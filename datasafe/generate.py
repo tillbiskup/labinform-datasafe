@@ -85,6 +85,19 @@ class Generate:
         self.create_new_directory(new_dir=str(new_id))
         return new_id
 
+    def path_from_loi(self, loi):
+        """
+        Set path corresponding to LOI
+
+        Parameters
+        ----------
+        loi : :class:`str`
+            Lab Object Identifier (LOI)
+
+        """
+        short_loi = loi.split('/', 1)[1]
+        self.path = os.sep.join(short_loi.split('/'))
+
 
 if __name__ == '__main__':
     datasafe_root = '../tests/files/'
