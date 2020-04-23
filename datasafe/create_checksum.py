@@ -127,8 +127,8 @@ def checksum(filenames=None, algorithm='md5'):
 # MD5 (sa620-01.xml) = db432cd074fe817703c87d34676332cd
 # MD5 (sa620-01.info) = 5e8f76e0ca076b8809193fea0fa03dd1
 
-print('')
-print(checksum('sa620-01.xml'))
+#print('')
+#print(checksum('sa620-01.xml'))
 
-print(checksum(['sa620-01.xml', 'sa620-01.info']))
-print(checksum(['sa620-01.info', 'sa620-01.xml']))
+#print(checksum(['sa620-01.xml', 'sa620-01.info']))
+#print(checksum(['sa620-01.info', 'sa620-01.xml']))

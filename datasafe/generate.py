@@ -70,9 +70,9 @@ def create_directory_for_new_dataset(path=''):
     return new_id
 
 
-temporary_datasafe = 'tmpsafe'
+#temporary_datasafe = 'tmpsafe'
 
-last_id = find_last_id(path=temporary_datasafe)
-print(last_id)
+#last_id = find_last_id(path=temporary_datasafe)
+#print(last_id)
 
-print(create_directory_for_new_dataset(path=temporary_datasafe))
+#print(create_directory_for_new_dataset(path=temporary_datasafe))
