@@ -3,8 +3,18 @@ import importlib
 
 class Checksum:
     """
-    This class doesn't have any documentation.
+    Class for creating checksums
+
+    Attributes
+    ----------
+    algorithm : :class:`str`
+        Hash algorithm to use.
+
+        Defaults to "md5", can be everything available in hashlib module.
     """
+
+    def __init__(self):
+        self.algorithm = 'md5'
 
     @staticmethod
     def object_from_name(module_name='', class_name=''):
@@ -31,7 +41,7 @@ class Checksum:
         class_ = getattr(module, class_name)
         return class_()
 
-    def checksum_of_file_contents(self, filename='', algorithm='md5'):
+    def checksum_of_file_contents(self, filename=''):
         """
         Create checksum for file contents
 
@@ -40,10 +50,6 @@ class Checksum:
         filename : :class:`str`
             Name of the file to compute the hash for
 
-        algorithm : :class:`str`
-            Hash algorithm to use.
-
-            Defaults to "md5", can be everything available in hashlib module.
 
         Returns
         -------
@@ -51,15 +57,14 @@ class Checksum:
             Computed checksum
 
         """
-        hash_function = self.object_from_name('hashlib', algorithm)
+        hash_function = self.object_from_name('hashlib', self.algorithm)
         with open(filename, "rb") as f:
             for chunk in iter(lambda: f.read(4096), b""):
                 hash_function.update(chunk)
         # noinspection PyUnresolvedReferences
         return hash_function.hexdigest()
 
-    def checksum_of_list_of_strings(self, list_of_strings=None,
-                                    algorithm='md5'):
+    def checksum_of_list_of_strings(self, list_of_strings=None):
         """
         Create checksum for list of strings
 
@@ -73,10 +78,6 @@ class Checksum:
         list_of_strings : :class:`list`
             List of strings to compute hash for
 
-        algorithm : :class:`str`
-            Hash algorithm to use.
-
-            Defaults to "md5", can be everything available in hashlib module.
 
         Returns
         -------
@@ -84,13 +85,13 @@ class Checksum:
             Computed checksum
 
         """
-        hash_function = self.object_from_name('hashlib', algorithm)
+        hash_function = self.object_from_name('hashlib', self.algorithm)
         for element in sorted(list_of_strings):
             hash_function.update(element.encode())
         # noinspection PyUnresolvedReferences
         return hash_function.hexdigest()
 
-    def checksum(self, filenames=None, algorithm='md5'):
+    def checksum(self, filenames=None):
         """
         Generate checksum for (list of) file(s).
 
@@ -106,10 +107,6 @@ class Checksum:
 
             filename(s) of files to generate a checksum of their content(s)
 
-        algorithm : :class:`str`
-            Hash algorithm to use.
-
-            Defaults to "md5", can be everything available in hashlib module.
 
         Returns
         -------
@@ -118,24 +115,25 @@ class Checksum:
 
         """
         if not isinstance(filenames, list):
-            return self.checksum_of_file_contents(filenames,
-                                                  algorithm=algorithm)
+            return self.checksum_of_file_contents(filenames)
 
         file_checksum = []
         for filename in filenames:
             file_checksum.append(
-                self.checksum_of_file_contents(filename, algorithm=algorithm))
+                self.checksum_of_file_contents(filename))
 
-        return self.checksum_of_list_of_strings(file_checksum,
-                                                algorithm=algorithm)
+        return self.checksum_of_list_of_strings(file_checksum)
 
 
 if __name__ == '__main__':
     # MD5 (sa620-01.xml) = db432cd074fe817703c87d34676332cd
     # MD5 (sa620-01.info) = 5e8f76e0ca076b8809193fea0fa03dd1
 
+    # MD5 (both files) = c4bf65e5b8de8d7466ce6d9aea08395a
+
     path_to_files = '../tests/files/'
     irgendwas = Checksum()
+    irgendwas.algorithm = 'sha256'
 
     print('')
     print(irgendwas.checksum(path_to_files + 'sa620-01.xml'))
