@@ -8,12 +8,29 @@ class Generate:
     Attributes
     ----------
     path : :class:`str`
+        temporary path within the datasafe to work on
+
+    base_directory : :class:`str`
         base directory for the datasafe
 
     """
 
     def __init__(self):
         self.path = ''
+        self.base_directory = ''
+
+    @property
+    def working_path(self):
+        """
+        Full path to working directory in datasafe
+
+        Returns
+        -------
+        full_path : :class:`str`
+            full path to work on
+        """
+        full_path = os.path.join(self.base_directory, self.path)
+        return full_path
 
     def find_last_id(self):
         """
@@ -30,7 +47,7 @@ class Generate:
             Highest ID in current directory
 
         """
-        directory_contents = os.listdir(self.path)
+        directory_contents = os.listdir(self.working_path)
         # Important: Convert first to integers, then sort
         directory_contents = list(map(int, directory_contents))
         if not directory_contents:
@@ -49,7 +66,7 @@ class Generate:
             Name of new directory to create
 
         """
-        complete_path = os.path.join(self.path, new_dir)
+        complete_path = os.path.join(self.working_path, new_dir)
         os.mkdir(path=complete_path)
         return
 
@@ -70,10 +87,12 @@ class Generate:
 
 
 if __name__ == '__main__':
-    temporary_datasafe = '../tests/files/tmpsafe'
+    datasafe_root = '../tests/files/'
+    working_dir = 'tmpsafe'
 
     irgendwas = Generate()
-    irgendwas.path = temporary_datasafe
+    irgendwas.path = working_dir
+    irgendwas.base_directory = datasafe_root
 
     last_id = irgendwas.find_last_id()
     print(last_id)
