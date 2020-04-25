@@ -1,5 +1,7 @@
 import re
 
+import datasafe.utils as utils
+
 
 class InListChecker:
 
@@ -63,7 +65,7 @@ class PatternChecker:
         return re.fullmatch(self.pattern, string)
 
 
-class LoiChecker:
+class OldLoiChecker:
     def __init__(self):
         self.loi_identifier = '42.'
         self.types = ['ds', 'recipe', 'img']
@@ -119,3 +121,78 @@ class LoiChecker:
         checker = PatternChecker()
         checker.pattern = "\d+"
         return checker.check(loi.split('/')[4])
+
+
+class Checker:
+    def __init__(self):
+        self.next_checker = None
+        self.separator = '/'
+
+    def check(self, string):
+        result = self._check(string.split(self.separator)[0])
+        if result and self.next_checker:
+            substring = self.separator.join(string.split(self.separator)[1:])
+            result = self.next_checker.check(substring)
+        return result
+
+    def _check(self, string):
+        return False
+
+
+class LoiChecker(Checker):
+    def __init__(self):
+        super().__init__()
+        self.next_checker = LoiTypeChecker()
+
+    def _check(self, string):
+        checker = LoiStartsWith42Checker()
+        return checker.check(string)
+
+
+class LoiStartsWith42Checker(Checker):
+
+    def _check(self, string):
+        checker = StartsWithChecker()
+        checker.string = '42.'
+        return checker.check(string)
+
+
+class LoiTypeChecker(Checker):
+
+    def _check(self, string):
+        checker = InListChecker()
+        checker.list = ['ds', 'rec', 'img', 'info']
+        result = checker.check(string)
+        if result:
+            self.next_checker = utils.object_from_name(
+                'datasafe.loi', 'Loi' + string.capitalize() + 'Checker')
+        return result
+
+
+class LoiRecChecker(Checker):
+
+    def _check(self, string):
+        checker = IsNumberChecker()
+        return checker.check(string)
+
+
+class LoiExpChecker(Checker):
+    def _check(self, string):
+        checker = IsDateChecker()
+        result = checker.check(string)
+        if not result:
+            checker = InListChecker()
+            checker.list = ['ba', 'sa']
+            result = checker.check(string)
+        return result
+
+
+class LoiDsChecker(Checker):
+    def __init__(self):
+        super().__init__()
+        self.next_checker = LoiExpChecker()
+
+    def _check(self, string):
+        checker = InListChecker()
+        checker.list = ['exp', 'calc']
+        return checker.check(string)
