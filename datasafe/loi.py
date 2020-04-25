@@ -176,17 +176,6 @@ class LoiRecChecker(Checker):
         return checker.check(string)
 
 
-class LoiExpChecker(Checker):
-    def _check(self, string):
-        checker = IsDateChecker()
-        result = checker.check(string)
-        if not result:
-            checker = InListChecker()
-            checker.list = ['ba', 'sa']
-            result = checker.check(string)
-        return result
-
-
 class LoiDsChecker(Checker):
     def __init__(self):
         super().__init__()
@@ -195,4 +184,39 @@ class LoiDsChecker(Checker):
     def _check(self, string):
         checker = InListChecker()
         checker.list = ['exp', 'calc']
+        return checker.check(string)
+
+
+class LoiMethodChecker(Checker):
+    def _check(self, string):
+        return True
+
+
+class LoiExpChecker(Checker):
+    def __init__(self):
+        super().__init__()
+        self.next_checker = LoiMethodChecker()
+
+    def _check(self, string):
+        checker = IsDateChecker()
+        result = checker.check(string)
+        if not result:
+            checker = BaSaChecker()
+            result = checker.check(string)
+            self.next_checker = BaSaNumberChecker()
+        return result
+
+
+class BaSaChecker(Checker):
+
+    def _check(self, string):
+        checker = InListChecker()
+        checker.list = ['ba', 'sa']
+        return checker.check(string)
+
+
+class BaSaNumberChecker(Checker):
+
+    def _check(self, string):
+        checker = IsNumberChecker()
         return checker.check(string)

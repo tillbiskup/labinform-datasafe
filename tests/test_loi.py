@@ -133,20 +133,14 @@ class TestLoiChecker(unittest.TestCase):
         self.checker = loi_.LoiChecker()
         self.loi = '42.1001/ds/exp/sa/42/cwepr/1'
 
-    def test_loi_starting_with_42_returns_true(self):
+    def test_with_correct_loi_returns_true(self):
         self.assertTrue(self.checker.check(self.loi))
 
     def test_loi_not_starting_with_42_returns_false(self):
         self.assertFalse(self.checker.check('43.1001/foo'))
 
-    def test_loi_with_correct_type_returns_true(self):
-        self.assertTrue(self.checker.check(self.loi))
-
     def test_loi_with_incorrect_type_returns_false(self):
         self.assertFalse(self.checker.check('42.1001/foo'))
-
-    def test_ds_loi_with_correct_kind_returns_true(self):
-        self.assertTrue(self.checker.check(self.loi))
 
     def test_ds_loi_with_incorrect_kind_returns_false(self):
         self.assertFalse(self.checker.check('42.1001/ds/foo'))
@@ -154,15 +148,15 @@ class TestLoiChecker(unittest.TestCase):
     def test_rec_loi_with_kind_returns_false(self):
         self.assertFalse(self.checker.check('42.1001/rec/exp'))
 
-    def test_exp_loi_with_correct_object_returns_true(self):
-        self.assertTrue(self.checker.check(self.loi))
-
     def test_exp_loi_with_incorrect_object_returns_false(self):
         self.assertFalse(self.checker.check('42.1001/ds/exp/foo'))
 
     def test_exp_loi_with_date_object_returns_true(self):
         self.assertTrue(self.checker.check(
             '42.1001/ds/exp/2020-04-25/cwepr/1'))
+
+    def test_ba_sa_loi_without_number_returns_false(self):
+        self.assertFalse(self.checker.check('42.1001/ds/exp/sa/foo'))
 
 
 if __name__ == '__main__':
