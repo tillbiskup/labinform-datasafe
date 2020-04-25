@@ -144,6 +144,11 @@ class TestLoiChecker(unittest.TestCase):
         self.assertFalse(self.checker.check(
             '42.1001/info/tb/calculation/molecule/foo'))
 
+    def test_info_kind_with_unfriendly_string_returns_false(self):
+        self.assertFalse(self.checker.check('42.1001/info/tb/project/foo#'))
+        self.assertFalse(self.checker.check('42.1001/info/tb/project/foo?'))
+        self.assertFalse(self.checker.check('42.1001/info/tb/project/FOO'))
+
 
 if __name__ == '__main__':
     unittest.main()

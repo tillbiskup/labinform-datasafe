@@ -52,6 +52,15 @@ class IsDateChecker(IsPatternChecker):
         return super().check(string)
 
 
+class IsFriendlyStringChecker(IsPatternChecker):
+    def __init__(self):
+        super().__init__()
+        self.pattern = "[a-z0-9-_]+"
+
+    def check(self, string):
+        return super().check(string)
+
+
 class AbstractLoiChecker:
     def __init__(self):
         self.next_checker = None
@@ -213,32 +222,33 @@ class LoiInfoKindChecker(AbstractLoiChecker):
         return result
 
 
-class LoiInfoFakeChecker(AbstractLoiChecker):
+class LoiInfoOtherKindChecker(AbstractLoiChecker):
     def _check(self, string):
-        return True
+        checker = IsFriendlyStringChecker()
+        return checker.check(string)
 
 
-class LoiInfoProjectChecker(LoiInfoFakeChecker):
+class LoiInfoProjectChecker(LoiInfoOtherKindChecker):
     pass
 
 
-class LoiInfoPublicationChecker(LoiInfoFakeChecker):
+class LoiInfoPublicationChecker(LoiInfoOtherKindChecker):
     pass
 
 
-class LoiInfoGrantChecker(LoiInfoFakeChecker):
+class LoiInfoGrantChecker(LoiInfoOtherKindChecker):
     pass
 
 
-class LoiInfoDeviceChecker(LoiInfoFakeChecker):
+class LoiInfoDeviceChecker(LoiInfoOtherKindChecker):
     pass
 
 
-class LoiInfoChemicalChecker(LoiInfoFakeChecker):
+class LoiInfoChemicalChecker(LoiInfoOtherKindChecker):
     pass
 
 
-class LoiInfoPersonChecker(LoiInfoFakeChecker):
+class LoiInfoPersonChecker(LoiInfoOtherKindChecker):
     pass
 
 
