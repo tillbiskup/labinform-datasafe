@@ -135,6 +135,9 @@ class TestLoiChecker(unittest.TestCase):
 
     def test_with_correct_loi_returns_true(self):
         self.assertTrue(self.checker.check(self.loi))
+        self.assertTrue(self.checker.check('42.1001/ds/exp/2020-04-25/cwepr/1'))
+        self.assertTrue(self.checker.check('42.1001/ds/calc/geo/42'))
+        self.assertTrue(self.checker.check('42.1001/rec/42'))
 
     def test_loi_not_starting_with_42_returns_false(self):
         self.assertFalse(self.checker.check('43.1001/foo'))
@@ -156,8 +159,24 @@ class TestLoiChecker(unittest.TestCase):
             '42.1001/ds/exp/2020-04-25/cwepr/1'))
 
     def test_ba_sa_loi_without_number_returns_false(self):
+        self.assertFalse(self.checker.check('42.1001/ds/exp/ba/foo'))
         self.assertFalse(self.checker.check('42.1001/ds/exp/sa/foo'))
 
+    def test_exp_loi_with_wrong_method_returns_false(self):
+        self.assertFalse(self.checker.check('42.1001/ds/exp/sa/42/foo'))
+        self.assertFalse(self.checker.check('42.1001/ds/exp/2020-04-25/foo'))
+
+    def test_exp_loi_without_measurement_number_returns_false(self):
+        self.assertFalse(self.checker.check('42.1001/ds/exp/sa/42/cwepr/a'))
+        self.assertFalse(self.checker.check(
+            '42.1001/ds/exp/2020-04-25/cwepr/a'))
+
+    def test_calc_with_incorrect_object_returns_false(self):
+        self.assertFalse(self.checker.check('42.1001/ds/calc/foo'))
+
+    def test_calc_without_object_number_returns_false(self):
+        self.assertFalse(self.checker.check('42.1001/ds/calc/geo/foo'))
+        self.assertFalse(self.checker.check('42.1001/ds/calc/result/foo'))
 
 if __name__ == '__main__':
     unittest.main()

@@ -177,19 +177,15 @@ class LoiRecChecker(Checker):
 
 
 class LoiDsChecker(Checker):
-    def __init__(self):
-        super().__init__()
-        self.next_checker = LoiExpChecker()
 
     def _check(self, string):
         checker = InListChecker()
         checker.list = ['exp', 'calc']
-        return checker.check(string)
-
-
-class LoiMethodChecker(Checker):
-    def _check(self, string):
-        return True
+        result = checker.check(string)
+        if result:
+            self.next_checker = utils.object_from_name(
+                'datasafe.loi', 'Loi' + string.capitalize() + 'Checker')
+        return result
 
 
 class LoiExpChecker(Checker):
@@ -216,7 +212,44 @@ class BaSaChecker(Checker):
 
 
 class BaSaNumberChecker(Checker):
+    def __init__(self):
+        super().__init__()
+        self.next_checker = LoiMethodChecker()
 
+    def _check(self, string):
+        checker = IsNumberChecker()
+        return checker.check(string)
+
+
+class LoiMethodChecker(Checker):
+    def __init__(self):
+        super().__init__()
+        self.next_checker = LoiMeasurementNumberChecker()
+
+    def _check(self, string):
+        checker = InListChecker()
+        checker.list = ['cwepr', 'trepr']
+        return checker.check(string)
+
+
+class LoiMeasurementNumberChecker(Checker):
+    def _check(self, string):
+        checker = IsNumberChecker()
+        return checker.check(string)
+
+
+class LoiCalcChecker(Checker):
+    def __init__(self):
+        super().__init__()
+        self.next_checker = LoiCalcObjectNumberChecker()
+
+    def _check(self, string):
+        checker = InListChecker()
+        checker.list = ['geo', 'result']
+        return checker.check(string)
+
+
+class LoiCalcObjectNumberChecker(Checker):
     def _check(self, string):
         checker = IsNumberChecker()
         return checker.check(string)
