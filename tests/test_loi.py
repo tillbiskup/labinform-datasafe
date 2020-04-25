@@ -65,8 +65,68 @@ class TestLoiChecker(unittest.TestCase):
         for object_ in ['sa', 'ba']:
             loi = '/'.join(['42.1001', 'ds', 'exp', object_, 'cwepr'])
             self.assertFalse(self.checker.check(loi))
-            
-    
+
+
+class TestListChecker(unittest.TestCase):
+    def setUp(self):
+        self.checker = loi_.InListChecker()
+        self.list = ['foo', 'bar']
+        self.checker.list = self.list
+
+    def test_string_in_list_returns_true(self):
+        for element in self.list:
+            self.assertTrue(self.checker.check(element))
+
+    def test_string_not_in_list_returns_false(self):
+        self.assertFalse(self.checker.check('foobar'))
+
+
+class TestPatternChecker(unittest.TestCase):
+    def setUp(self):
+        self.checker = loi_.IsPatternChecker()
+        # noinspection PyPep8
+        self.checker.pattern = "\d{2}"
+
+    def test_string_conforms_with_pattern_returns_true(self):
+        self.assertTrue(self.checker.check('42'))
+
+    def test_string_does_not_conform_with_pattern_returns_false(self):
+        self.assertFalse(self.checker.check('432'))
+
+
+class TestStartsWithChecker(unittest.TestCase):
+    def setUp(self):
+        self.checker = loi_.StartsWithChecker()
+        self.checker.string = '42.'
+
+    def test_string_starts_with_substring_returns_true(self):
+        self.assertTrue(self.checker.check('42.1001'))
+
+    def test_string_does_not_start_with_substring_returns_false(self):
+        self.assertFalse(self.checker.check('43.1001'))
+
+
+class TestIsNumberChecker(unittest.TestCase):
+    def setUp(self):
+        self.checker = loi_.IsNumberChecker()
+
+    def test_string_is_number_returns_true(self):
+        self.assertTrue(self.checker.check('42'))
+
+    def test_string_is_not_number_returns_false(self):
+        self.assertFalse(self.checker.check('ab'))
+
+
+class TestIsDateChecker(unittest.TestCase):
+    def setUp(self):
+        self.checker = loi_.IsDateChecker()
+
+    def test_string_is_date_returns_true(self):
+        self.assertTrue(self.checker.check('2020-04-25'))
+
+    def test_string_is_not_date_returns_false(self):
+        self.assertFalse(self.checker.check('2020-30-01'))
+
 
 if __name__ == '__main__':
     unittest.main()

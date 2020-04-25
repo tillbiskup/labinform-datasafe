@@ -1,6 +1,50 @@
 import re
 
 
+class InListChecker:
+
+    def __init__(self):
+        self.list = None
+
+    def check(self, string):
+        return string in self.list
+
+
+class IsPatternChecker:
+
+    def __init__(self):
+        self.pattern = ''
+
+    def check(self, string):
+        return re.fullmatch(self.pattern, string)
+
+
+class IsNumberChecker(IsPatternChecker):
+    def __init__(self):
+        super().__init__()
+        self.pattern = "\d+"
+
+    def check(self, string=''):
+        return super().check(string)
+
+
+class IsDateChecker(IsPatternChecker):
+    def __init__(self):
+        super().__init__()
+        self.pattern = "\d{4}-[0-1][0-9]-[0-3][0-9]"
+
+    def check(self, string):
+        return super().check(string)
+
+
+class StartsWithChecker:
+    def __init__(self):
+        self.string = ''
+
+    def check(self, string=''):
+        return string.startswith(self.string)
+
+
 class ListChecker:
 
     def __init__(self):
@@ -62,7 +106,6 @@ class LoiChecker:
         return checker.check(loi.split('/')[2])
 
     def _exp_object_in_list_of_objects(self, loi):
-        result = False
         string_to_test = loi.split('/')[3]
         if string_to_test in self.exp_objects:
             result = True
