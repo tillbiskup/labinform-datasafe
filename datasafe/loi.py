@@ -3,7 +3,12 @@ import re
 import datasafe.utils as utils
 
 
-class InListChecker:
+class AbstractChecker:
+    def check(self, string):
+        pass
+
+
+class InListChecker(AbstractChecker):
 
     def __init__(self):
         self.list = None
@@ -12,7 +17,15 @@ class InListChecker:
         return string in self.list
 
 
-class IsPatternChecker:
+class StartsWithChecker(AbstractChecker):
+    def __init__(self):
+        self.string = ''
+
+    def check(self, string=''):
+        return string.startswith(self.string)
+
+
+class IsPatternChecker(AbstractChecker):
 
     def __init__(self):
         self.pattern = ''
@@ -39,33 +52,7 @@ class IsDateChecker(IsPatternChecker):
         return super().check(string)
 
 
-class StartsWithChecker:
-    def __init__(self):
-        self.string = ''
-
-    def check(self, string=''):
-        return string.startswith(self.string)
-
-
-class ListChecker:
-
-    def __init__(self):
-        self.list = None
-
-    def check(self, string):
-        return string in self.list
-
-
-class PatternChecker:
-
-    def __init__(self):
-        self.pattern = None
-
-    def check(self, string):
-        return re.fullmatch(self.pattern, string)
-
-
-class Checker:
+class AbstractLoiChecker:
     def __init__(self):
         self.next_checker = None
         self.separator = '/'
@@ -81,7 +68,7 @@ class Checker:
         return False
 
 
-class LoiChecker(Checker):
+class LoiChecker(AbstractLoiChecker):
     def __init__(self):
         super().__init__()
         self.next_checker = LoiTypeChecker()
@@ -91,7 +78,7 @@ class LoiChecker(Checker):
         return checker.check(string)
 
 
-class LoiStartsWith42Checker(Checker):
+class LoiStartsWith42Checker(AbstractLoiChecker):
 
     def _check(self, string):
         checker = StartsWithChecker()
@@ -99,7 +86,7 @@ class LoiStartsWith42Checker(Checker):
         return checker.check(string)
 
 
-class LoiTypeChecker(Checker):
+class LoiTypeChecker(AbstractLoiChecker):
 
     def _check(self, string):
         checker = InListChecker()
@@ -111,14 +98,14 @@ class LoiTypeChecker(Checker):
         return result
 
 
-class LoiRecChecker(Checker):
+class LoiRecChecker(AbstractLoiChecker):
 
     def _check(self, string):
         checker = IsNumberChecker()
         return checker.check(string)
 
 
-class LoiDsChecker(Checker):
+class LoiDsChecker(AbstractLoiChecker):
 
     def _check(self, string):
         checker = InListChecker()
@@ -130,7 +117,7 @@ class LoiDsChecker(Checker):
         return result
 
 
-class LoiExpChecker(Checker):
+class LoiExpChecker(AbstractLoiChecker):
     def __init__(self):
         super().__init__()
         self.next_checker = LoiMethodChecker()
@@ -145,7 +132,7 @@ class LoiExpChecker(Checker):
         return result
 
 
-class BaSaChecker(Checker):
+class BaSaChecker(AbstractLoiChecker):
 
     def _check(self, string):
         checker = InListChecker()
@@ -153,7 +140,7 @@ class BaSaChecker(Checker):
         return checker.check(string)
 
 
-class BaSaNumberChecker(Checker):
+class BaSaNumberChecker(AbstractLoiChecker):
     def __init__(self):
         super().__init__()
         self.next_checker = LoiMethodChecker()
@@ -163,7 +150,7 @@ class BaSaNumberChecker(Checker):
         return checker.check(string)
 
 
-class LoiMethodChecker(Checker):
+class LoiMethodChecker(AbstractLoiChecker):
     def __init__(self):
         super().__init__()
         self.next_checker = LoiMeasurementNumberChecker()
@@ -174,13 +161,13 @@ class LoiMethodChecker(Checker):
         return checker.check(string)
 
 
-class LoiMeasurementNumberChecker(Checker):
+class LoiMeasurementNumberChecker(AbstractLoiChecker):
     def _check(self, string):
         checker = IsNumberChecker()
         return checker.check(string)
 
 
-class LoiCalcChecker(Checker):
+class LoiCalcChecker(AbstractLoiChecker):
     def __init__(self):
         super().__init__()
         self.next_checker = LoiCalcObjectNumberChecker()
@@ -191,19 +178,19 @@ class LoiCalcChecker(Checker):
         return checker.check(string)
 
 
-class LoiCalcObjectNumberChecker(Checker):
+class LoiCalcObjectNumberChecker(AbstractLoiChecker):
     def _check(self, string):
         checker = IsNumberChecker()
         return checker.check(string)
 
 
-class LoiImgChecker(Checker):
+class LoiImgChecker(AbstractLoiChecker):
 
     def _check(self, string):
         return True
 
 
-class LoiInfoChecker(Checker):
+class LoiInfoChecker(AbstractLoiChecker):
 
     def _check(self, string):
         return True
