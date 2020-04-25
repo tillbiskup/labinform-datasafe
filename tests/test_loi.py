@@ -75,7 +75,15 @@ class TestLoiChecker(unittest.TestCase):
         self.assertTrue(self.checker.check('42.1001/ds/calc/geo/42'))
         self.assertTrue(self.checker.check('42.1001/rec/42'))
         self.assertTrue(self.checker.check('42.1001/img/foo'))
-        self.assertTrue(self.checker.check('42.1001/info/foo'))
+        self.assertTrue(self.checker.check('42.1001/info/tb/sample/batch/42'))
+        self.assertTrue(self.checker.check(
+            '42.1001/info/tb/calculation/molecule/42'))
+        self.assertTrue(self.checker.check('42.1001/info/tb/project/foo'))
+        self.assertTrue(self.checker.check('42.1001/info/tb/publication/foo'))
+        self.assertTrue(self.checker.check('42.1001/info/tb/grant/foo'))
+        self.assertTrue(self.checker.check('42.1001/info/tb/device/foo'))
+        self.assertTrue(self.checker.check('42.1001/info/tb/chemical/foo'))
+        self.assertTrue(self.checker.check('42.1001/info/tb/person/foo'))
 
     def test_loi_not_starting_with_42_returns_false(self):
         self.assertFalse(self.checker.check('43.1001/foo'))
@@ -118,6 +126,23 @@ class TestLoiChecker(unittest.TestCase):
 
     def test_rec_without_number_returns_false(self):
         self.assertFalse(self.checker.check('42.1001/rec/foo'))
+
+    def test_info_with_incorrect_initials_returns_false(self):
+        self.assertFalse(self.checker.check('42.1001/info/foo'))
+
+    def test_info_with_incorrect_kind_returns_false(self):
+        self.assertFalse(self.checker.check('42.1001/info/tb/foo'))
+
+    def test_info_with_incorrect_object_returns_false(self):
+        self.assertFalse(self.checker.check('42.1001/info/tb/sample/foo'))
+        self.assertFalse(self.checker.check('42.1001/info/tb/calculation/foo'))
+
+    def test_info_sample_without_number_returns_false(self):
+        self.assertFalse(self.checker.check('42.1001/info/tb/sample/batch/foo'))
+
+    def test_info_calculation_without_number_returns_false(self):
+        self.assertFalse(self.checker.check(
+            '42.1001/info/tb/calculation/molecule/foo'))
 
 
 if __name__ == '__main__':

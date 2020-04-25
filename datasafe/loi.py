@@ -120,7 +120,7 @@ class LoiDsChecker(AbstractLoiChecker):
 class LoiExpChecker(AbstractLoiChecker):
     def __init__(self):
         super().__init__()
-        self.next_checker = LoiMethodChecker()
+        self.next_checker = LoiExpMethodChecker()
 
     def _check(self, string):
         checker = IsDateChecker()
@@ -143,14 +143,14 @@ class BaSaChecker(AbstractLoiChecker):
 class BaSaNumberChecker(AbstractLoiChecker):
     def __init__(self):
         super().__init__()
-        self.next_checker = LoiMethodChecker()
+        self.next_checker = LoiExpMethodChecker()
 
     def _check(self, string):
         checker = IsNumberChecker()
         return checker.check(string)
 
 
-class LoiMethodChecker(AbstractLoiChecker):
+class LoiExpMethodChecker(AbstractLoiChecker):
     def __init__(self):
         super().__init__()
         self.next_checker = LoiMeasurementNumberChecker()
@@ -191,6 +191,75 @@ class LoiImgChecker(AbstractLoiChecker):
 
 
 class LoiInfoChecker(AbstractLoiChecker):
+    def __init__(self):
+        super().__init__()
+        self.next_checker = LoiInfoKindChecker()
 
     def _check(self, string):
+        checker = InListChecker()
+        checker.list = ['tb', 'ms', 'jp', 'dm', 'cm']
+        return checker.check(string)
+
+
+class LoiInfoKindChecker(AbstractLoiChecker):
+    def _check(self, string):
+        checker = InListChecker()
+        checker.list = ['sample', 'calculation', 'project', 'publication',
+                        'grant', 'device', 'chemical', 'person']
+        result = checker.check(string)
+        if result:
+            self.next_checker = utils.object_from_name(
+                'datasafe.loi', 'LoiInfo' + string.capitalize() + 'Checker')
+        return result
+
+
+class LoiInfoFakeChecker(AbstractLoiChecker):
+    def _check(self, string):
         return True
+
+
+class LoiInfoProjectChecker(LoiInfoFakeChecker):
+    pass
+
+
+class LoiInfoPublicationChecker(LoiInfoFakeChecker):
+    pass
+
+
+class LoiInfoGrantChecker(LoiInfoFakeChecker):
+    pass
+
+
+class LoiInfoDeviceChecker(LoiInfoFakeChecker):
+    pass
+
+
+class LoiInfoChemicalChecker(LoiInfoFakeChecker):
+    pass
+
+
+class LoiInfoPersonChecker(LoiInfoFakeChecker):
+    pass
+
+
+class LoiInfoSampleChecker(AbstractLoiChecker):
+    def __init__(self):
+        super().__init__()
+        self.next_checker = IsNumberChecker()
+
+    def _check(self, string):
+        checker = InListChecker()
+        checker.list = ['batch', 'sample', 'substrate', 'synthesis', 'cell',
+                        'tube']
+        return checker.check(string)
+
+
+class LoiInfoCalculationChecker(AbstractLoiChecker):
+    def __init__(self):
+        super().__init__()
+        self.next_checker = IsNumberChecker()
+
+    def _check(self, string):
+        checker = InListChecker()
+        checker.list = ['molecule', 'geometry', 'calculation']
+        return checker.check(string)
