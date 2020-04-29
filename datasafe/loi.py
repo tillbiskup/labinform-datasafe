@@ -120,6 +120,10 @@ class AbstractLoiChecker:
 
     def check(self, string):
         """
+        Initiates checking cascade by checking the first part of the LOI and
+        pass the following string to the next checker (if given) which
+        performs the next checking step in a recursive way.
+        Key element of the LOI validating cascade.
 
         Parameters
         ----------
@@ -146,11 +150,33 @@ class AbstractLoiChecker:
 
 
 class LoiChecker(AbstractLoiChecker):
+    """
+    Begin of the cascading chain to validate a given LOI.
+
+    Attributes
+    ----------
+    next_checker : :class: `str`
+        Defines checker class for the next part of the chain
+    """
     def __init__(self):
         super().__init__()
         self.next_checker = LoiTypeChecker()
 
     def _check(self, string):
+        """
+        Overwrites private method of the abstract Loi Checker.
+        A string beginning with 42 indicates a LOI per definition.
+
+        Parameters
+        ----------
+        string : :`str`
+            Full loi to be checked.
+
+        Returns
+        -------
+            ??
+
+        """
         checker = LoiStartsWith42Checker()
         return checker.check(string)
 
