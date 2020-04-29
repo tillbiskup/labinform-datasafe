@@ -20,6 +20,21 @@ datasafe.generate module
    :undoc-members:
    :show-inheritance:
 
+datasafe.loi module
+-------------------
+
+.. automodule:: datasafe.loi
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+datasafe.utils module
+---------------------
+
+.. automodule:: datasafe.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------
