@@ -4,16 +4,47 @@ import datasafe.utils as utils
 
 
 class AbstractChecker:
+    """ Base class for different types of checkers
+
+    The LOI is analysed using basic checkers that look for specific elements
+    or patterns.
+
+    Parameters
+    ----------
+    string : :class:`str`
+        Part of the LOI that should be checked.
+    """
     def check(self, string):
         pass
 
 
 class InListChecker(AbstractChecker):
+    """
+    Check whether the given string is contained in a given list.
+
+    Attributes
+    ----------
+    list : :class:`list`
+        List of strings that are possible options for the given string.
+    """
 
     def __init__(self):
         self.list = None
 
     def check(self, string):
+        """
+        Return boolean if string is contained in given list.
+
+        Parameters
+        ----------
+        string : :class:`str`
+            part of the LOI to check
+
+        Returns
+        -------
+        : :class:`bool`
+            bool True if string in list. (??)
+        """
         return string in self.list
 
 
@@ -62,11 +93,45 @@ class IsFriendlyStringChecker(IsPatternChecker):
 
 
 class AbstractLoiChecker:
+    """
+    Abstract checker class to check if LOI is supposed to exist.
+
+    The Laboratory Object Identifier (LOI) is a persistent identifier or
+    handle to identify various samples, objects and projects that are linked
+    to a laboratory and its working group. The aim of it is a unique
+    connection between those objects and actions performed on or with them.
+
+    The checker works recursive-like: If the attribute :attr:`next_checker`
+    is given in the respective class, checking continues.
+
+    This class contains the public method :meth:`check` which calls the private
+    method :meth:`_check` that is to be overwritten in derived checkers.
+
+    Attributes
+    ----------
+    next_checker: :class:`str`
+        Next checker class that should be called
+    separator : :class:`str`
+        Sign that separates different parts of the LOI. Standard: /
+    """
     def __init__(self):
         self.next_checker = None
         self.separator = '/'
 
     def check(self, string):
+        """
+
+        Parameters
+        ----------
+        string : :class:`str`
+            Part of the LOI to check.
+
+        Returns
+        -------
+        result : :class: `bool`
+            Returns true if part of the string is valid.
+
+        """
         result = self._check(string.split(self.separator)[0])
         if result and self.next_checker:
             substring = self.separator.join(string.split(self.separator)[1:])
@@ -74,6 +139,9 @@ class AbstractLoiChecker:
         return result
 
     def _check(self, string):
+        """
+        Private checking method, has to be overwritten in derived classes.
+        """
         return False
 
 
