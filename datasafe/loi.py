@@ -1,20 +1,42 @@
+"""
+.. todo::
+    structure of the LOI that is implemented in this module needs to be 
+    described.
+"""
+
 import re
 
 import datasafe.utils as utils
 
 
 class AbstractChecker:
-    """ Base class for different types of checkers
+    """
+    Base class for different types of checkers.
 
-    The LOI is analysed using basic checkers that look for specific elements
-    or patterns.
+    A given string is analysed using basic checkers that look for specific
+    elements or patterns.
 
-    Parameters
-    ----------
-    string : :class:`str`
-        Part of the LOI that should be checked.
+    Derived classes should implement the concrete and private method
+    :meth:`check`. This method returns a Boolean value depending on the
+    test results.
     """
     def check(self, string):
+        """
+       Return result of private method :meth:`_check`
+
+       Parameters
+       ----------
+       string : :class:`str`
+           string to check
+
+       Returns
+       -------
+       : :class:`bool`
+           Bool True if string fulfills criteria.
+       """
+        return self._check(string)
+
+    def _check(self, string):
         pass
 
 
@@ -27,24 +49,10 @@ class InListChecker(AbstractChecker):
     list : :class:`list`
         List of strings that are possible options for the given string.
     """
-
     def __init__(self):
         self.list = None
 
-    def check(self, string):
-        """
-        Return boolean if string is contained in given list.
-
-        Parameters
-        ----------
-        string : :class:`str`
-            part of the LOI to check
-
-        Returns
-        -------
-        : :class:`bool`
-            bool True if string in list. (??)
-        """
+    def _check(self, string):
         return string in self.list
 
 
@@ -52,7 +60,7 @@ class StartsWithChecker(AbstractChecker):
     def __init__(self):
         self.string = ''
 
-    def check(self, string=''):
+    def _check(self, string=''):
         return string.startswith(self.string)
 
 
@@ -61,7 +69,7 @@ class IsPatternChecker(AbstractChecker):
     def __init__(self):
         self.pattern = ''
 
-    def check(self, string):
+    def _check(self, string):
         return re.fullmatch(self.pattern, string)
 
 
@@ -70,26 +78,20 @@ class IsNumberChecker(IsPatternChecker):
         super().__init__()
         self.pattern = "\d+"
 
-    def check(self, string=''):
-        return super().check(string)
-
 
 class IsDateChecker(IsPatternChecker):
+    """
+    Checks date in given form (YYYY-MM-DD), doesn't validate if date exists.
+    """
     def __init__(self):
         super().__init__()
         self.pattern = "\d{4}-[0-1][0-9]-[0-3][0-9]"
-
-    def check(self, string):
-        return super().check(string)
 
 
 class IsFriendlyStringChecker(IsPatternChecker):
     def __init__(self):
         super().__init__()
         self.pattern = "[a-z0-9-_]+"
-
-    def check(self, string):
-        return super().check(string)
 
 
 class AbstractLoiChecker:
@@ -100,6 +102,8 @@ class AbstractLoiChecker:
     handle to identify various samples, objects and projects that are linked
     to a laboratory and its working group. The aim of it is a unique
     connection between those objects and actions performed on or with them.
+    The LOI is part of the LabInform framework. For more information see
+    `<https://www.labinform.de/>`_
 
     The checker works recursive-like: If the attribute :attr:`next_checker`
     is given in the respective class, checking continues.
@@ -110,9 +114,10 @@ class AbstractLoiChecker:
     Attributes
     ----------
     next_checker: :class:`str`
-        Next checker class that should be called
+        Next checker class that should be called.
+
     separator : :class:`str`
-        Sign that separates different parts of the LOI. Standard: /
+        Character that separates different parts of the LOI. Defaults to ``/``.
     """
     def __init__(self):
         self.next_checker = None
@@ -120,9 +125,11 @@ class AbstractLoiChecker:
 
     def check(self, string):
         """
+        Split string, check first part, give the rest over to next checker.
+
         Initiates checking cascade by checking the first part of the LOI and
         pass the following string to the next checker (if given) which
-        performs the next checking step in a recursive way.
+        performs the next checking step in a recursive-like way.
         Key element of the LOI validating cascade.
 
         Parameters
@@ -132,9 +139,8 @@ class AbstractLoiChecker:
 
         Returns
         -------
-        result : :class: `bool`
+        result : :class:`bool`
             Returns true if part of the string is valid.
-
         """
         result = self._check(string.split(self.separator)[0])
         if result and self.next_checker:
@@ -151,11 +157,16 @@ class AbstractLoiChecker:
 
 class LoiChecker(AbstractLoiChecker):
     """
-    Begin of the cascading chain to validate a given LOI.
+    User only needs to instantiate this class for checking a LOI.
+
+    Begin of the cascading chain to validate a given LOI. Checking starts
+    with the first part of the LOI that should start with 42. Following,
+    the data type will be surveyed and depending on the result, further
+    downstream checkers will be involved. Returns `True` if string is valid LOI.
 
     Attributes
     ----------
-    next_checker : :class: `str`
+    next_checker : :class:`str`
         Defines checker class for the next part of the chain
     """
     def __init__(self):
@@ -164,18 +175,19 @@ class LoiChecker(AbstractLoiChecker):
 
     def _check(self, string):
         """
-        Overwrites private method of the abstract Loi Checker.
+        Check beginning of LOI and start cascading chain if true.
+
         A string beginning with 42 indicates a LOI per definition.
 
         Parameters
         ----------
-        string : :`str`
-            Full loi to be checked.
+        string : :class:`str`
+            Full LOI to be checked.
 
         Returns
         -------
-            ??
-
+        result : :class:`bool`
+            Returns true if string is valid LOI.
         """
         checker = LoiStartsWith42Checker()
         return checker.check(string)
