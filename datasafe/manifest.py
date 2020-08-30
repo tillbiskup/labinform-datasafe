@@ -43,6 +43,18 @@ class MissingFileError(Error):
 
 
 class Generator:
+    """
+    Collect information and write MANIFEST.yaml Document
+
+    MANIFEST.yaml contains relevant information about a the data storage of a
+    single measurement. Beside the type and format of the for MANIFEST.yaml
+    itself, it contains the LOI of the dataset, the names, format and
+    versions of data and metadata files and the respective checksums.
+
+    The information for the actual MANIFEST.yaml Document first gets
+    collected in an ordered dict of the designated structure. The so
+    populated dict is then written to a yaml file.
+    """
     def __init__(self):
         manifest_format = collections.OrderedDict([
             ("type", "datasafe dataset manifest"),
@@ -67,6 +79,15 @@ class Generator:
         self.filenames = {'data': [], 'metadata': []}
 
     def populate(self):
+        """
+        Populate given manifest structure with information.
+
+        Returns
+        -------
+        manifest : :class:`OrderedDict`
+            Returns manifest dict containing information about data and
+            metadata.
+        """
         if not self.filenames['data']:
             raise MissingInformationError(message='Data filenames missing')
         if not self.filenames['metadata']:
@@ -98,6 +119,9 @@ class Generator:
         ]))
 
     def write(self):
+        """
+        Writes manifest dict into yaml-document.
+        """
         with open(self.filename, mode='w+') as output_file:
             yaml.dump(self.manifest, output_file)
 
@@ -121,5 +145,18 @@ class Generator:
 
     @staticmethod
     def _generate_checksum(filenames=None):
+        """
+        Generate checksum over file(s) using the checksum module.
+
+        Parameters
+        ----------
+        filenames : :class:`list`
+            List containing filenames of which a checksum will be created.
+
+        Returns
+        -------
+        result : :class:`str`
+            Returns checksum (over checksums) of files.
+        """
         checksum_generator = datasafe.checksum.Checksum()
         return checksum_generator.checksum(filenames=filenames)
