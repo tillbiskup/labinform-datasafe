@@ -1,5 +1,5 @@
 """
-Each item (currenty: dataset) stored in the datasafe is accompanied by a
+Each item (currently: dataset) stored in the datasafe is accompanied by a
 file containing a lot of (autmatically obtained) useful information about
 the item stored. Typically, the YAML format is used for the manifest file,
 and the file named ``MANIFEST.yaml`` generically.
@@ -62,10 +62,10 @@ class MissingFileError(Error):
 
 class Generator:
     """
-    Collect information and write ``MANIFEST.yaml`` Document
+    Collect information and write ``MANIFEST.yaml`` document
 
     ``MANIFEST.yaml`` contains relevant information about the data storage of a
-    single measurement. Beside the type and format of the for ``MANIFEST.yaml``
+    single measurement. Beside the type and format of the ``MANIFEST.yaml``
     itself, it contains the LOI of the dataset, the names, format and
     versions of data and metadata files and the respective checksums.
 
