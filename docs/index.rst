@@ -11,6 +11,10 @@ Welcome! This is the documentation for the LabInform datasafe component. For gen
 One key aspect of handling data is to store them in one place and access them via unique identifiers (here: a *Lab Object Identifier*, LOI). The data storage component of the LabInform framework is the datasafe documented here.
 
 
+.. note::
+   This documentation will most probably eventually become part of the general `LabInform documentation <https://docs.labinform.de/>`_. There, you can find already some more general information concerning LabInform.
+
+
 Features
 --------
 

@@ -1,3 +1,17 @@
+"""
+General purpose functions and classes used in other modules.
+
+To avoid circular dependencies, this module does not depend on any other
+modules of the datasafe package, but it can be imported into every other
+module.
+
+.. todo::
+    Probably, this module should eventually be moved to the utils subpackage
+    of the LabInform package, as it may contain utils not only useful for
+    the datasafe component.
+"""
+
+
 import importlib
 
 

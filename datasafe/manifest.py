@@ -1,3 +1,21 @@
+"""
+Each item (currenty: dataset) stored in the datasafe is accompanied by a
+file containing a lot of (autmatically obtained) useful information about
+the item stored. Typically, the YAML format is used for the manifest file,
+and the file named ``MANIFEST.yaml`` generically.
+
+The idea behind manifests is to have easy access to information that could
+be retrieved from the item stored, but not without having special
+functionality such as data and metadata importers available. Thus,
+the datasafe component is much more independent of other packages and modules.
+
+In case of a dataset, the information contained ranges from general
+information on the dataset (LOI, whether it is complete) to the format of
+data and metadata to the actual file names and the checksums over data and
+data and metadata.
+"""
+
+
 import collections
 import os
 

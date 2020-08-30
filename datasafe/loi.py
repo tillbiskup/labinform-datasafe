@@ -1,7 +1,22 @@
 """
+Accessing objects in a laboratory via unique identifiers (here: a *Lab Object
+Identifier*, LOI) is a key concept of the LabInform framework. "Object" may
+be thought of in a very broad and general way, ranging from (physically
+existing) samples via datasets represented as files on a computer storage
+system to abstract concepts such as projects.
+
+Currently, the classes implemented in this module can check a LOI for
+consistency and compliance to the LOI scheme developed so far.
+
 .. todo::
     structure of the LOI that is implemented in this module needs to be 
     described.
+
+.. note::
+    This module should probably eventually be moved to a separate subpackage
+    dealing with LOIs. See the `LabInform documentation
+    <https://docs.labinform.de/subpackages.html>`_ containing already hints of
+    such a subpackage of the LabInform package for details.
 """
 
 import re

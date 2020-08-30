@@ -1,3 +1,36 @@
+"""
+Checksums fulfil a twofold function within the dataset component of the
+LabInform framework: They allow for easily checking whether the data items
+of a dataset entry have been corrupted on transfer or during time, and they
+allow for easily detecting duplicates.
+
+To fulfil their duties, a few general design goals have been developed and
+implemented:
+
+* Checksums are always generated for file contents, not file names,
+  thus rendering the file names (that may easily change) irrelevant for the
+  actual checksum.
+
+* Checksums over a list of files are generated per file (using its content),
+  the generated checksums sorted and a checksum generated for the sorted
+  list of checksums. Thus, filenames cannot interfere with the final
+  checksum, as they are irrelevant for the sorting of the checksums the
+  final checksum is generated for.
+
+* For datasets, two checksums are generated, one spanning both, data and
+  metadata, the other spanning only the data. The reason behind: Metadata
+  are of human origin and therefore inherently prone to errors and subject
+  to (in)frequent updates and corrections. Data, however, shall never
+  change after they have been recorded.
+
+A note on the algorithms used: The module allows to use all algorithms for
+creating checksums that are currently supported by the :mod:`hashlib` module.
+However, although MD5 usually is considered unsafe, for the purposes
+checksums are used in the current context (*non-cryptographic*),
+it is clearly sufficient. This is why still, the default algorithm used by
+the :class:`Checksum` class is MD5.
+"""
+
 import importlib
 
 
