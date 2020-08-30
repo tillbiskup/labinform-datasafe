@@ -4,6 +4,8 @@ import unittest
 import os
 import collections
 
+import oyaml as yaml
+
 from datasafe import manifest
 
 
@@ -21,6 +23,14 @@ class TestManifestGenerator(unittest.TestCase):
             os.remove(self.data_filename)
         if os.path.exists(self.metadata_filename):
             os.remove(self.metadata_filename)
+
+    def _create_data_and_metadata_files(self):
+        with open(self.data_filename, 'w+') as f:
+            f.write('')
+        with open(self.metadata_filename, 'w+') as f:
+            f.write('')
+        self.generator.filenames['data'] = [self.data_filename]
+        self.generator.filenames['metadata'] = [self.metadata_filename]
 
     def test_instantiate_class(self):
         pass
@@ -92,21 +102,11 @@ class TestManifestGenerator(unittest.TestCase):
             self.generator.populate()
 
     def test_populate_with_filenames_does_not_raise(self):
-        with open(self.data_filename, 'w+') as f:
-            f.write('')
-        with open(self.metadata_filename, 'w+') as f:
-            f.write('')
-        self.generator.filenames['data'] = [self.data_filename]
-        self.generator.filenames['metadata'] = [self.metadata_filename]
+        self._create_data_and_metadata_files()
         self.generator.populate()
 
     def test_populate_with_data_file_populates_field_data(self):
-        with open(self.data_filename, 'w+') as f:
-            f.write('')
-        with open(self.metadata_filename, 'w+') as f:
-            f.write('')
-        self.generator.filenames['data'] = [self.data_filename]
-        self.generator.filenames['metadata'] = [self.metadata_filename]
+        self._create_data_and_metadata_files()
         self.generator.populate()
         self.assertEqual(self.generator.manifest['files']['data']['names'][0],
                          self.data_filename)
@@ -127,12 +127,7 @@ class TestManifestGenerator(unittest.TestCase):
             os.remove(name)
 
     def test_populate_with_metadata_file_populates_field_metadata(self):
-        with open(self.data_filename, 'w+') as f:
-            f.write('')
-        with open(self.metadata_filename, 'w+') as f:
-            f.write('')
-        self.generator.filenames['data'] = [self.data_filename]
-        self.generator.filenames['metadata'] = [self.metadata_filename]
+        self._create_data_and_metadata_files()
         self.generator.populate()
         self.assertEqual(self.generator.manifest['files']['metadata'][
                              0]['name'], self.metadata_filename)
@@ -148,10 +143,48 @@ class TestManifestGenerator(unittest.TestCase):
         self.generator.filenames['metadata'] = metadata_filenames
         self.generator.populate()
         for idx, filename in enumerate(metadata_filenames):
-            self.assertEqual(self.generator.manifest['files']['metadata'][idx][
-                                 'name'], filename)
+            self.assertEqual(
+                self.generator.manifest['files']['metadata'][idx]['name'],
+                filename)
         for name in metadata_filenames:
             os.remove(name)
+
+    def test_populate_with_metadata_file_gets_metadata_info(self):
+        self._create_data_and_metadata_files()
+        self.generator.populate()
+        self.assertEqual(
+            list(self.generator.manifest['files']['metadata'][0].keys()),
+            ['name', 'format', 'version'])
+
+    def test_populate_with_files_populates_checksums(self):
+        self._create_data_and_metadata_files()
+        self.generator.populate()
+        self.assertEqual(len(self.generator.manifest['files']['checksums']), 2)
+
+    def test_populate_with_files_creates_checksums_structure(self):
+        self._create_data_and_metadata_files()
+        self.generator.populate()
+        self.assertEqual(
+            list(self.generator.manifest['files']['checksums'][0].keys()),
+            ['name', 'format', 'span', 'value'])
+
+    def test_populate_with_files_creates_correct_checksums(self):
+        self._create_data_and_metadata_files()
+        self.generator.populate()
+        self.assertEqual(
+            self.generator.manifest['files']['checksums'][0]['value'],
+            '020eb29b524d7ba672d9d48bc72db455')
+        self.assertEqual(
+            self.generator.manifest['files']['checksums'][1]['value'],
+            '74be16979710d4c4e7c6647856088456')
+
+    def test_written_manifest_is_correct(self):
+        self._create_data_and_metadata_files()
+        self.generator.populate()
+        self.generator.write()
+        with open('MANIFEST.yaml', 'r') as file:
+            manifest_dict = yaml.safe_load(file)
+        self.assertEqual(self.generator.manifest, manifest_dict)
 
 
 if __name__ == '__main__':
