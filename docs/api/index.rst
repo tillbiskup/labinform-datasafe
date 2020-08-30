@@ -12,7 +12,7 @@ An alphabetic list of the submodules available within the datasafe. The actual d
 .. toctree::
    :maxdepth: 4
 
-   datasafe.create_checksum
+   datasafe.checksum
    datasafe.generate
    datasafe.loi
    datasafe.manifest

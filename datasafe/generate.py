@@ -3,7 +3,7 @@ import os
 
 class Generate:
     """
-    Class for whatever...
+    Class for (physically) creating directories in the datasafe
 
     Attributes
     ----------

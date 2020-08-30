@@ -3,7 +3,7 @@ import os
 
 import oyaml as yaml
 
-import datasafe.create_checksum
+import datasafe.checksum
 
 
 class Error(Exception):
@@ -121,5 +121,5 @@ class Generator:
 
     @staticmethod
     def _generate_checksum(filenames=None):
-        checksum_generator = datasafe.create_checksum.Checksum()
+        checksum_generator = datasafe.checksum.Checksum()
         return checksum_generator.checksum(filenames=filenames)
