@@ -15,6 +15,7 @@ An alphabetic list of the submodules available within the datasafe. The actual d
    datasafe.create_checksum
    datasafe.generate
    datasafe.loi
+   datasafe.manifest
    datasafe.utils
 
 Module contents
