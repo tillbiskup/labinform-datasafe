@@ -11,10 +11,16 @@ class TestManifestGenerator(unittest.TestCase):
     def setUp(self):
         self.generator = manifest.Generator()
         self.filename = 'MANIFEST.yaml'
+        self.data_filename = 'foo'
+        self.metadata_filename = 'bar.info'
 
     def tearDown(self):
         if os.path.exists(self.filename):
             os.remove(self.filename)
+        if os.path.exists(self.data_filename):
+            os.remove(self.data_filename)
+        if os.path.exists(self.metadata_filename):
+            os.remove(self.metadata_filename)
 
     def test_instantiate_class(self):
         pass
@@ -61,10 +67,91 @@ class TestManifestGenerator(unittest.TestCase):
         self.assertTrue(hasattr(self.generator, 'populate'))
         self.assertTrue(callable(self.generator.populate))
 
-    @unittest.skip
-    def test_populate_without_files_raises(self):
-        with self.assertRaises(MissingInformationError):
+    def test_populate_without_data_filenames_raises(self):
+        self.generator.filenames['metadata'] = [self.metadata_filename]
+        with self.assertRaises(manifest.MissingInformationError):
             self.generator.populate()
+
+    def test_populate_without_metadata_filenames_raises(self):
+        self.generator.filenames['data'] = [self.data_filename]
+        with self.assertRaises(manifest.MissingInformationError):
+            self.generator.populate()
+
+    def test_populate_with_missing_data_files_raises(self):
+        self.generator.filenames['data'] = [self.data_filename]
+        self.generator.filenames['metadata'] = [self.metadata_filename]
+        with self.assertRaises(manifest.MissingFileError):
+            self.generator.populate()
+
+    def test_populate_with_missing_metadata_files_raises(self):
+        with open(self.data_filename, 'w+') as f:
+            f.write('')
+        self.generator.filenames['data'] = [self.data_filename]
+        self.generator.filenames['metadata'] = [self.metadata_filename]
+        with self.assertRaises(manifest.MissingFileError):
+            self.generator.populate()
+
+    def test_populate_with_filenames_does_not_raise(self):
+        with open(self.data_filename, 'w+') as f:
+            f.write('')
+        with open(self.metadata_filename, 'w+') as f:
+            f.write('')
+        self.generator.filenames['data'] = [self.data_filename]
+        self.generator.filenames['metadata'] = [self.metadata_filename]
+        self.generator.populate()
+
+    def test_populate_with_data_file_populates_field_data(self):
+        with open(self.data_filename, 'w+') as f:
+            f.write('')
+        with open(self.metadata_filename, 'w+') as f:
+            f.write('')
+        self.generator.filenames['data'] = [self.data_filename]
+        self.generator.filenames['metadata'] = [self.metadata_filename]
+        self.generator.populate()
+        self.assertEqual(self.generator.manifest['files']['data']['names'][0],
+                         self.data_filename)
+
+    def test_populate_with_data_files_populates_field_data(self):
+        data_filenames = ['foo1', 'foo2', 'foo3']
+        for name in data_filenames:
+            with open(name, 'w+') as f:
+                f.write('')
+        with open(self.metadata_filename, 'w+') as f:
+            f.write('')
+        self.generator.filenames['data'] = data_filenames
+        self.generator.filenames['metadata'] = [self.metadata_filename]
+        self.generator.populate()
+        self.assertEqual(self.generator.manifest['files']['data']['names'],
+                         data_filenames)
+        for name in data_filenames:
+            os.remove(name)
+
+    def test_populate_with_metadata_file_populates_field_metadata(self):
+        with open(self.data_filename, 'w+') as f:
+            f.write('')
+        with open(self.metadata_filename, 'w+') as f:
+            f.write('')
+        self.generator.filenames['data'] = [self.data_filename]
+        self.generator.filenames['metadata'] = [self.metadata_filename]
+        self.generator.populate()
+        self.assertEqual(self.generator.manifest['files']['metadata'][
+                             0]['name'], self.metadata_filename)
+
+    def test_populate_with_metadata_files_populates_field_metadata(self):
+        metadata_filenames = ['foo1', 'foo2', 'foo3']
+        for name in metadata_filenames:
+            with open(name, 'w+') as f:
+                f.write('')
+        with open(self.data_filename, 'w+') as f:
+            f.write('')
+        self.generator.filenames['data'] = [self.data_filename]
+        self.generator.filenames['metadata'] = metadata_filenames
+        self.generator.populate()
+        for idx, filename in enumerate(metadata_filenames):
+            self.assertEqual(self.generator.manifest['files']['metadata'][idx][
+                                 'name'], filename)
+        for name in metadata_filenames:
+            os.remove(name)
 
 
 if __name__ == '__main__':
