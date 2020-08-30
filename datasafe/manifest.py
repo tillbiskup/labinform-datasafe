@@ -44,17 +44,27 @@ class MissingFileError(Error):
 
 class Generator:
     """
-    Collect information and write MANIFEST.yaml Document
+    Collect information and write ``MANIFEST.yaml`` Document
 
-    MANIFEST.yaml contains relevant information about a the data storage of a
-    single measurement. Beside the type and format of the for MANIFEST.yaml
+    ``MANIFEST.yaml`` contains relevant information about the data storage of a
+    single measurement. Beside the type and format of the for ``MANIFEST.yaml``
     itself, it contains the LOI of the dataset, the names, format and
     versions of data and metadata files and the respective checksums.
 
-    The information for the actual MANIFEST.yaml Document first gets
-    collected in an ordered dict of the designated structure. The so
-    populated dict is then written to a yaml file.
-    """
+    The information for the actual ``MANIFEST.yaml`` document first gets
+    collected in an ordered dict of the designated structure. The dict
+    populated this way is then written to a yaml file.
+
+    Attributes
+    ----------
+    manifest : :class:`collections.OrderedDict`
+
+    filename : :class:`str`
+        Output filename, defaults to ``MANIFEST.yaml``
+
+    filenames : :class:`dict`
+        Lists of data and metadata files.
+   """
     def __init__(self):
         manifest_format = collections.OrderedDict([
             ("type", "datasafe dataset manifest"),
@@ -82,11 +92,7 @@ class Generator:
         """
         Populate given manifest structure with information.
 
-        Returns
-        -------
-        manifest : :class:`OrderedDict`
-            Returns manifest dict containing information about data and
-            metadata.
+        Fills manifest dict containing information about data and metadata.
         """
         if not self.filenames['data']:
             raise MissingInformationError(message='Data filenames missing')
@@ -120,7 +126,7 @@ class Generator:
 
     def write(self):
         """
-        Writes manifest dict into yaml-document.
+        Output manifest dict to yaml file.
         """
         with open(self.filename, mode='w+') as output_file:
             yaml.dump(self.manifest, output_file)
