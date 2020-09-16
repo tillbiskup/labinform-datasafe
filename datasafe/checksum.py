@@ -34,6 +34,32 @@ the :class:`Checksum` class is MD5.
 import importlib
 
 
+class ChecksumGenerator:
+    def __init__(self):
+        self.algorithm = 'md5'
+
+    def _get_hash_function(self):
+        return getattr(importlib.import_module('hashlib'), self.algorithm)()
+
+    def hash_string(self, string=''):
+        hash_function = self._get_hash_function()
+        hash_function.update(string.encode())
+        return hash_function.hexdigest()
+
+    def hash_strings(self, list_of_strings=None):
+        hash_function = self._get_hash_function()
+        for element in sorted(list_of_strings):
+            hash_function.update(element.encode())
+        return hash_function.hexdigest()
+
+    def generate(self, filename=''):
+        hash_function = self._get_hash_function()
+        with open(filename, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_function.update(chunk)
+        return hash_function.hexdigest()
+
+
 class Checksum:
     """
     Class for creating checksums
@@ -77,6 +103,9 @@ class Checksum:
     def checksum_of_file_contents(self, filename=''):
         """
         Create checksum for file contents
+
+        Reads file in binary format and blockwise (4K) for not crashing
+        with large files.
 
         Parameters
         ----------
@@ -132,6 +161,11 @@ class Checksum:
 
         For a list of files, for each file, the checksum of its contents will be
         generated and afterwards the checksum over the checksums.
+
+        The checksums of the individual files will be sorted before generating
+        the final checksum. Hence, sorting is independent of the filenames
+        and only depends on the actual file contents, resulting in stable
+        hashes.
 
         Parameters
         ----------
