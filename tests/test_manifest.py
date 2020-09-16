@@ -186,6 +186,11 @@ class TestManifestGenerator(unittest.TestCase):
             manifest_dict = yaml.safe_load(file)
         self.assertEqual(self.generator.manifest, manifest_dict)
 
+    def test_populate_sets_format(self):
+        self._create_data_and_metadata_files()
+        self.generator.populate()
+        self.assertTrue(self.generator.manifest['files']['data']['format'])
+
 
 if __name__ == '__main__':
     unittest.main()

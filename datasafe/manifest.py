@@ -125,6 +125,8 @@ class Generator:
         for filename in self.filenames['data']:
             # noinspection PyTypeChecker
             self.manifest['files']['data']['names'].append(filename)
+        self.manifest['files']['data']['format'] = self._get_data_format(
+            self.filenames['data'])
         for filename in self.filenames['metadata']:
             metadata_info = self._get_metadata_info(filename)
             self.manifest['files']['metadata'].append(metadata_info)
@@ -166,6 +168,18 @@ class Generator:
             ('version', '0.1.0')
         ])
         return metadata_info
+
+    @staticmethod
+    def _get_data_format(filenames=None):
+        """
+        Retrieve format of data files
+
+        .. todo::
+            Needs to be converted into a factory method.
+
+        """
+        data_format = 'test'
+        return data_format
 
     @staticmethod
     def _generate_checksum(filenames=None):
