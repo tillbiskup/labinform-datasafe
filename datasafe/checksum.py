@@ -34,33 +34,7 @@ the :class:`Checksum` class is MD5.
 import importlib
 
 
-class ChecksumGenerator:
-    def __init__(self):
-        self.algorithm = 'md5'
-
-    def _get_hash_function(self):
-        return getattr(importlib.import_module('hashlib'), self.algorithm)()
-
-    def hash_string(self, string=''):
-        hash_function = self._get_hash_function()
-        hash_function.update(string.encode())
-        return hash_function.hexdigest()
-
-    def hash_strings(self, list_of_strings=None):
-        hash_function = self._get_hash_function()
-        for element in sorted(list_of_strings):
-            hash_function.update(element.encode())
-        return hash_function.hexdigest()
-
-    def generate(self, filename=''):
-        hash_function = self._get_hash_function()
-        with open(filename, "rb") as f:
-            for chunk in iter(lambda: f.read(4096), b""):
-                hash_function.update(chunk)
-        return hash_function.hexdigest()
-
-
-class Checksum:
+class Generator:
     """
     Class for creating checksums
 
@@ -75,42 +49,17 @@ class Checksum:
     def __init__(self):
         self.algorithm = 'md5'
 
-    @staticmethod
-    def object_from_name(module_name='', class_name=''):
+    def _get_hash_function(self):
+        return getattr(importlib.import_module('hashlib'), self.algorithm)()
+
+    def hash_string(self, string=''):
         """
-        Create object from module and class name
+        Create checksum for string
 
         Parameters
         ----------
-        module_name : :class:`str`
-            Name of the module containing the class
-
-        class_name : :class:`str`
-            Name of the class an object should be instantiated of
-
-        Returns
-        -------
-        object : :class:`object`
-            Object instantiated from module and class name
-
-        """
-        # load the module, will raise ImportError if module cannot be loaded
-        module = importlib.import_module(module_name)
-        # get the class, will raise AttributeError if class cannot be found
-        class_ = getattr(module, class_name)
-        return class_()
-
-    def checksum_of_file_contents(self, filename=''):
-        """
-        Create checksum for file contents
-
-        Reads file in binary format and blockwise (4K) for not crashing
-        with large files.
-
-        Parameters
-        ----------
-        filename : :class:`str`
-            Name of the file to compute the hash for
+        string : :class:`str`
+            String to compute hash for
 
 
         Returns
@@ -119,14 +68,11 @@ class Checksum:
             Computed checksum
 
         """
-        hash_function = self.object_from_name('hashlib', self.algorithm)
-        with open(filename, "rb") as f:
-            for chunk in iter(lambda: f.read(4096), b""):
-                hash_function.update(chunk)
-        # noinspection PyUnresolvedReferences
+        hash_function = self._get_hash_function()
+        hash_function.update(string.encode())
         return hash_function.hexdigest()
 
-    def checksum_of_list_of_strings(self, list_of_strings=None):
+    def hash_strings(self, list_of_strings=None):
         """
         Create checksum for list of strings
 
@@ -147,13 +93,12 @@ class Checksum:
             Computed checksum
 
         """
-        hash_function = self.object_from_name('hashlib', self.algorithm)
+        hash_function = self._get_hash_function()
         for element in sorted(list_of_strings):
             hash_function.update(element.encode())
-        # noinspection PyUnresolvedReferences
         return hash_function.hexdigest()
 
-    def checksum(self, filenames=None):
+    def generate(self, filenames=None):
         """
         Generate checksum for (list of) file(s).
 
@@ -182,30 +127,36 @@ class Checksum:
 
         """
         if not isinstance(filenames, list):
-            return self.checksum_of_file_contents(filenames)
+            return self._hash_file_content(filenames)
 
         file_checksum = []
         for filename in filenames:
             file_checksum.append(
-                self.checksum_of_file_contents(filename))
+                self._hash_file_content(filename))
 
-        return self.checksum_of_list_of_strings(file_checksum)
+        return self.hash_strings(file_checksum)
+
+    def _hash_file_content(self, filename):
+        """
+        Create checksum for file contents
+
+        Reads file in binary format and blockwise (4K) for not crashing
+        with large files.
+
+        Parameters
+        ----------
+        filename : :class:`str`
+            Name of the file to compute the hash for
 
 
-if __name__ == '__main__':
-    # MD5 (sa620-01.xml) = db432cd074fe817703c87d34676332cd
-    # MD5 (sa620-01.info) = 5e8f76e0ca076b8809193fea0fa03dd1
+        Returns
+        -------
+        checksum : :class:`str`
+            Computed checksum
 
-    # MD5 (both files) = c4bf65e5b8de8d7466ce6d9aea08395a
-
-    path_to_files = '../tests/files/'
-    irgendwas = Checksum()
-    irgendwas.algorithm = 'sha256'
-
-    print('')
-    print(irgendwas.checksum(path_to_files + 'sa620-01.xml'))
-
-    print(irgendwas.checksum([path_to_files + 'sa620-01.xml',
-                              path_to_files + 'sa620-01.info']))
-    print(irgendwas.checksum([path_to_files + 'sa620-01.info',
-                              path_to_files + 'sa620-01.xml']))
+        """
+        hash_function = self._get_hash_function()
+        with open(filename, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_function.update(chunk)
+        return hash_function.hexdigest()

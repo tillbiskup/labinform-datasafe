@@ -1,3 +1,4 @@
+import os
 import unittest
 
 from datasafe import checksum
@@ -5,9 +6,19 @@ from datasafe import checksum
 
 class TestChecksumGenerator(unittest.TestCase):
     def setUp(self):
-        self.generator = checksum.ChecksumGenerator()
-        path_to_files = '../tests/files/'
-        self.filename = path_to_files + 'sa620-01.xml'
+        self.generator = checksum.Generator()
+        self.filenames = ['foo', 'bar']
+        self.strings = ['foo', 'bar']
+
+    def tearDown(self):
+        for filename in self.filenames:
+            if os.path.exists(filename):
+                os.remove(filename)
+
+    def _create_files(self):
+        for idx, filename in enumerate(self.filenames):
+            with open(filename, 'w+') as file:
+                file.write(self.strings[idx])
 
     def test_instantiate_class(self):
         pass
@@ -38,20 +49,24 @@ class TestChecksumGenerator(unittest.TestCase):
     def test_checksum_module_has_generate_method(self):
         self.assertTrue(hasattr(self.generator, 'generate'))
 
-    def test_generate_returns_checksum_of_file(self):
-        self.assertEqual(self.generator.generate(self.filename),
-                         'db432cd074fe817703c87d34676332cd')
-
     def test_generate_with_md5_algorithm_returns_correct_checksum(self):
+        self._create_files()
         self.generator.algorithm = 'md5'
-        self.assertEqual(self.generator.generate(self.filename),
-                         'db432cd074fe817703c87d34676332cd')
+        self.assertEqual(self.generator.generate(self.filenames[0]),
+                         'acbd18db4cc2f85cedef654fccc4a4d8')
 
     def test_generate_with_sha256_algorithm_returns_correct_checksum(self):
+        self._create_files()
         self.generator.algorithm = 'sha256'
-        self.assertEqual(self.generator.generate(self.filename),
-                         '23c202ee031d74d1f22ce321517f2b34e310bd05df30fe87adc2d330916bc9fa')
+        self.assertEqual(self.generator.generate(self.filenames[0]),
+                         '2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae')
+
+    def test_generate_with_md5_with_files_returns_correct_checksum(self):
+        self._create_files()
+        self.assertEqual(self.generator.generate(self.filenames),
+                         '7813987d9dc87851f49ecbed9f875968')
 
 
 if __name__ == '__main__':
     unittest.main()
+

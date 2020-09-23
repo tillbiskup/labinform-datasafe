@@ -196,5 +196,5 @@ class Generator:
         result : :class:`str`
             Returns checksum (over checksums) of files.
         """
-        checksum_generator = datasafe.checksum.Checksum()
-        return checksum_generator.checksum(filenames=filenames)
+        checksum_generator = datasafe.checksum.Generator()
+        return checksum_generator.generate(filenames=filenames)
