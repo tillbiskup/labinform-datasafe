@@ -13,6 +13,9 @@ class Generator:
     base_directory : :class:`str`
         base directory for the datasafe
 
+    .. todo::
+        Reimplement test-driven!
+
     """
 
     def __init__(self):

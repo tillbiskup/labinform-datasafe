@@ -13,7 +13,7 @@ An alphabetic list of the submodules available within the datasafe. The actual d
    :maxdepth: 4
 
    datasafe.checksum
-   datasafe.generate
+   datasafe.directory
    datasafe.loi
    datasafe.manifest
    datasafe.utils

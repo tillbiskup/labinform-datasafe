@@ -1,7 +1,7 @@
 datasafe.generate module
 ========================
 
-.. automodule:: datasafe.generate
+.. automodule:: datasafe.directory
    :members:
    :undoc-members:
    :show-inheritance:
