@@ -1,7 +1,7 @@
 import os
 
 
-class Generate:
+class Generator:
     """
     Class for (physically) creating directories in the datasafe
 
@@ -103,7 +103,7 @@ if __name__ == '__main__':
     datasafe_root = '../tests/files/'
     working_dir = 'tmpsafe'
 
-    irgendwas = Generate()
+    irgendwas = Generator()
     irgendwas.path = working_dir
     irgendwas.base_directory = datasafe_root
 
