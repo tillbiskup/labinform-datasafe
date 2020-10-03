@@ -1,5 +1,7 @@
-import os
+import io
+import socketserver
 import tempfile
+import threading
 
 import datasafe.loi
 
@@ -40,9 +42,8 @@ class InvalidLoiError(Error):
         self.message = message
 
 
-class Client:
-
-    def pull(self, loi=''):
+class Backend:
+    def get(self, loi=''):
         if not loi:
             raise MissingLoiError('No LOI provided.')
         checker = datasafe.loi.LoiChecker()
@@ -50,10 +51,6 @@ class Client:
             raise InvalidLoiError('String is not a valid LOI.')
         if not self._is_datasafe_loi(loi):
             raise InvalidLoiError('LOI is not a datasafe LOI.')
-        tmpdir = tempfile.mkdtemp()
-        self._retrieve_data_from_datasafe_server(loi, tmpdir)
-        return tmpdir
-
 
     @staticmethod
     def _is_datasafe_loi(loi):
@@ -69,11 +66,9 @@ class Client:
         parts = loi.split('/')
         return parts[1] == 'ds'
 
-    def _retrieve_data_from_datasafe_server(self, loi, tmpdir):
-        """ Retrieve dataset from datasafe and store it in tmpdir.
 
-        .. todo::
-            connect to server and retrieve dataset.
-        """
-        with open(os.path.join(tmpdir, 'MANIFEST.yaml'), 'w+') as file:
-            file.write('')
+class Server(threading.Thread):
+    def run(self):
+        server = socketserver.ThreadingTCPServer(("", 50000),
+                                                 socketserver.BaseRequestHandler)
+        server.serve_forever()
