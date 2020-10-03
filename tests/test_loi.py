@@ -72,6 +72,7 @@ class TestLoiChecker(unittest.TestCase):
     def test_with_correct_loi_returns_true(self):
         self.assertTrue(self.checker.check(self.loi))
         self.assertTrue(self.checker.check('42.1001/ds/exp/2020-04-25/cwepr/1'))
+        self.assertTrue(self.checker.check('42.1001/ds/exp/sa/42/cwepr/1'))
         self.assertTrue(self.checker.check('42.1001/ds/calc/geo/42'))
         self.assertTrue(self.checker.check('42.1001/rec/42'))
         self.assertTrue(self.checker.check('42.1001/img/foo'))
