@@ -48,6 +48,17 @@ class StorageBackend:
     root_directory : :class:`str`
         base directory for the datasafe
 
+
+    .. todo::
+        Needs the following further methods:
+
+        * get_index - returns list of paths in the datasafe
+        * check_integrity - check stored checksums against actual files
+
+    .. todo::
+        Class needs to be moved to other module, probably
+        :mod:`datasafe.server`.
+
     """
     def __init__(self):
         self.root_directory = ''
