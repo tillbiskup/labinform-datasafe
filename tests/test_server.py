@@ -1,4 +1,3 @@
-import socket
 import unittest
 
 import datasafe.server as server
@@ -38,11 +37,6 @@ class TestServer(unittest.TestCase):
 
     def test_instantiate_class(self):
         pass
-
-    def test_allows_connection(self):
-        self.server.start()
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(('', 50000))
 
 
 if __name__ == '__main__':

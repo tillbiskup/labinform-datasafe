@@ -1,8 +1,3 @@
-import io
-import socketserver
-import tempfile
-import threading
-
 import datasafe.loi
 
 
@@ -67,8 +62,5 @@ class Backend:
         return parts[1] == 'ds'
 
 
-class Server(threading.Thread):
-    def run(self):
-        server = socketserver.ThreadingTCPServer(("", 50000),
-                                                 socketserver.BaseRequestHandler)
-        server.serve_forever()
+class Server:
+    pass
