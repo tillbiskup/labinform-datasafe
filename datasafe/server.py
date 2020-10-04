@@ -13,17 +13,9 @@ class Backend:
 
     @staticmethod
     def _is_datasafe_loi(loi):
-        """
-        Check if LOI belongs to datasafe.
-
-        .. todo::
-            Needs to go into loi module and to get converted there into a
-            checker class!
-            Needs to get removed from other modules
-
-        """
-        parts = loi.split('/')
-        return parts[1] == 'ds'
+        """ Check if LOI belongs to datasafe. """
+        parser = loi_.Parser()
+        return parser.parse(loi)['type'] == 'ds'
 
 
 class Server:

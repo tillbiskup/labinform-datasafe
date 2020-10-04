@@ -154,6 +154,7 @@ class TestLoiChecker(unittest.TestCase):
 class TestLoiParser(unittest.TestCase):
     def setUp(self):
         self.parser = loi_.Parser()
+        self.loi = '42.1001/ds/exp/sa/42/cwepr/1'
 
     def test_instantiate_class(self):
         pass
@@ -169,6 +170,42 @@ class TestLoiParser(unittest.TestCase):
     def test_parse_with_invalid_loi_raises(self):
         with self.assertRaises(loi_.InvalidLoiError):
             self.parser.parse('FOO')
+
+    def test_parse_returns_dict(self):
+        self.assertIsInstance(self.parser.parse(self.loi), dict)
+
+    def test_parse_returns_dict_with_correct_keys(self):
+        dict_ = self.parser.parse(self.loi)
+        self.assertListEqual(list(dict_.keys()),
+                             ['root', 'issuer', 'type', 'id'])
+
+    def test_parse_returns_root(self):
+        dict_ = self.parser.parse(self.loi)
+        self.assertEqual(dict_['root'], '42')
+
+    def test_parse_returns_issuer(self):
+        dict_ = self.parser.parse(self.loi)
+        self.assertEqual(dict_['issuer'], '1001')
+
+    def test_parse_returns_real_issuer(self):
+        dict_ = self.parser.parse(self.loi.replace('1001', '1002'))
+        self.assertEqual(dict_['issuer'], '1002')
+
+    def test_parse_returns_issuer_length_independent(self):
+        dict_ = self.parser.parse(self.loi.replace('1001', '1001001'))
+        self.assertEqual(dict_['issuer'], '1001001')
+
+    def test_parse_returns_type(self):
+        dict_ = self.parser.parse(self.loi)
+        self.assertEqual(dict_['type'], 'ds')
+
+    def test_parse_returns_id(self):
+        dict_ = self.parser.parse(self.loi)
+        self.assertEqual(dict_['id'], 'exp/sa/42/cwepr/1')
+
+
+
+
 
 
 if __name__ == '__main__':

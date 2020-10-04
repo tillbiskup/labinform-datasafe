@@ -60,6 +60,22 @@ class InvalidLoiError(Error):
         self.message = message
 
 
+class LoiMixin:
+    """
+    Define basic properties for LOIs.
+
+    Attributes
+    ----------
+        separator : :class:`str`
+        Character that separates different parts of the LOI. Defaults to ``/``.
+
+    """
+    def __init__(self):
+        self.separator = '/'
+        self.root = '42'
+        self.root_issuer_separator = '.'
+
+
 class AbstractChecker:
     """
     Base class for different types of checkers.
@@ -145,7 +161,7 @@ class IsFriendlyStringChecker(IsPatternChecker):
         self.pattern = "[a-z0-9-_]+"
 
 
-class AbstractLoiChecker:
+class AbstractLoiChecker(LoiMixin):
     """
     Abstract checker class to check if LOI is supposed to exist.
 
@@ -167,12 +183,10 @@ class AbstractLoiChecker:
     next_checker: :class:`str`
         Next checker class that should be called.
 
-    separator : :class:`str`
-        Character that separates different parts of the LOI. Defaults to ``/``.
     """
     def __init__(self):
+        super().__init__()
         self.next_checker = None
-        self.separator = '/'
 
     def check(self, string):
         """
@@ -228,7 +242,8 @@ class LoiChecker(AbstractLoiChecker):
         """
         Check beginning of LOI and start cascading chain if true.
 
-        A string beginning with 42 indicates a LOI per definition.
+        A string beginning with correct root that is defined in
+        :class:`LoiMixin` indicates a LOI per definition.
 
         Parameters
         ----------
@@ -240,15 +255,15 @@ class LoiChecker(AbstractLoiChecker):
         result : :class:`bool`
             Returns true if string is valid LOI.
         """
-        checker = LoiStartsWith42Checker()
+        checker = LoiStartsWithCorrectRootChecker()
         return checker.check(string)
 
 
-class LoiStartsWith42Checker(AbstractLoiChecker):
+class LoiStartsWithCorrectRootChecker(AbstractLoiChecker):
 
     def _check(self, string):
         checker = StartsWithChecker()
-        checker.string = '42.'
+        checker.string = self.root + self.root_issuer_separator
         return checker.check(string)
 
 
@@ -432,11 +447,22 @@ class LoiInfoCalculationChecker(AbstractLoiChecker):
         return checker.check(string)
 
 
-class Parser:
+class Parser(LoiMixin):
+    def __init__(self):
+        super().__init__()
+
     def parse(self, loi=''):
         if not loi:
             raise MissingLoiError('No LOI provided.')
         checker = LoiChecker()
         if not checker.check(loi):
             raise InvalidLoiError('String is not a valid LOI.')
+        parser_dict = {
+            'root': loi.split(self.separator)[0].split(self.root_issuer_separator)[0],
+            'issuer': loi.split(self.separator)[0].split(self.root_issuer_separator)[1],
+            'type': loi.split(self.separator)[1],
+            'id': self.separator.join(loi.split(self.separator)[2:]),
+        }
+
+        return parser_dict
 
