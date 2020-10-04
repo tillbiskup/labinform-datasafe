@@ -480,14 +480,38 @@ class Parser(LoiMixin):
         super().__init__()
 
     def parse(self, loi=''):
+        """
+        Parse given LOI and create dict with the four parts described above.
+
+        Parameters
+        ----------
+        loi : :class:`str`
+            LOI to parse.
+
+        Returns
+        -------
+        parser_dict : :class:`dict`
+            Dict with parts of the LOI as key:value pairs.
+
+        Raises
+        ------
+        datasafe.loi.MissingLoiError
+            Raised if no LOI is provided.
+
+        datasafe.loi.InvalidLoiError
+            Raised if given string is not a valid LOI.
+
+        """
         if not loi:
             raise MissingLoiError('No LOI provided.')
         checker = LoiChecker()
         if not checker.check(loi):
             raise InvalidLoiError('String is not a valid LOI.')
         parser_dict = {
-            'root': loi.split(self.separator)[0].split(self.root_issuer_separator)[0],
-            'issuer': loi.split(self.separator)[0].split(self.root_issuer_separator)[1],
+            'root': loi.split(self.separator)[0].split(
+                self.root_issuer_separator)[0],
+            'issuer': loi.split(self.separator)[0].split(
+                self.root_issuer_separator)[1],
             'type': loi.split(self.separator)[1],
             'id': self.separator.join(loi.split(self.separator)[2:]),
         }
