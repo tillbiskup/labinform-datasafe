@@ -163,7 +163,7 @@ class StorageBackend:
 
         Returns
         -------
-        id : :class:`str`
+        id : :class:`int`
             subdirectory with the highest number in the directory
             corresponding to ``path``
 
@@ -258,4 +258,3 @@ class StorageBackend:
             contents = zip_file.read()
         os.remove(tmpfile[1] + '.zip')
         return contents
-
