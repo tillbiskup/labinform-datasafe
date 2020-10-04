@@ -64,10 +64,18 @@ class LoiMixin:
     """
     Define basic properties for LOIs.
 
+    Every class handling LOIs should inherit/mixin this class.
+
     Attributes
     ----------
-        separator : :class:`str`
+    separator : :class:`str`
         Character that separates different parts of the LOI. Defaults to ``/``.
+
+    root : :class:`str`
+        Number identifying a LOI; default: 42
+
+    root_issuer_separator : :class:`str`
+        Character separating root and issuer; default: ``.``
 
     """
     def __init__(self):
@@ -448,6 +456,26 @@ class LoiInfoCalculationChecker(AbstractLoiChecker):
 
 
 class Parser(LoiMixin):
+    """
+    Parse LOIs, allowing to handle different parts correctly.
+
+    A LOI consists of four parts:
+
+      * root
+      * issuer
+      * type
+      * id
+
+    Generally, a LOI could be written like this::
+
+        <root>.<issuer>/<type>/<id>
+
+    Typically, root is fixed for LOIs (42) and issuer is a number. Type is a
+    single string, and id usually consists of several parts separated by a "/".
+
+    For general aspects of LOIs, such as root and separator(s), refer to the
+    :class:`LoiMixin` class.
+    """
     def __init__(self):
         super().__init__()
 
