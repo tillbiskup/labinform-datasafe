@@ -1,5 +1,5 @@
-datasafe.generate module
-========================
+datasafe.directory module
+=========================
 
 .. automodule:: datasafe.directory
    :members:
