@@ -1,5 +1,6 @@
 import unittest
 
+import datasafe.loi as loi_
 import datasafe.server as server
 
 
@@ -16,18 +17,18 @@ class TestBackend(unittest.TestCase):
         self.assertTrue(callable(self.backend.get))
     
     def test_get_without_loi_raises(self):
-        with self.assertRaises(server.MissingLoiError):
+        with self.assertRaises(loi_.MissingLoiError):
             self.backend.get()
 
     def test_get_with_loi(self):
         self.path = self.backend.get(self.loi)
 
     def test_get_with_invalid_loi_raises(self):
-        with self.assertRaises(server.InvalidLoiError):
+        with self.assertRaises(loi_.InvalidLoiError):
             self.backend.get('foo')
 
     def test_get_with_no_datasafe_loi_raises(self):
-        with self.assertRaises(server.InvalidLoiError):
+        with self.assertRaises(loi_.InvalidLoiError):
             self.backend.get('42.1001/rec/42')
 
 

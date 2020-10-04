@@ -24,6 +24,42 @@ import re
 import datasafe.utils as utils
 
 
+class Error(Exception):
+    """Base class for exceptions in this module."""
+
+    pass
+
+
+class MissingLoiError(Error):
+    """Exception raised when no LOI is provided
+
+    Attributes
+    ----------
+    message : :class:`str`
+        explanation of the error
+
+    """
+
+    def __init__(self, message=''):
+        super().__init__()
+        self.message = message
+
+
+class InvalidLoiError(Error):
+    """Exception raised when invalid LOI is provided
+
+    Attributes
+    ----------
+    message : :class:`str`
+        explanation of the error
+
+    """
+
+    def __init__(self, message=''):
+        super().__init__()
+        self.message = message
+
+
 class AbstractChecker:
     """
     Base class for different types of checkers.
@@ -394,3 +430,13 @@ class LoiInfoCalculationChecker(AbstractLoiChecker):
         checker = InListChecker()
         checker.list = ['molecule', 'geometry', 'calculation']
         return checker.check(string)
+
+
+class Parser:
+    def parse(self, loi=''):
+        if not loi:
+            raise MissingLoiError('No LOI provided.')
+        checker = LoiChecker()
+        if not checker.check(loi):
+            raise InvalidLoiError('String is not a valid LOI.')
+

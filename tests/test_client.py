@@ -3,6 +3,7 @@ import unittest
 import shutil
 
 import datasafe.client as client
+import datasafe.loi as loi_
 
 
 class TestClient(unittest.TestCase):
@@ -19,18 +20,18 @@ class TestClient(unittest.TestCase):
         self.assertTrue(hasattr(self.client, 'pull'))
 
     def test_pull_without_loi_raises(self):
-        with self.assertRaises(client.MissingLoiError):
+        with self.assertRaises(loi_.MissingLoiError):
             self.client.pull()
 
     def test_pull_with_loi(self):
         self.path = self.client.pull(self.loi)
 
     def test_pull_with_invalid_loi_raises(self):
-        with self.assertRaises(client.InvalidLoiError):
+        with self.assertRaises(loi_.InvalidLoiError):
             self.client.pull('foo')
 
     def test_pull_with_no_datasafe_loi_raises(self):
-        with self.assertRaises(client.InvalidLoiError):
+        with self.assertRaises(loi_.InvalidLoiError):
             self.client.pull('42.1001/rec/42')
 
     def test_pull_returns_string(self):

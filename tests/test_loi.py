@@ -151,5 +151,25 @@ class TestLoiChecker(unittest.TestCase):
         self.assertFalse(self.checker.check('42.1001/info/tb/project/FOO'))
 
 
+class TestLoiParser(unittest.TestCase):
+    def setUp(self):
+        self.parser = loi_.Parser()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_has_parse_method(self):
+        self.assertTrue(hasattr(self.parser, 'parse'))
+        self.assertTrue(callable(self.parser.parse))
+
+    def test_parse_without_loi_raises(self):
+        with self.assertRaises(loi_.MissingLoiError):
+            self.parser.parse()
+
+    def test_parse_with_invalid_loi_raises(self):
+        with self.assertRaises(loi_.InvalidLoiError):
+            self.parser.parse('FOO')
+
+
 if __name__ == '__main__':
     unittest.main()
