@@ -54,6 +54,8 @@ class StorageBackend:
 
         * get_index - returns list of paths in the datasafe
         * check_integrity - check stored checksums against actual files
+        * get_manifest - returns Manifest.yaml file for given path
+        * get_checksum(s) - returns checksum(s) for given path
 
     .. todo::
         Class needs to be moved to other module, probably
@@ -166,6 +168,10 @@ class StorageBackend:
         directory to only contain subdirectories with numeric IDs.
 
         In case there is no numeric ID yet in the directory, it returns 0.
+
+        .. todo::
+            Handle directories whose names are not convertible to integers
+
 
         Parameters
         ----------
