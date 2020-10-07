@@ -10,6 +10,7 @@ class TestStorageBackend(unittest.TestCase):
     def setUp(self):
         self.backend = directory.StorageBackend()
         self.path = 'path'
+        self.subdir = 'bla'
         self.root = 'root'
         self.tempdir = 'tmp'
         self.manifest_filename = 'MANIFEST.yaml'
@@ -23,6 +24,8 @@ class TestStorageBackend(unittest.TestCase):
             shutil.rmtree(self.root)
         if os.path.exists(self.tempdir):
             shutil.rmtree(self.tempdir)
+        if os.path.exists(self.subdir):
+            shutil.rmtree(self.subdir)
 
     def create_tmp_file(self):
         os.makedirs(self.tempdir)
@@ -261,6 +264,23 @@ class TestStorageBackend(unittest.TestCase):
             f.write(checksum_contents)
         self.assertEqual(checksum_contents, self.backend.get_checksum(
             self.path, data=True))
+
+    def test_get_index_returns_list_of_paths(self):
+        self.backend.create(self.path)
+        self.assertEqual(self.path, self.backend.get_index()[0])
+
+    def test_get_index_with_root_returns_list_of_paths(self):
+        self.backend.root_directory = self.root
+        paths = ['foo', 'bar', 'foobar']
+        for path in paths:
+            self.backend.create(path)
+        self.assertCountEqual(paths, self.backend.get_index())
+
+    def test_get_index_with_subfolders_works(self):
+        path = os.path.join(self.subdir, self.path)
+        self.backend.create(path)
+        self.assertEqual(path, self.backend.get_index()[0])
+        self.backend.remove(path)
 
 
 if __name__ == '__main__':

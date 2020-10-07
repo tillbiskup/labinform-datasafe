@@ -305,3 +305,26 @@ class StorageBackend:
         with open(os.path.join(path, checksum_filename), 'r') as f:
             checksum_contents = f.read()
         return checksum_contents
+
+    def get_index(self):
+        """
+        .. todo::
+            Implement subfolder handling.
+
+            Additionally, return only ultimate leaf, no intermediate directories
+
+
+        Returns
+        -------
+
+        """
+        if self.root_directory:
+            top = self.root_directory
+        else:
+            top = '.'
+        paths = []
+        for root, dirs, files in os.walk(top):
+            for dir_ in dirs:
+                paths.append(os.path.join(root, dir_).replace(os.path.join(
+                    top, ''), ''))
+        return paths
