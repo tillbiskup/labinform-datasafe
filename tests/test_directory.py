@@ -6,12 +6,15 @@ from datasafe import directory
 
 
 class TestStorageBackend(unittest.TestCase):
+
     def setUp(self):
         self.backend = directory.StorageBackend()
         self.path = 'path'
         self.root = 'root'
         self.tempdir = 'tmp'
         self.manifest_filename = 'MANIFEST.yaml'
+        self.checksum_filename = 'CHECKSUM'
+        self.checksum_data_filename = 'CHECKSUM.data'
 
     def tearDown(self):
         if os.path.exists(self.path):
@@ -227,6 +230,37 @@ class TestStorageBackend(unittest.TestCase):
             f.write(manifest_contents)
         self.assertEqual(manifest_contents, self.backend.get_manifest(
             self.path))
+
+    def test_get_checksum_without_path_raises(self):
+        self.backend.create(self.path)
+        with self.assertRaises(directory.MissingPathError):
+            self.backend.get_checksum()
+
+    def test_get_checksum_with_non_existing_path_raises(self):
+        with self.assertRaises(OSError):
+            self.backend.get_checksum(path=self.path)
+
+    def test_get_checksum_with_non_existing_checksum_file_raises(self):
+        self.backend.create(self.path)
+        with self.assertRaises(directory.MissingContentError):
+            self.backend.get_checksum(path=self.path)
+
+    def test_get_checksum_returns_contents_as_string(self):
+        self.backend.create(self.path)
+        checksum_contents = 'bar'
+        with open(os.path.join(self.path, self.checksum_filename), 'w+') as f:
+            f.write(checksum_contents)
+        self.assertEqual(checksum_contents,
+                         self.backend.get_checksum(self.path))
+
+    def test_get_checksum_for_data_returns_contents_as_string(self):
+        self.backend.create(self.path)
+        checksum_contents = 'bar'
+        with open(os.path.join(self.path, self.checksum_data_filename),
+                  'w+') as f:
+            f.write(checksum_contents)
+        self.assertEqual(checksum_contents, self.backend.get_checksum(
+            self.path, data=True))
 
 
 if __name__ == '__main__':

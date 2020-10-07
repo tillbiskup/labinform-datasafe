@@ -57,7 +57,6 @@ class StorageBackend:
 
         * get_index - returns list of paths in the datasafe
         * check_integrity - check stored checksums against actual files
-        * get_checksum(s) - returns checksum(s) for given path
 
     .. todo::
         Class needs to be moved to other module, probably
@@ -65,6 +64,8 @@ class StorageBackend:
 
     """
     def __init__(self):
+        self.checksum_filename = 'CHECKSUM'
+        self.checksum_data_filename = 'CHECKSUM.data'
         self.manifest_filename = 'MANIFEST.yaml'
         self.root_directory = ''
 
@@ -289,3 +290,18 @@ class StorageBackend:
         with open(os.path.join(path, self.manifest_filename), 'r') as f:
             manifest_contents = f.read()
         return manifest_contents
+
+    def get_checksum(self, path='', data=False):
+        if not path:
+            raise MissingPathError(message='No path provided.')
+        if not os.path.exists(path):
+            raise OSError
+        if data:
+            checksum_filename = self.checksum_data_filename
+        else:
+            checksum_filename = self.checksum_filename
+        if not os.path.exists(os.path.join(path, checksum_filename)):
+            raise MissingContentError(message='No checksum file found.')
+        with open(os.path.join(path, checksum_filename), 'r') as f:
+            checksum_contents = f.read()
+        return checksum_contents
