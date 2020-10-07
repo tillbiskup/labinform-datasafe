@@ -48,13 +48,15 @@ class StorageBackend:
     root_directory : :class:`str`
         base directory for the datasafe
 
+    manifest_filename : :class:`str`
+        name of manifest file
+
 
     .. todo::
         Needs the following further methods:
 
         * get_index - returns list of paths in the datasafe
         * check_integrity - check stored checksums against actual files
-        * get_manifest - returns Manifest.yaml file for given path
         * get_checksum(s) - returns checksum(s) for given path
 
     .. todo::
@@ -63,6 +65,7 @@ class StorageBackend:
 
     """
     def __init__(self):
+        self.manifest_filename = 'MANIFEST.yaml'
         self.root_directory = ''
 
     def working_path(self, path=''):
@@ -275,3 +278,14 @@ class StorageBackend:
             contents = zip_file.read()
         os.remove(tmpfile[1] + '.zip')
         return contents
+
+    def get_manifest(self, path=''):
+        if not path:
+            raise MissingPathError(message='No path provided.')
+        if not os.path.exists(path):
+            raise OSError
+        if not os.path.exists(os.path.join(path, self.manifest_filename)):
+            raise MissingContentError(message='No MANIFEST file found.')
+        with open(os.path.join(path, self.manifest_filename), 'r') as f:
+            manifest_contents = f.read()
+        return manifest_contents

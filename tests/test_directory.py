@@ -11,6 +11,7 @@ class TestStorageBackend(unittest.TestCase):
         self.path = 'path'
         self.root = 'root'
         self.tempdir = 'tmp'
+        self.manifest_filename = 'MANIFEST.yaml'
 
     def tearDown(self):
         if os.path.exists(self.path):
@@ -204,6 +205,28 @@ class TestStorageBackend(unittest.TestCase):
         content = self.create_zip_archive()
         self.backend.deposit(path=self.path, content=content)
         self.assertEqual(content, self.backend.retrieve(self.path))
+
+    def test_get_manifest_without_path_raises(self):
+        self.backend.create(self.path)
+        with self.assertRaises(directory.MissingPathError):
+            self.backend.get_manifest()
+
+    def test_get_manifest_with_non_existing_path_raises(self):
+        with self.assertRaises(OSError):
+            self.backend.get_manifest(path=self.path)
+
+    def test_get_manifest_with_non_existing_manifest_raises(self):
+        self.backend.create(self.path)
+        with self.assertRaises(directory.MissingContentError):
+            self.backend.get_manifest(path=self.path)
+
+    def test_get_manifest_returns_contents_as_string(self):
+        self.backend.create(self.path)
+        manifest_contents = 'foo'
+        with open(os.path.join(self.path, self.manifest_filename), 'w+') as f:
+            f.write(manifest_contents)
+        self.assertEqual(manifest_contents, self.backend.get_manifest(
+            self.path))
 
 
 if __name__ == '__main__':
