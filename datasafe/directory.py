@@ -55,7 +55,6 @@ class StorageBackend:
     .. todo::
         Needs the following further methods:
 
-        * get_index - returns list of paths in the datasafe
         * check_integrity - check stored checksums against actual files
 
     .. todo::
@@ -281,6 +280,20 @@ class StorageBackend:
         return contents
 
     def get_manifest(self, path=''):
+        """
+        Retrieve manifest of a dataset stored in path.
+
+        Parameters
+        ----------
+        path : :class:`str`
+            path to the dataset the manifest should be retrieved for
+
+        Returns
+        -------
+        content : :class:`str`
+            contents of the manifest file
+
+        """
         if not path:
             raise MissingPathError(message='No path provided.')
         if not os.path.exists(path):
@@ -292,6 +305,28 @@ class StorageBackend:
         return manifest_contents
 
     def get_checksum(self, path='', data=False):
+        """
+        Retrieve checksum for a dataset stored in path.
+
+        To each dataset, two checksum files exist: one covering both,
+        data and metadata, the other covering only the data. Usually,
+        the former is returned. If you need to get the checksum covering the
+        data only, set the second parameter ``data`` to ``True``.
+
+        Parameters
+        ----------
+        path : :class:`str`
+            path to the dataset the manifest should be retrieved for
+
+        data : :class:`bool`
+            switch for returning the checksum over data only
+
+        Returns
+        -------
+        content : :class:`str`
+            contents of the checksum file
+
+        """
         if not path:
             raise MissingPathError(message='No path provided.')
         if not os.path.exists(path):
@@ -308,14 +343,20 @@ class StorageBackend:
 
     def get_index(self):
         """
-        .. todo::
-            Implement subfolder handling.
+        Return list of paths to datasets
 
-            Additionally, return only ultimate leaf, no intermediate directories
+        Such a list of paths to datasets is pretty useful if one intends to
+        check locally for existing LOIs (corresponding to paths in the
+        datasafe).
 
+        If a path has been created already, but no data yet saved in there,
+        as may happen during an experiment to reserve the corresponding LOI,
+        this path will nevertheless be included.
 
         Returns
         -------
+        paths : :class:`list`
+            list of paths to datasets
 
         """
         if self.root_directory:
@@ -325,6 +366,8 @@ class StorageBackend:
         paths = []
         for root, dirs, files in os.walk(top):
             for dir_ in dirs:
-                paths.append(os.path.join(root, dir_).replace(os.path.join(
-                    top, ''), ''))
+                files_in_dir = os.listdir(os.path.join(root, dir_))
+                if not files_in_dir or self.manifest_filename in files_in_dir:
+                    paths.append(os.path.join(root, dir_).replace(os.path.join(
+                        top, ''), ''))
         return paths

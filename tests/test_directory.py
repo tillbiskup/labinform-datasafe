@@ -282,6 +282,12 @@ class TestStorageBackend(unittest.TestCase):
         self.assertEqual(path, self.backend.get_index()[0])
         self.backend.remove(path)
 
+    def test_get_index_with_manifest_file_works(self):
+        self.backend.create(self.path)
+        with open(os.path.join(self.path, self.manifest_filename), 'w+') as f:
+            f.write('foo')
+        self.assertEqual(self.path, self.backend.get_index()[0])
+
 
 if __name__ == '__main__':
     unittest.main()
