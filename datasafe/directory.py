@@ -371,3 +371,19 @@ class StorageBackend:
                     paths.append(os.path.join(root, dir_).replace(os.path.join(
                         top, ''), ''))
         return paths
+
+    def check_integrity(self, path=''):
+        if self.manifest_filename not in os.listdir(path):
+            raise MissingContentError(message='No manifest file found.')
+        # Read (correct) manifest file into dict
+        # retrieve list of data and metadata filenames from there
+        # create checksums
+        # compare checksums with stored ones
+        #
+        # TODO: Should better use a Manifest class that can be asked for the
+        #  respective information
+        integrity = {
+            'data': '',
+            'all': '',
+            }
+        return integrity

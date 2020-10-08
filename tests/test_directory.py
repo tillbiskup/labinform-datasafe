@@ -41,6 +41,10 @@ class TestStorageBackend(unittest.TestCase):
         os.remove('test.zip')
         return contents
 
+    def create_manifest_file(self, path=''):
+        with open(os.path.join(path, self.manifest_filename), 'w+') as f:
+            f.write('foo')
+
     def test_instantiate_class(self):
         pass
 
@@ -284,9 +288,31 @@ class TestStorageBackend(unittest.TestCase):
 
     def test_get_index_with_manifest_file_works(self):
         self.backend.create(self.path)
-        with open(os.path.join(self.path, self.manifest_filename), 'w+') as f:
-            f.write('foo')
+        self.create_manifest_file(path=self.path)
         self.assertEqual(self.path, self.backend.get_index()[0])
+
+    def test_check_integrity_without_manifest_file_raises(self):
+        self.backend.create(self.path)
+        with self.assertRaises(directory.MissingContentError):
+            self.backend.check_integrity(self.path)
+
+    def test_check_integrity_returns_dict(self):
+        self.backend.create(self.path)
+        self.create_manifest_file(path=self.path)
+        self.assertIsInstance(self.backend.check_integrity(self.path), dict)
+
+    def test_check_integrity_dict_contains_correct_fields(self):
+        self.backend.create(self.path)
+        self.create_manifest_file(path=self.path)
+        self.assertCountEqual(['data', 'all'], self.backend.check_integrity(
+            self.path).keys())
+
+    @unittest.skip
+    def test_check_integrity_returns_correct_answer_for_data(self):
+        self.backend.create(self.path)
+        self.create_manifest_file(path=self.path)
+        # Create full contents of a dataset and copy it to self.path
+        # Check that checksum for data is correct
 
 
 if __name__ == '__main__':
