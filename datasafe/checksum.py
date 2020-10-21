@@ -13,7 +13,7 @@ implemented:
 
 * Checksums over a list of files are generated per file (using its content),
   the generated checksums sorted and a checksum generated for the sorted
-  list of checksums. Thus, filenames cannot interfere with the final
+  list of checksums. Thus, data_filenames cannot interfere with the final
   checksum, as they are irrelevant for the sorting of the checksums the
   final checksum is generated for.
 
@@ -78,7 +78,7 @@ class Generator:
 
         The strings will be sorted before generating the checksum. Hence, if you
         want to create a checksum of checksums (e.g., for a checksum of several
-        files), sorting is independent of the filenames and only depends on the
+        files), sorting is independent of the data_filenames and only depends on the
         actual file contents, resulting in stable hashes.
 
         Parameters
@@ -108,7 +108,7 @@ class Generator:
         generated and afterwards the checksum over the checksums.
 
         The checksums of the individual files will be sorted before generating
-        the final checksum. Hence, sorting is independent of the filenames
+        the final checksum. Hence, sorting is independent of the data_filenames
         and only depends on the actual file contents, resulting in stable
         hashes.
 

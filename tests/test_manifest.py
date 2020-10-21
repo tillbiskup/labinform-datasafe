@@ -192,5 +192,75 @@ class TestManifestGenerator(unittest.TestCase):
         self.assertTrue(self.generator.manifest['files']['data']['format'])
 
 
+class TestManifest(unittest.TestCase):
+    def setUp(self):
+        self.manifest = manifest.Manifest()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_has_from_file_method(self):
+        self.assertTrue(hasattr(self.manifest, 'from_file'))
+        self.assertTrue(callable(self.manifest.from_file))
+
+    def test_has_to_file_method(self):
+        self.assertTrue(hasattr(self.manifest, 'to_file'))
+        self.assertTrue(callable(self.manifest.to_file))
+
+    def test_has_data_filenames_attribute(self):
+        self.assertTrue(hasattr(self.manifest, 'data_filenames'))
+        self.assertIsInstance(self.manifest.data_filenames, list)
+
+    def test_has_metadata_filenames_attribute(self):
+        self.assertTrue(hasattr(self.manifest, 'metadata_filenames'))
+        self.assertIsInstance(self.manifest.metadata_filenames, list)
+
+    def test_has_data_checksum_attribute(self):
+        self.assertTrue(hasattr(self.manifest, 'data_checksum'))
+
+    def test_has_checksum_attribute(self):
+        self.assertTrue(hasattr(self.manifest, 'checksum'))
+
+    def test_has_to_dict_method(self):
+        self.assertTrue(hasattr(self.manifest, 'to_dict'))
+        self.assertTrue(callable(self.manifest.to_dict))
+
+    def test_to_dict_returns_ordered_dict(self):
+        self.assertIsInstance(self.manifest.to_dict(), collections.OrderedDict)
+
+    def test_to_dict_returns_ordered_dict_with_correct_keys(self):
+        manifest_keys_level_one = ['format', 'dataset', 'files']
+        self.assertEqual(list(self.manifest.to_dict()), manifest_keys_level_one)
+
+    def test_to_dict_type_is_datasafe_manifest(self):
+        manifest_ = self.manifest.to_dict()
+        self.assertEqual(manifest_["format"]["type"],
+                         "datasafe dataset manifest")
+
+    def test_to_dict_version_is_not_empty(self):
+        manifest_ = self.manifest.to_dict()
+        self.assertTrue(manifest_["format"]["version"])
+
+    def test_to_dict_dataset_has_loi(self):
+        manifest_ = self.manifest.to_dict()
+        self.assertTrue("loi" in manifest_['dataset'].keys())
+
+    def test_to_dict_dataset_has_complete_field(self):
+        manifest_ = self.manifest.to_dict()
+        self.assertTrue("complete" in manifest_['dataset'].keys())
+
+    def test_to_dict_files_has_minimal_structure(self):
+        manifest_ = self.manifest.to_dict()
+        manifest_files_keys = ["metadata", "data", "checksums"]
+        self.assertEqual(list(manifest_["files"].keys()),
+                         manifest_files_keys)
+
+    def test_to_dict_with_data_filenames_populates_dict(self):
+        filenames = ['foo', 'bar']
+        self.manifest.data_filenames = filenames
+        manifest_ = self.manifest.to_dict()
+        self.assertEqual(manifest_['files']['data']['names'], filenames)
+
+
 if __name__ == '__main__':
     unittest.main()

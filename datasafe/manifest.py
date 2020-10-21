@@ -1,6 +1,6 @@
 """
 Each item (currently: dataset) stored in the datasafe is accompanied by a
-file containing a lot of (autmatically obtained) useful information about
+file containing a lot of (automatically obtained) useful information about
 the item stored. Typically, the YAML format is used for the manifest file,
 and the file named ``MANIFEST.yaml`` generically.
 
@@ -113,9 +113,9 @@ class Generator:
         Fills manifest dict containing information about data and metadata.
         """
         if not self.filenames['data']:
-            raise MissingInformationError(message='Data filenames missing')
+            raise MissingInformationError(message='Data data_filenames missing')
         if not self.filenames['metadata']:
-            raise MissingInformationError(message='Metadata filenames missing')
+            raise MissingInformationError(message='Metadata data_filenames missing')
         for filename in self.filenames['data']:
             if not os.path.exists(filename):
                 raise MissingFileError(message='data file(s) not existent')
@@ -189,7 +189,7 @@ class Generator:
         Parameters
         ----------
         filenames : :class:`list`
-            List containing filenames of which a checksum will be created.
+            List containing data_filenames of which a checksum will be created.
 
         Returns
         -------
@@ -198,3 +198,54 @@ class Generator:
         """
         checksum_generator = datasafe.checksum.Generator()
         return checksum_generator.generate(filenames=filenames)
+
+
+class Manifest:
+    def __init__(self):
+        self.data_filenames = []
+        self.metadata_filenames = []
+        self.data_checksum = ''
+        self.checksum = ''
+
+    def from_file(self):
+        pass
+
+    def to_file(self):
+        pass
+
+    def to_dict(self):
+        """
+        .. todo::
+            Populate dict from class attributes, recycling populate method
+            from above (class Generator)
+
+
+        Returns
+        -------
+
+        """
+        manifest_ = self._create_manifest_dict()
+        return manifest_
+
+    @staticmethod
+    def _create_manifest_dict():
+        manifest_format = collections.OrderedDict([
+            ("type", "datasafe dataset manifest"),
+            ("version", "0.1.0.dev4"),
+        ])
+        manifest_dataset = collections.OrderedDict([
+            ("loi", ""),
+            ("complete", False),
+        ])
+        manifest_files = collections.OrderedDict([
+            ("metadata", []),
+            ("data", collections.OrderedDict([('format', ''), ('names', [])])),
+            ("checksums", []),
+        ])
+        manifest_keys_level_one = [
+            ('format', manifest_format),
+            ('dataset', manifest_dataset),
+            ('files', manifest_files),
+        ]
+        manifest_ = collections.OrderedDict(manifest_keys_level_one)
+        return manifest_

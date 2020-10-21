@@ -413,7 +413,7 @@ class StorageBackend:
         if self.manifest_filename not in os.listdir(path):
             raise MissingContentError(message='No manifest file found.')
         # Read (correct) manifest file into dict
-        # retrieve list of data and metadata filenames from there
+        # retrieve list of data and metadata data_filenames from there
         # create checksums
         # compare checksums with stored ones
         #
