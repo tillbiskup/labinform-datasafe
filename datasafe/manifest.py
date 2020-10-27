@@ -87,6 +87,15 @@ class Manifest:
         filename for Manifest file, defaults to ``MANIFEST.yaml``
 
 
+    .. todo::
+        Implement :func:`from_file`
+
+    .. todo::
+        Make use of :attr:`data_checksum` and :attr:`checksum`,
+        automatically generating checksums and perhaps returning an empty
+        string in case no filename(s) are provided in :attr:`data_filenames`
+        and/or :attr:`metadata_filenames`.
+
     """
     def __init__(self):
         self.data_filenames = []
