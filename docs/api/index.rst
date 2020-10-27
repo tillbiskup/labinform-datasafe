@@ -14,7 +14,6 @@ An alphabetic list of the submodules available within the datasafe. The actual d
 
    datasafe.checksum
    datasafe.client
-   datasafe.directory
    datasafe.loi
    datasafe.manifest
    datasafe.server
