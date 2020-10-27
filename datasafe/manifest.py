@@ -60,146 +60,6 @@ class MissingFileError(Error):
         self.message = message
 
 
-class Generator:
-    """
-    Collect information and write ``MANIFEST.yaml`` document
-
-    ``MANIFEST.yaml`` contains relevant information about the data storage of a
-    single measurement. Beside the type and format of the ``MANIFEST.yaml``
-    itself, it contains the LOI of the dataset, the names, format and
-    versions of data and metadata files and the respective checksums.
-
-    The information for the actual ``MANIFEST.yaml`` document first gets
-    collected in an ordered dict of the designated structure. The dict
-    populated this way is then written to a yaml file.
-
-    Attributes
-    ----------
-    manifest : :class:`collections.OrderedDict`
-
-    filename : :class:`str`
-        Output filename, defaults to ``MANIFEST.yaml``
-
-    filenames : :class:`dict`
-        Lists of data and metadata files.
-   """
-    def __init__(self):
-        manifest_format = collections.OrderedDict([
-            ("type", "datasafe dataset manifest"),
-            ("version", "0.1.0.dev4"),
-        ])
-        manifest_dataset = collections.OrderedDict([
-            ("loi", ""),
-            ("complete", False),
-        ])
-        manifest_files = collections.OrderedDict([
-            ("metadata", []),
-            ("data", collections.OrderedDict([('format', ''), ('names', [])])),
-            ("checksums", []),
-        ])
-        manifest_keys_level_one = [
-            ('format', manifest_format),
-            ('dataset', manifest_dataset),
-            ('files', manifest_files),
-        ]
-        self.manifest = collections.OrderedDict(manifest_keys_level_one)
-        self.filename = 'MANIFEST.yaml'
-        self.filenames = {'data': [], 'metadata': []}
-
-    def populate(self):
-        """
-        Populate given manifest structure with information.
-
-        Fills manifest dict containing information about data and metadata.
-        """
-        if not self.filenames['data']:
-            raise MissingInformationError(message='Data data_filenames missing')
-        if not self.filenames['metadata']:
-            raise MissingInformationError(message='Metadata data_filenames missing')
-        for filename in self.filenames['data']:
-            if not os.path.exists(filename):
-                raise MissingFileError(message='data file(s) not existent')
-        for filename in self.filenames['metadata']:
-            if not os.path.exists(filename):
-                raise MissingFileError(message='metadata file(s) not existent')
-        for filename in self.filenames['data']:
-            # noinspection PyTypeChecker
-            self.manifest['files']['data']['names'].append(filename)
-        self.manifest['files']['data']['format'] = self._get_data_format(
-            self.filenames['data'])
-        for filename in self.filenames['metadata']:
-            metadata_info = self._get_metadata_info(filename)
-            self.manifest['files']['metadata'].append(metadata_info)
-        self.manifest['files']['checksums'].append(collections.OrderedDict([
-            ('name', 'CHECKSUM'),
-            ('format', 'MD5 checksum'),
-            ('span', 'data, metadata'),
-            ('value', self._generate_checksum(self.filenames['data'] +
-                                              self.filenames['metadata'])),
-        ]))
-        self.manifest['files']['checksums'].append(collections.OrderedDict([
-            ('name', 'CHECKSUM_data'),
-            ('format', 'MD5 checksum'),
-            ('span', 'data'),
-            ('value', self._generate_checksum(self.filenames['data'])),
-        ]))
-
-    def write(self):
-        """
-        Output manifest dict to yaml file.
-        """
-        with open(self.filename, mode='w+') as output_file:
-            yaml.dump(self.manifest, output_file)
-
-    @staticmethod
-    def _get_metadata_info(filename=''):
-        """
-        Retrieve general information about metadata file
-
-        .. todo::
-            Needs to be converted into a factory method calling the relevant
-            metadata importers and retrieve the actual information about
-            format and version from the metadata file itself.
-
-        """
-        metadata_info = collections.OrderedDict([
-            ('name', filename),
-            ('format', 'info file'),
-            ('version', '0.1.0')
-        ])
-        return metadata_info
-
-    @staticmethod
-    def _get_data_format(filenames=None):
-        """
-        Retrieve format of data files
-
-        .. todo::
-            Needs to be converted into a factory method.
-
-        """
-        data_format = 'test'
-        return data_format
-
-    @staticmethod
-    def _generate_checksum(filenames=None):
-        """
-        Generate checksum over file(s) using the checksum module.
-
-        Parameters
-        ----------
-        filenames : :class:`list`
-            List containing data_filenames of which a checksum will be created.
-
-        Returns
-        -------
-        result : :class:`str`
-            Returns checksum (over checksums) of files.
-        """
-        checksum_generator = datasafe.checksum.Generator()
-        return checksum_generator.generate(filenames=filenames)
-
-
 class Manifest:
     """
     Representation of the information contained in a manifest file
@@ -219,6 +79,9 @@ class Manifest:
 
     checksum : :class:`str`
 
+    manifest_filename : :class:`str`
+        filename for Manifest file, defaults to ``MANIFEST.yaml``
+
 
     """
     def __init__(self):
@@ -226,6 +89,7 @@ class Manifest:
         self.metadata_filenames = []
         self.data_checksum = ''
         self.checksum = ''
+        self.manifest_filename = 'MANIFEST.yaml'
 
     def from_file(self):
         """
@@ -240,12 +104,13 @@ class Manifest:
         """
         Safe manifest to file
 
-        The information for the actual ``MANIFEST.yaml`` document first gets
-        collected in an ordered dict of the designated structure using
-        :func:`to_dict`. The dict populated this way is then written to a
-        yaml file (usually) named ``MANIFEST.yaml``.
+        The information for the actual manifest file first gets collected in
+        an ordered dict of the designated structure using :func:`to_dict`.
+        The dict populated this way is then written to a yaml file (usually)
+        named ``MANIFEST.yaml`` (as speficied by :attr:`manifest_filename`).
         """
-        pass
+        with open(self.manifest_filename, mode='w+') as output_file:
+            yaml.dump(self.to_dict(), output_file)
 
     def to_dict(self):
         """
