@@ -211,6 +211,10 @@ class TestManifest(unittest.TestCase):
             manifest_dict = yaml.safe_load(file)
         self.assertEqual(self.manifest.to_dict(), manifest_dict)
 
+    def test_from_file_without_filename_raises(self):
+        with self.assertRaises(manifest.MissingInformationError):
+            self.manifest.from_file()
+
 
 if __name__ == '__main__':
     unittest.main()
