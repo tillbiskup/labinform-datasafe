@@ -72,12 +72,16 @@ class Manifest:
     Attributes
     ----------
     data_filenames : :class:`list`
+        filenames of data files
 
     metadata_filenames : :class:`list`
+        filenames of metadata files
 
     data_checksum : :class:`str`
+        checksum over data only
 
     checksum : :class:`str`
+        checksum over data and metadata
 
     manifest_filename : :class:`str`
         filename for Manifest file, defaults to ``MANIFEST.yaml``
@@ -107,7 +111,7 @@ class Manifest:
         The information for the actual manifest file first gets collected in
         an ordered dict of the designated structure using :func:`to_dict`.
         The dict populated this way is then written to a yaml file (usually)
-        named ``MANIFEST.yaml`` (as speficied by :attr:`manifest_filename`).
+        named ``MANIFEST.yaml`` (as specified by :attr:`manifest_filename`).
         """
         with open(self.manifest_filename, mode='w+') as output_file:
             yaml.dump(self.to_dict(), output_file)
