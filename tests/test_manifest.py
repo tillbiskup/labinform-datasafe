@@ -268,6 +268,19 @@ class TestManifest(unittest.TestCase):
             manifest_dict = yaml.safe_load(file)
         self.assertEqual(new_manifest.to_dict(), manifest_dict)
 
+    def test_from_file_sets_checksum(self):
+        self._create_data_and_metadata_files()
+        self.manifest.to_file()
+        new_manifest = manifest.Manifest()
+        new_manifest.from_file(self.manifest_filename)
+        with open(self.manifest_filename, 'r') as file:
+            manifest_dict = yaml.safe_load(file)
+        for checksum in manifest_dict['files']['checksums']:
+            if 'metadata' in checksum['span']:
+                self.assertEqual(checksum['value'], new_manifest.checksum)
+            else:
+                self.assertEqual(checksum['value'], new_manifest.data_checksum)
+
 
 if __name__ == '__main__':
     unittest.main()

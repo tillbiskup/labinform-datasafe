@@ -85,13 +85,6 @@ class Manifest:
     manifest_filename : :class:`str`
         filename for Manifest file, defaults to ``MANIFEST.yaml``
 
-
-    .. todo::
-        Make use of :attr:`data_checksum` and :attr:`checksum`,
-        automatically generating checksums and perhaps returning an empty
-        string in case no filename(s) are provided in :attr:`data_filenames`
-        and/or :attr:`metadata_filenames`.
-
     """
 
     def __init__(self):
@@ -114,6 +107,11 @@ class Manifest:
         self.data_filenames = manifest_dict['files']['data']['names']
         for metadata_file in manifest_dict['files']['metadata']:
             self.metadata_filenames.append(metadata_file['name'])
+        for checksum in manifest_dict['files']['checksums']:
+            if 'metadata' in checksum['span']:
+                self.checksum = checksum['value']
+            else:
+                self.data_checksum = checksum['value']
 
     def from_file(self, filename=''):
         """
@@ -142,6 +140,7 @@ class Manifest:
         with open(filename, 'r') as file:
             manifest_dict = yaml.safe_load(file)
         self.from_dict(manifest_dict)
+
 
     def to_dict(self):
         """
