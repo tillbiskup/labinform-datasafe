@@ -94,10 +94,6 @@ class StorageBackend:
 
         * check_integrity - check stored checksums against actual files
 
-    .. todo::
-        Class needs to be moved to other module, probably
-        :mod:`datasafe.server`.
-
     """
     def __init__(self):
         self.checksum_filename = 'CHECKSUM'

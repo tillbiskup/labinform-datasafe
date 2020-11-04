@@ -87,9 +87,6 @@ class Manifest:
 
 
     .. todo::
-        Implement :func:`from_file`
-
-    .. todo::
         Make use of :attr:`data_checksum` and :attr:`checksum`,
         automatically generating checksums and perhaps returning an empty
         string in case no filename(s) are provided in :attr:`data_filenames`
@@ -104,12 +101,39 @@ class Manifest:
         self.checksum = ''
         self.manifest_filename = 'MANIFEST.yaml'
 
+    def from_dict(self, manifest_dict):
+        """
+        Obtain information from (ordered) dict
+
+        Parameters
+        ----------
+        manifest_dict : :class:`collections.OrderedDict`
+            Dict containing information of a manifest
+
+        """
+        self.data_filenames = manifest_dict['files']['data']['names']
+        for metadata_file in manifest_dict['files']['metadata']:
+            self.metadata_filenames.append(metadata_file['name'])
+
     def from_file(self, filename=''):
         """
         Obtain information from Manifest file
 
         Usually, manifests are stored as YAML file on the file system in
         files named ``MANIFEST.yaml``.
+
+        Parameters
+        ----------
+        filename : :class:`str`
+            Name of the file to read manifest from
+
+        Raises
+        ------
+        MissingInformationError
+            Raised if no filename to read from is provided
+        MissingFileError
+            Raised if file to read from does not exist on the file system
+
         """
         if not filename:
             raise MissingInformationError(message="No filename provided")
@@ -118,18 +142,6 @@ class Manifest:
         with open(filename, 'r') as file:
             manifest_dict = yaml.safe_load(file)
         self.from_dict(manifest_dict)
-
-    def to_file(self):
-        """
-        Safe manifest to file
-
-        The information for the actual manifest file first gets collected in
-        an ordered dict of the designated structure using :func:`to_dict`.
-        The dict populated this way is then written to a yaml file (usually)
-        named ``MANIFEST.yaml`` (as specified by :attr:`manifest_filename`).
-        """
-        with open(self.manifest_filename, mode='w+') as output_file:
-            yaml.dump(self.to_dict(), output_file)
 
     def to_dict(self):
         """
@@ -184,10 +196,17 @@ class Manifest:
         ]))
         return manifest_
 
-    def from_dict(self, manifest_dict):
-        self.data_filenames = manifest_dict['files']['data']['names']
-        for metadata_file in manifest_dict['files']['metadata']:
-            self.metadata_filenames.append(metadata_file['name'])
+    def to_file(self):
+        """
+        Safe manifest to file
+
+        The information for the actual manifest file first gets collected in
+        an ordered dict of the designated structure using :func:`to_dict`.
+        The dict populated this way is then written to a yaml file (usually)
+        named ``MANIFEST.yaml`` (as specified by :attr:`manifest_filename`).
+        """
+        with open(self.manifest_filename, mode='w+') as output_file:
+            yaml.dump(self.to_dict(), output_file)
 
     @staticmethod
     def _create_manifest_dict():
