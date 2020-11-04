@@ -141,7 +141,6 @@ class Manifest:
             manifest_dict = yaml.safe_load(file)
         self.from_dict(manifest_dict)
 
-
     def to_dict(self):
         """
         Return information contained in object as (ordered) dict

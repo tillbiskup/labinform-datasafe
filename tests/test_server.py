@@ -57,6 +57,8 @@ class TestStorageBackend(unittest.TestCase):
         self.manifest_filename = 'MANIFEST.yaml'
         self.checksum_filename = 'CHECKSUM'
         self.checksum_data_filename = 'CHECKSUM.data'
+        self.data_filename = 'foo'
+        self.metadata_filename = 'bar.info'
 
     def tearDown(self):
         if os.path.exists(self.path):
@@ -67,6 +69,10 @@ class TestStorageBackend(unittest.TestCase):
             shutil.rmtree(self.tempdir)
         if os.path.exists(self.subdir):
             shutil.rmtree(self.subdir)
+        if os.path.exists(self.data_filename):
+            os.remove(self.data_filename)
+        if os.path.exists(self.metadata_filename):
+            os.remove(self.metadata_filename)
 
     def create_tmp_file(self):
         os.makedirs(self.tempdir)
@@ -85,6 +91,12 @@ class TestStorageBackend(unittest.TestCase):
     def create_manifest_file(self, path=''):
         with open(os.path.join(path, self.manifest_filename), 'w+') as f:
             f.write('foo')
+
+    def _create_data_and_metadata_files(self, path=''):
+        with open(os.path.join(path, self.data_filename), 'w+') as f:
+            f.write('')
+        with open(os.path.join(path, self.metadata_filename), 'w+') as f:
+            f.write('')
 
     def test_instantiate_class(self):
         pass
@@ -348,9 +360,21 @@ class TestStorageBackend(unittest.TestCase):
         self.assertCountEqual(['data', 'all'], self.backend.check_integrity(
             self.path).keys())
 
-    @unittest.skip
     def test_check_integrity_returns_correct_answer_for_data(self):
         self.backend.create(self.path)
         self.create_manifest_file(path=self.path)
-        # Create full contents of a dataset and copy it to self.path
+        self._create_data_and_metadata_files(path=self.path)
+        integrity = self.backend.check_integrity(path=self.path)
+        self.assertEqual(True, integrity['data'])
+
+        # Create full contents of a manifest with correct checksum
         # Check that checksum for data is correct
+        # Create checksum(s) from files
+        # Compare them to the stored ones. (Be robust with order of
+        # checksums, see manifest module)
+
+    @unittest.skip
+    def test_check_integrity_with_wrong_checksum_in_manifest_returns_false(self):
+        # Create manifest containing fantasy checksum(s)
+        # Check that integrity for one or both field(s) is False
+        pass

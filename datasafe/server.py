@@ -408,7 +408,7 @@ class StorageBackend:
     def check_integrity(self, path=''):
         if self.manifest_filename not in os.listdir(path):
             raise MissingContentError(message='No manifest file found.')
-        # Read (correct) manifest file into dict
+        # Read (correct) manifest file into dict #manifest.from_file()
         # retrieve list of data and metadata data_filenames from there
         # create checksums
         # compare checksums with stored ones
@@ -416,7 +416,7 @@ class StorageBackend:
         # TODO: Should better use a Manifest class that can be asked for the
         #  respective information
         integrity = {
-            'data': '',
-            'all': '',
+            'data': None, # Booleans
+            'all': None,
             }
         return integrity
