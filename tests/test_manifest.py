@@ -211,9 +211,62 @@ class TestManifest(unittest.TestCase):
             manifest_dict = yaml.safe_load(file)
         self.assertEqual(self.manifest.to_dict(), manifest_dict)
 
+    def test_has_from_dict_method(self):
+        self.assertTrue(hasattr(self.manifest, 'from_dict'))
+        self.assertTrue(callable(self.manifest.from_dict))
+
+    def test_from_dict_sets_data_filenames(self):
+        self._create_data_and_metadata_files()
+        self.manifest.to_file()
+        with open(self.manifest_filename, 'r') as file:
+            manifest_dict = yaml.safe_load(file)
+        new_manifest = manifest.Manifest()
+        new_manifest.from_dict(manifest_dict)
+        self.assertEqual(manifest_dict['files']['data']['names'],
+                         new_manifest.data_filenames)
+
+    def test_from_dict_sets_metadata_filenames(self):
+        self._create_data_and_metadata_files()
+        self.manifest.to_file()
+        with open(self.manifest_filename, 'r') as file:
+            manifest_dict = yaml.safe_load(file)
+        new_manifest = manifest.Manifest()
+        new_manifest.from_dict(manifest_dict)
+        self.assertEqual([manifest_dict['files']['metadata'][0]['name']],
+                         new_manifest.metadata_filenames)
+
+    def test_from_dict_with_multiple_metadata_filenames_sets_metadata(self):
+        metadata_filename_ = 'blub.info'
+        with open(metadata_filename_, 'w+') as f:
+            f.write('')
+        self.manifest.metadata_filenames.append(metadata_filename_)
+        self._create_data_and_metadata_files()
+        self.manifest.to_file()
+        with open(self.manifest_filename, 'r') as file:
+            manifest_dict = yaml.safe_load(file)
+        new_manifest = manifest.Manifest()
+        new_manifest.from_dict(manifest_dict)
+        self.assertEqual(manifest_dict['files']['metadata'][1]['name'],
+                         new_manifest.metadata_filenames[1])
+        if os.path.exists(metadata_filename_):
+            os.remove(metadata_filename_)
+
     def test_from_file_without_filename_raises(self):
         with self.assertRaises(manifest.MissingInformationError):
             self.manifest.from_file()
+
+    def test_from_file_with_missing_file_raises(self):
+        with self.assertRaises(manifest.MissingFileError):
+            self.manifest.from_file(filename="foobar")
+
+    def test_from_file_with_file_sets_properties_from_manifest(self):
+        self._create_data_and_metadata_files()
+        self.manifest.to_file()
+        new_manifest = manifest.Manifest()
+        new_manifest.from_file(self.manifest_filename)
+        with open(self.manifest_filename, 'r') as file:
+            manifest_dict = yaml.safe_load(file)
+        self.assertEqual(new_manifest.to_dict(), manifest_dict)
 
 
 if __name__ == '__main__':

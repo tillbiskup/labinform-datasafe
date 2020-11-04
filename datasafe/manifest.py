@@ -15,7 +15,6 @@ data and metadata to the actual file names and the checksums over data and
 data and metadata.
 """
 
-
 import collections
 import os
 
@@ -97,6 +96,7 @@ class Manifest:
         and/or :attr:`metadata_filenames`.
 
     """
+
     def __init__(self):
         self.data_filenames = []
         self.metadata_filenames = []
@@ -104,14 +104,20 @@ class Manifest:
         self.checksum = ''
         self.manifest_filename = 'MANIFEST.yaml'
 
-    def from_file(self):
+    def from_file(self, filename=''):
         """
         Obtain information from Manifest file
 
         Usually, manifests are stored as YAML file on the file system in
         files named ``MANIFEST.yaml``.
         """
-        pass
+        if not filename:
+            raise MissingInformationError(message="No filename provided")
+        if not os.path.exists(filename):
+            raise MissingFileError(message="File does not exist")
+        with open(filename, 'r') as file:
+            manifest_dict = yaml.safe_load(file)
+        self.from_dict(manifest_dict)
 
     def to_file(self):
         """
@@ -145,11 +151,9 @@ class Manifest:
             exist on the file system
         """
         if not self.data_filenames:
-            raise MissingInformationError(message='Data data_filenames '
-                                                  'missing')
+            raise MissingInformationError(message='Data filenames missing')
         if not self.metadata_filenames:
-            raise MissingInformationError(message='Metadata data_filenames '
-                                                  'missing')
+            raise MissingInformationError(message='Metadata filenames missing')
         for filename in self.data_filenames:
             if not os.path.exists(filename):
                 raise MissingFileError(message='data file(s) not existent')
@@ -179,6 +183,11 @@ class Manifest:
             ('value', self._generate_checksum(self.data_filenames)),
         ]))
         return manifest_
+
+    def from_dict(self, manifest_dict):
+        self.data_filenames = manifest_dict['files']['data']['names']
+        for metadata_file in manifest_dict['files']['metadata']:
+            self.metadata_filenames.append(metadata_file['name'])
 
     @staticmethod
     def _create_manifest_dict():
