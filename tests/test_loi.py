@@ -204,9 +204,5 @@ class TestLoiParser(unittest.TestCase):
         self.assertEqual(dict_['id'], 'exp/sa/42/cwepr/1')
 
 
-
-
-
-
 if __name__ == '__main__':
     unittest.main()

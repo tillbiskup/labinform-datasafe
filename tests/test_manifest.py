@@ -19,14 +19,12 @@ class TestManifest(unittest.TestCase):
         self.manifest.metadata_filenames = [self.metadata_filename]
 
     def tearDown(self):
-        if os.path.exists(self.data_filename):
-            os.remove(self.data_filename)
-        if os.path.exists(self.metadata_filename):
-            os.remove(self.metadata_filename)
-        if os.path.exists(self.manifest_filename):
-            os.remove(self.manifest_filename)
+        for filename in [self.data_filename, self.metadata_filename,
+                         self.manifest_filename]:
+            if os.path.exists(filename):
+                os.remove(filename)
 
-    def _create_data_and_metadata_files(self):
+    def create_data_and_metadata_files(self):
         with open(self.data_filename, 'w+') as f:
             f.write('')
         with open(self.metadata_filename, 'w+') as f:
@@ -62,73 +60,73 @@ class TestManifest(unittest.TestCase):
         self.assertTrue(callable(self.manifest.to_dict))
 
     def test_to_dict_returns_ordered_dict(self):
-        self._create_data_and_metadata_files()
+        self.create_data_and_metadata_files()
         self.assertIsInstance(self.manifest.to_dict(), collections.OrderedDict)
 
     def test_to_dict_returns_ordered_dict_with_correct_keys(self):
-        self._create_data_and_metadata_files()
+        self.create_data_and_metadata_files()
         manifest_keys_level_one = ['format', 'dataset', 'files']
         self.assertEqual(list(self.manifest.to_dict()), manifest_keys_level_one)
 
     def test_to_dict_type_is_datasafe_manifest(self):
-        self._create_data_and_metadata_files()
+        self.create_data_and_metadata_files()
         manifest_ = self.manifest.to_dict()
         self.assertEqual(manifest_["format"]["type"],
                          "datasafe dataset manifest")
 
     def test_to_dict_version_is_not_empty(self):
-        self._create_data_and_metadata_files()
+        self.create_data_and_metadata_files()
         manifest_ = self.manifest.to_dict()
         self.assertTrue(manifest_["format"]["version"])
 
     def test_to_dict_dataset_has_loi(self):
-        self._create_data_and_metadata_files()
+        self.create_data_and_metadata_files()
         manifest_ = self.manifest.to_dict()
         self.assertTrue("loi" in manifest_['dataset'].keys())
 
     def test_to_dict_dataset_has_complete_field(self):
-        self._create_data_and_metadata_files()
+        self.create_data_and_metadata_files()
         manifest_ = self.manifest.to_dict()
         self.assertTrue("complete" in manifest_['dataset'].keys())
 
     def test_to_dict_files_has_minimal_structure(self):
-        self._create_data_and_metadata_files()
+        self.create_data_and_metadata_files()
         manifest_ = self.manifest.to_dict()
         manifest_files_keys = ["metadata", "data", "checksums"]
         self.assertEqual(list(manifest_["files"].keys()),
                          manifest_files_keys)
 
     def test_to_dict_with_data_filenames_populates_dict(self):
-        self._create_data_and_metadata_files()
+        self.create_data_and_metadata_files()
         manifest_ = self.manifest.to_dict()
         self.assertEqual(manifest_['files']['data']['names'][0],
                          self.data_filename)
 
     def test_to_dict_with_data_filenames_sets_format(self):
-        self._create_data_and_metadata_files()
+        self.create_data_and_metadata_files()
         manifest_ = self.manifest.to_dict()
         self.assertTrue(manifest_['files']['data']['format'])
 
     def test_to_dict_with_metadata_filename_populates_dict(self):
-        self._create_data_and_metadata_files()
+        self.create_data_and_metadata_files()
         manifest_ = self.manifest.to_dict()
         self.assertEqual(manifest_['files']['metadata'][0]['name'],
                          self.metadata_filename)
 
     def test_to_dict_with_metadata_filename_gets_metadata_info(self):
-        self._create_data_and_metadata_files()
+        self.create_data_and_metadata_files()
         manifest_ = self.manifest.to_dict()
         self.assertEqual(
             list(manifest_['files']['metadata'][0].keys()),
             ['name', 'format', 'version'])
 
     def test_to_dict_with_files_populates_checksums(self):
-        self._create_data_and_metadata_files()
+        self.create_data_and_metadata_files()
         manifest_ = self.manifest.to_dict()
         self.assertEqual(len(manifest_['files']['checksums']), 2)
 
     def test_to_dict_with_files_creates_checksums_structure(self):
-        self._create_data_and_metadata_files()
+        self.create_data_and_metadata_files()
         self.manifest.data_filenames = [self.data_filename]
         manifest_ = self.manifest.to_dict()
         self.assertEqual(
@@ -136,7 +134,7 @@ class TestManifest(unittest.TestCase):
             ['name', 'format', 'span', 'value'])
 
     def test_to_dict_with_files_creates_correct_checksums(self):
-        self._create_data_and_metadata_files()
+        self.create_data_and_metadata_files()
         manifest_ = self.manifest.to_dict()
         self.assertEqual(
             manifest_['files']['checksums'][0]['value'],
@@ -166,7 +164,7 @@ class TestManifest(unittest.TestCase):
             self.manifest.to_dict()
 
     def test_to_dict_with_filenames_does_not_raise(self):
-        self._create_data_and_metadata_files()
+        self.create_data_and_metadata_files()
         self.manifest.to_dict()
 
     def test_to_dict_with_data_files_populates_field_data(self):
@@ -200,12 +198,12 @@ class TestManifest(unittest.TestCase):
             os.remove(name)
 
     def test_to_file_creates_yaml_file(self):
-        self._create_data_and_metadata_files()
+        self.create_data_and_metadata_files()
         self.manifest.to_file()
         self.assertTrue(os.path.exists(self.manifest_filename))
 
     def test_written_manifest_is_correct(self):
-        self._create_data_and_metadata_files()
+        self.create_data_and_metadata_files()
         self.manifest.to_file()
         with open(self.manifest_filename, 'r') as file:
             manifest_dict = yaml.safe_load(file)
@@ -216,7 +214,7 @@ class TestManifest(unittest.TestCase):
         self.assertTrue(callable(self.manifest.from_dict))
 
     def test_from_dict_sets_data_filenames(self):
-        self._create_data_and_metadata_files()
+        self.create_data_and_metadata_files()
         self.manifest.to_file()
         with open(self.manifest_filename, 'r') as file:
             manifest_dict = yaml.safe_load(file)
@@ -226,7 +224,7 @@ class TestManifest(unittest.TestCase):
                          new_manifest.data_filenames)
 
     def test_from_dict_sets_metadata_filenames(self):
-        self._create_data_and_metadata_files()
+        self.create_data_and_metadata_files()
         self.manifest.to_file()
         with open(self.manifest_filename, 'r') as file:
             manifest_dict = yaml.safe_load(file)
@@ -240,7 +238,7 @@ class TestManifest(unittest.TestCase):
         with open(metadata_filename_, 'w+') as f:
             f.write('')
         self.manifest.metadata_filenames.append(metadata_filename_)
-        self._create_data_and_metadata_files()
+        self.create_data_and_metadata_files()
         self.manifest.to_file()
         with open(self.manifest_filename, 'r') as file:
             manifest_dict = yaml.safe_load(file)
@@ -260,7 +258,7 @@ class TestManifest(unittest.TestCase):
             self.manifest.from_file(filename="foobar")
 
     def test_from_file_with_file_sets_properties_from_manifest(self):
-        self._create_data_and_metadata_files()
+        self.create_data_and_metadata_files()
         self.manifest.to_file()
         new_manifest = manifest.Manifest()
         new_manifest.from_file(self.manifest_filename)
@@ -269,7 +267,7 @@ class TestManifest(unittest.TestCase):
         self.assertEqual(new_manifest.to_dict(), manifest_dict)
 
     def test_from_file_sets_checksum(self):
-        self._create_data_and_metadata_files()
+        self.create_data_and_metadata_files()
         self.manifest.to_file()
         new_manifest = manifest.Manifest()
         new_manifest.from_file(self.manifest_filename)

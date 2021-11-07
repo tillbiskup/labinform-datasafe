@@ -13,6 +13,39 @@ In case of a dataset, the information contained ranges from general
 information on the dataset (LOI, whether it is complete) to the format of
 data and metadata to the actual file names and the checksums over data and
 data and metadata.
+
+As an example, the contents of a manifest file are shown below,
+for a fictitious dataset consisting of two (empty) files (data in ``test`` and
+metadata in ``test.info``):
+
+.. code-block:: yaml
+
+    format:
+      type: datasafe dataset manifest
+      version: 0.1.0.dev4
+    dataset:
+      loi: ''
+      complete: false
+    files:
+      metadata:
+      - name: test.info
+        format: info file
+        version: 0.1.0
+      data:
+        format: test
+        names:
+        - test
+      checksums:
+      - name: CHECKSUM
+        format: MD5 checksum
+        span: data, metadata
+        value: 020eb29b524d7ba672d9d48bc72db455
+      - name: CHECKSUM_data
+        format: MD5 checksum
+        span: data
+        value: 74be16979710d4c4e7c6647856088456
+
+
 """
 
 import collections
@@ -285,3 +318,18 @@ class Manifest:
         """
         checksum_generator = datasafe.checksum.Generator()
         return checksum_generator.generate(filenames=filenames)
+
+
+if __name__ == '__main__':
+    # Create Manifest.yaml file for demonstration purposes
+    data_filename = 'test'
+    metadata_filename = 'test.info'
+    for filename in [data_filename, metadata_filename]:
+        with open(filename, 'w+') as file:
+            file.write('')
+    manifest_ = Manifest()
+    manifest_.data_filenames = [data_filename]
+    manifest_.metadata_filenames = [metadata_filename]
+    manifest_.to_file()
+    for filename in [data_filename, metadata_filename]:
+        os.remove(filename)

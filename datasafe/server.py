@@ -3,6 +3,8 @@ import shutil
 import tempfile
 
 import datasafe.loi as loi_
+from datasafe.manifest import Manifest
+from datasafe.checksum import Generator
 
 
 class Error(Exception):
@@ -408,15 +410,14 @@ class StorageBackend:
     def check_integrity(self, path=''):
         if self.manifest_filename not in os.listdir(path):
             raise MissingContentError(message='No manifest file found.')
-        # Read (correct) manifest file into dict #manifest.from_file()
-        # retrieve list of data and metadata data_filenames from there
-        # create checksums
-        # compare checksums with stored ones
-        #
-        # TODO: Should better use a Manifest class that can be asked for the
-        #  respective information
+        manifest = Manifest()
+        manifest.from_file(os.path.join(path, self.manifest_filename))
+        checksum_generator = Generator()
+        data_checksum = checksum_generator.generate(manifest.data_filenames)
+        checksum = checksum_generator.generate(manifest.data_filenames +
+                                               manifest.metadata_filenames)
         integrity = {
-            'data': None, # Booleans
-            'all': None,
+            'data': data_checksum == manifest.data_checksum,
+            'all': checksum == manifest.checksum,
             }
         return integrity

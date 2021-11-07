@@ -30,5 +30,6 @@ class Client:
         .. todo::
             connect to server and retrieve dataset.
         """
+        # This is just to make the test run
         with open(os.path.join(tmpdir, 'MANIFEST.yaml'), 'w+') as file:
             file.write('')

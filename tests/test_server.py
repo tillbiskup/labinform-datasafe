@@ -4,6 +4,7 @@ import unittest
 
 import datasafe.loi as loi_
 import datasafe.server as server
+from datasafe.manifest import Manifest
 
 
 class TestBackend(unittest.TestCase):
@@ -42,10 +43,6 @@ class TestServer(unittest.TestCase):
         pass
 
 
-if __name__ == '__main__':
-    unittest.main()
-
-
 class TestStorageBackend(unittest.TestCase):
 
     def setUp(self):
@@ -61,18 +58,12 @@ class TestStorageBackend(unittest.TestCase):
         self.metadata_filename = 'bar.info'
 
     def tearDown(self):
-        if os.path.exists(self.path):
-            shutil.rmtree(self.path)
-        if os.path.exists(self.root):
-            shutil.rmtree(self.root)
-        if os.path.exists(self.tempdir):
-            shutil.rmtree(self.tempdir)
-        if os.path.exists(self.subdir):
-            shutil.rmtree(self.subdir)
-        if os.path.exists(self.data_filename):
-            os.remove(self.data_filename)
-        if os.path.exists(self.metadata_filename):
-            os.remove(self.metadata_filename)
+        for directory in [self.path, self.root, self.tempdir, self.subdir]:
+            if os.path.exists(directory):
+                shutil.rmtree(directory)
+        for filename in [self.data_filename, self.metadata_filename]:
+            if os.path.exists(filename):
+                os.remove(filename)
 
     def create_tmp_file(self):
         os.makedirs(self.tempdir)
@@ -89,10 +80,14 @@ class TestStorageBackend(unittest.TestCase):
         return contents
 
     def create_manifest_file(self, path=''):
-        with open(os.path.join(path, self.manifest_filename), 'w+') as f:
-            f.write('foo')
+        manifest = Manifest()
+        manifest.data_filenames = [os.path.join(path, self.data_filename)]
+        manifest.metadata_filenames = \
+            [os.path.join(path, self.metadata_filename)]
+        manifest.manifest_filename = os.path.join(path, self.manifest_filename)
+        manifest.to_file()
 
-    def _create_data_and_metadata_files(self, path=''):
+    def create_data_and_metadata_files(self, path=''):
         with open(os.path.join(path, self.data_filename), 'w+') as f:
             f.write('')
         with open(os.path.join(path, self.metadata_filename), 'w+') as f:
@@ -341,6 +336,7 @@ class TestStorageBackend(unittest.TestCase):
 
     def test_get_index_with_manifest_file_works(self):
         self.backend.create(self.path)
+        self.create_data_and_metadata_files(path=self.path)
         self.create_manifest_file(path=self.path)
         self.assertEqual(self.path, self.backend.get_index()[0])
 
@@ -351,30 +347,38 @@ class TestStorageBackend(unittest.TestCase):
 
     def test_check_integrity_returns_dict(self):
         self.backend.create(self.path)
+        self.create_data_and_metadata_files(path=self.path)
         self.create_manifest_file(path=self.path)
         self.assertIsInstance(self.backend.check_integrity(self.path), dict)
 
     def test_check_integrity_dict_contains_correct_fields(self):
         self.backend.create(self.path)
+        self.create_data_and_metadata_files(path=self.path)
         self.create_manifest_file(path=self.path)
         self.assertCountEqual(['data', 'all'], self.backend.check_integrity(
             self.path).keys())
 
     def test_check_integrity_returns_correct_answer_for_data(self):
         self.backend.create(self.path)
+        self.create_data_and_metadata_files(path=self.path)
         self.create_manifest_file(path=self.path)
-        self._create_data_and_metadata_files(path=self.path)
         integrity = self.backend.check_integrity(path=self.path)
-        self.assertEqual(True, integrity['data'])
+        self.assertTrue(integrity['data'])
+        self.assertTrue(integrity['all'])
 
-        # Create full contents of a manifest with correct checksum
-        # Check that checksum for data is correct
-        # Create checksum(s) from files
-        # Compare them to the stored ones. (Be robust with order of
-        # checksums, see manifest module)
-
-    @unittest.skip
-    def test_check_integrity_with_wrong_checksum_in_manifest_returns_false(self):
+    def test_check_integrity_w_wrong_checksum_in_manifest_returns_false(self):
+        self.backend.create(self.path)
+        self.create_data_and_metadata_files(path=self.path)
+        self.create_manifest_file(path=self.path)
         # Create manifest containing fantasy checksum(s)
-        # Check that integrity for one or both field(s) is False
-        pass
+        import oyaml as yaml
+        with open(os.path.join(self.path, self.manifest_filename), 'r') as file:
+            manifest_dict = yaml.safe_load(file)
+        manifest_dict['files']['checksums'][0]['value'] = 'foo'
+        manifest_dict['files']['checksums'][1]['value'] = 'bar'
+        with open(os.path.join(self.path, self.manifest_filename), 'w+') as f:
+            yaml.dump(manifest_dict, f)
+        # Check that integrity for both fields is False
+        integrity = self.backend.check_integrity(path=self.path)
+        self.assertFalse(integrity['data'])
+        self.assertFalse(integrity['all'])
