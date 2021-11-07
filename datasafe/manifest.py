@@ -324,12 +324,12 @@ if __name__ == '__main__':
     # Create Manifest.yaml file for demonstration purposes
     data_filename = 'test'
     metadata_filename = 'test.info'
-    for filename in [data_filename, metadata_filename]:
-        with open(filename, 'w+') as file:
-            file.write('')
-    manifest_ = Manifest()
-    manifest_.data_filenames = [data_filename]
-    manifest_.metadata_filenames = [metadata_filename]
-    manifest_.to_file()
-    for filename in [data_filename, metadata_filename]:
-        os.remove(filename)
+    for filename_ in [data_filename, metadata_filename]:
+        with open(filename_, 'w+') as f:
+            f.write('')
+    manifest_obj = Manifest()
+    manifest_obj.data_filenames = [data_filename]
+    manifest_obj.metadata_filenames = [metadata_filename]
+    manifest_obj.to_file()
+    for filename_ in [data_filename, metadata_filename]:
+        os.remove(filename_)

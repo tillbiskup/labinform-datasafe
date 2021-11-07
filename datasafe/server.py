@@ -90,12 +90,6 @@ class StorageBackend:
     manifest_filename : :class:`str`
         name of manifest file
 
-
-    .. todo::
-        Needs the following further methods:
-
-        * check_integrity - check stored checksums against actual files
-
     """
     def __init__(self):
         self.checksum_filename = 'CHECKSUM'
@@ -408,6 +402,24 @@ class StorageBackend:
         return paths
 
     def check_integrity(self, path=''):
+        """
+        Check integrity of dataset, comparing stored with generated checksums.
+
+        To check the integrity of a dataset, the checksums stored within the
+        manifest file will be compared to newly generated checksums over
+        data and metadata together as well as over data alone.
+
+        Parameters
+        ----------
+        path : :class:`str`
+            path to the dataset the integrity should be checked for
+
+        Returns
+        -------
+        integrity : :class:`dict`
+            dict with fields ``data`` and ``all`` containing boolean values
+
+        """
         if self.manifest_filename not in os.listdir(path):
             raise MissingContentError(message='No manifest file found.')
         manifest = Manifest()
