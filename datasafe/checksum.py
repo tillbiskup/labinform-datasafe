@@ -1,4 +1,6 @@
 """
+Checksums for datasafe items.
+
 Checksums fulfil a twofold function within the dataset component of the
 LabInform framework: They allow for easily checking whether the data items
 of a dataset entry have been corrupted on transfer or during time, and they

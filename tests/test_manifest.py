@@ -14,7 +14,7 @@ class TestManifest(unittest.TestCase):
         self.manifest = manifest.Manifest()
         self.manifest_filename = 'MANIFEST.yaml'
         self.data_filename = 'foo'
-        self.metadata_filename = 'bar.info'
+        self.metadata_filename = 'bar'
         self.manifest.data_filenames = [self.data_filename]
         self.manifest.metadata_filenames = [self.metadata_filename]
 
@@ -234,7 +234,7 @@ class TestManifest(unittest.TestCase):
                          new_manifest.metadata_filenames)
 
     def test_from_dict_with_multiple_metadata_filenames_sets_metadata(self):
-        metadata_filename_ = 'blub.info'
+        metadata_filename_ = 'blub'
         with open(metadata_filename_, 'w+') as f:
             f.write('')
         self.manifest.metadata_filenames.append(metadata_filename_)
@@ -278,6 +278,81 @@ class TestManifest(unittest.TestCase):
                 self.assertEqual(checksum['value'], new_manifest.checksum)
             else:
                 self.assertEqual(checksum['value'], new_manifest.data_checksum)
+
+
+class TestFormatDetector(unittest.TestCase):
+
+    def setUp(self):
+        self.detector = manifest.FormatDetector()
+        self.metadata_filename = ''
+
+    def tearDown(self):
+        if os.path.exists(self.metadata_filename):
+            os.remove(self.metadata_filename)
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_has_data_filenames_attribute(self):
+        self.assertTrue(hasattr(self.detector, 'data_filenames'))
+        self.assertIsInstance(self.detector.data_filenames, list)
+
+    def test_has_metadata_filenames_attribute(self):
+        self.assertTrue(hasattr(self.detector, 'metadata_filenames'))
+        self.assertIsInstance(self.detector.metadata_filenames, list)
+
+    def test_has_metadata_format_method(self):
+        self.assertTrue(hasattr(self.detector, 'metadata_format'))
+        self.assertTrue(callable(self.detector.metadata_format))
+
+    def test_has_data_format_method(self):
+        self.assertTrue(hasattr(self.detector, 'data_format'))
+        self.assertTrue(callable(self.detector.data_format))
+
+    def test_metadata_format_without_metadata_raises(self):
+        message = 'No metadata filenames'
+        with self.assertRaisesRegex(manifest.MissingFileError, message):
+            self.detector.metadata_format()
+
+    def test_metadata_format_returns_list_of_ordered_dicts(self):
+        self.detector.metadata_filenames = ['foo']
+        self.assertIsInstance(self.detector.metadata_format(), list)
+        self.assertIsInstance(self.detector.metadata_format()[0],
+                              collections.OrderedDict)
+
+    def test_metadata_format_dict_contains_filename(self):
+        self.detector.metadata_filenames = ['foo']
+        metadata_info = self.detector.metadata_format()
+        self.assertEqual(self.detector.metadata_filenames[0],
+                         metadata_info[0]['name'])
+
+    def test_metadata_format_parses_info_file(self):
+        self.metadata_filename = 'test.info'
+        self.detector.metadata_filenames = [self.metadata_filename]
+        with open(self.metadata_filename, 'w+') as file:
+            file.write('cwEPR Info file - v. 0.1.4 (2020-01-21)')
+        metadata_info = self.detector.metadata_format()
+        self.assertEqual('cwEPR Info file', metadata_info[0]['format'])
+        self.assertEqual('0.1.4', metadata_info[0]['version'])
+
+    def test_metadata_format_parses_yaml_file(self):
+        self.metadata_filename = 'test.yaml'
+        self.detector.metadata_filenames = [self.metadata_filename]
+        info_dict = {'format': {'type': 'info file', 'version': '0.1.2'}}
+        with open(self.metadata_filename, 'w+') as file:
+            yaml.dump(info_dict, file)
+        metadata_info = self.detector.metadata_format()
+        self.assertEqual('info file', metadata_info[0]['format'])
+        self.assertEqual('0.1.2', metadata_info[0]['version'])
+
+    def test_data_format_without_metadata_raises(self):
+        message = 'No data filenames'
+        with self.assertRaisesRegex(manifest.MissingFileError, message):
+            self.detector.data_format()
+
+    def test_data_format_returns_string(self):
+        self.detector.data_filenames = ['foo']
+        self.assertIsInstance(self.detector.data_format(), str)
 
 
 if __name__ == '__main__':

@@ -55,7 +55,7 @@ class TestStorageBackend(unittest.TestCase):
         self.checksum_filename = 'CHECKSUM'
         self.checksum_data_filename = 'CHECKSUM.data'
         self.data_filename = 'foo'
-        self.metadata_filename = 'bar.info'
+        self.metadata_filename = 'bar'
 
     def tearDown(self):
         for directory in [self.path, self.root, self.tempdir, self.subdir]:

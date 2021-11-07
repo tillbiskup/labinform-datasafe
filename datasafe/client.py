@@ -1,3 +1,24 @@
+"""
+Client components of the LabInform datasafe.
+
+Clients of the datasafe connect to a server component of the datasafe and
+are responsible for a series of different tasks:
+
+* Deposit and retrieve items (currently: datasets) to and from the datasafe.
+
+* Prepare items (currently: datasets) for depositing in the datasafe.
+
+  For datasets, this means that a manifest needs to be written. And for a
+  manifest to be written, at least the format of the actual data needs to be
+  provided. In case of info or YAML files as metadata files,
+  the :class:`datasafe.manifest.Manifest` class should be able to
+  auto-detect the format and version of the metadata format,
+  using :class:`datasafe.manifest.FormatDetector`. See there for details.
+
+Probably, clients will be able to work both, with local servers and those
+using the HTTP(S) protocol.
+
+"""
 import os
 import tempfile
 

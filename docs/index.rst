@@ -29,7 +29,7 @@ A list of features, not all implemented yet but aimed at for the first public re
 
 And to make it even more convenient for users and future-proof:
 
-* Open source project written in Python (>= 3.5)
+* Open source project written in Python (>= 3.7)
 
 * Developed fully test-driven
 

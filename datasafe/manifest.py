@@ -1,4 +1,6 @@
 """
+Manifests for datasafe items.
+
 Each item (currently: dataset) stored in the datasafe is accompanied by a
 file containing a lot of (automatically obtained) useful information about
 the item stored. Typically, the YAML format is used for the manifest file,
@@ -14,7 +16,7 @@ information on the dataset (LOI, whether it is complete) to the format of
 data and metadata to the actual file names and the checksums over data and
 data and metadata.
 
-As an example, the contents of a manifest file are shown below,
+As an example, the contents of a manifest file for a dataset are shown below,
 for a fictitious dataset consisting of two (empty) files (data in ``test`` and
 metadata in ``test.info``):
 
@@ -22,7 +24,7 @@ metadata in ``test.info``):
 
     format:
       type: datasafe dataset manifest
-      version: 0.1.0.dev4
+      version: 0.1.0
     dataset:
       loi: ''
       complete: false
@@ -73,7 +75,7 @@ class MissingInformationError(Error):
     """
 
     def __init__(self, message=''):
-        super().__init__()
+        super().__init__(message)
         self.message = message
 
 
@@ -88,7 +90,7 @@ class MissingFileError(Error):
     """
 
     def __init__(self, message=''):
-        super().__init__()
+        super().__init__(message)
         self.message = message
 
 
@@ -118,6 +120,9 @@ class Manifest:
     manifest_filename : :class:`str`
         filename for Manifest file, defaults to ``MANIFEST.yaml``
 
+    format_detector : :class:`datasafe.manifest.FormatDetector`
+        Helper class to detect file formats
+
     """
 
     def __init__(self):
@@ -126,6 +131,7 @@ class Manifest:
         self.data_checksum = ''
         self.checksum = ''
         self.manifest_filename = 'MANIFEST.yaml'
+        self.format_detector = FormatDetector()
 
     def from_dict(self, manifest_dict):
         """
@@ -207,11 +213,8 @@ class Manifest:
         for filename in self.data_filenames:
             # noinspection PyTypeChecker
             manifest_['files']['data']['names'].append(filename)
-        manifest_['files']['data']['format'] = self._get_data_format(
-            self.data_filenames)
-        for filename in self.metadata_filenames:
-            metadata_info = self._get_metadata_info(filename)
-            manifest_['files']['metadata'].append(metadata_info)
+        manifest_['files']['data']['format'] = self._get_data_format()
+        manifest_['files']['metadata'] = self._get_metadata_info()
         manifest_['files']['checksums'].append(collections.OrderedDict([
             ('name', 'CHECKSUM'),
             ('format', 'MD5 checksum'),
@@ -252,7 +255,7 @@ class Manifest:
         """
         manifest_format = collections.OrderedDict([
             ("type", "datasafe dataset manifest"),
-            ("version", "0.1.0.dev4"),
+            ("version", "0.1.0"),
         ])
         manifest_dataset = collections.OrderedDict([
             ("loi", ""),
@@ -271,35 +274,15 @@ class Manifest:
         manifest_ = collections.OrderedDict(manifest_keys_level_one)
         return manifest_
 
-    @staticmethod
-    def _get_metadata_info(filename=''):
-        """
-        Retrieve general information about metadata file
+    def _get_metadata_info(self):
+        """ Retrieve general information about metadata file """
+        self.format_detector.metadata_filenames = self.metadata_filenames
+        return self.format_detector.metadata_format()
 
-        .. todo::
-            Needs to be converted into a factory method calling the relevant
-            metadata importers and retrieve the actual information about
-            format and version from the metadata file itself.
-
-        """
-        metadata_info = collections.OrderedDict([
-            ('name', filename),
-            ('format', 'info file'),
-            ('version', '0.1.0')
-        ])
-        return metadata_info
-
-    @staticmethod
-    def _get_data_format(filenames=None):
-        """
-        Retrieve format of data files
-
-        .. todo::
-            Needs to be converted into a factory method.
-
-        """
-        data_format = 'test'
-        return data_format
+    def _get_data_format(self):
+        """ Retrieve format of data files """
+        self.format_detector.data_filenames = self.data_filenames
+        return self.format_detector.data_format()
 
     @staticmethod
     def _generate_checksum(filenames=None):
@@ -318,6 +301,119 @@ class Manifest:
         """
         checksum_generator = datasafe.checksum.Generator()
         return checksum_generator.generate(filenames=filenames)
+
+
+class FormatDetector:
+    """
+    Helper class to detect file formats.
+
+    For real use, you need to implement a class subclassing this class
+    providing real information, as this class only provides dummy test output.
+
+    As each format has its own peculiarities, you need to come up with
+    sensible ways to actually detect both, metadata and data formats.
+    Generally, it should be sufficient to provide an implementation for the
+    private method :meth:`_detect_data_format` that returns the actual data
+    format as string.
+
+    However, at least info files and YAML files (with a certain structure)
+    as metadata files are supported out of the box. To add detectors for
+    further metadata formats, add methods with the naming scheme
+    ``_parse_<extension>`` with "<extension>" being the file extension of
+    your metadata file.
+
+    For YAML files, requirements are that there exists a key "format" at the
+    top level of the file that contains the keys "type" and "version".
+
+    Attributes
+    ----------
+    data_filenames : :class:`list`
+        filenames of data files
+
+    metadata_filenames : :class:`list`
+        filenames of metadata files
+
+    """
+
+    def __init__(self):
+        self.data_filenames = []
+        self.metadata_filenames = []
+
+    def metadata_format(self):
+        """
+        Obtain format of the metadata file(s).
+
+        Generally, the metadata format is checked using the file extension.
+
+        Two formats are automatically detected: info (.info) and YAML (
+        .yaml). To support other formats, you need to provide methods with
+        the naming scheme ``_parse_<extension>`` with "<extension>" being
+        the file extension of your metadata file.
+
+        Returns
+        -------
+        metadata_info : class:`list`
+            List of ordered dicts (:class:`collections.OrderedDict`) each
+            containing "name", "format", and "version" as fields.
+
+        """
+        if not self.metadata_filenames:
+            raise MissingFileError(message='No metadata filenames')
+        metadata_info = []
+        for filename in self.metadata_filenames:
+            extension = os.path.splitext(filename)[1]
+            try:
+                parse_method = getattr(self, '_parse_' + extension[1:])
+                format_, version = parse_method(filename=filename)
+            except AttributeError:
+                format_ = 'test'
+                version = '0.1.0'
+            info = collections.OrderedDict([
+                ('name', filename),
+                ('format', format_),
+                ('version', version)
+            ])
+            metadata_info.append(info)
+        return metadata_info
+
+    @staticmethod
+    def _parse_info(filename=''):
+        with open(filename, 'r') as file:
+            info_line = file.readline()
+        info_parts = info_line.split(' - ')
+        _, version, _ = info_parts[1].split()
+        format_ = info_parts[0].strip()
+        return format_, version
+
+    @staticmethod
+    def _parse_yaml(filename=''):
+        with open(filename, 'r') as file:
+            info = yaml.safe_load(file)
+        format_ = info['format']['type']
+        version = info['format']['version']
+        return format_, version
+
+    def data_format(self):
+        """
+        Obtain format of the data file(s).
+
+        You need to subclasses this class and override the non-public method
+        :meth:`_detect_data_format` to actually detect the file format, as this
+        method only provides "test" as format.
+
+        Returns
+        -------
+        data_format : :class:`str`
+            Name of the format of the data files
+
+        """
+        if not self.data_filenames:
+            raise MissingFileError(message='No data filenames')
+        return self._detect_data_format()
+
+    # noinspection PyMethodMayBeStatic
+    def _detect_data_format(self):
+        return 'test'
 
 
 if __name__ == '__main__':

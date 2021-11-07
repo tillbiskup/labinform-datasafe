@@ -1,4 +1,6 @@
 """
+Lab Object Identifiers (LOIs)
+
 Accessing objects in a laboratory via unique identifiers (here: a *Lab Object
 Identifier*, LOI) is a key concept of the LabInform framework. "Object" may
 be thought of in a very broad and general way, ranging from (physically
@@ -41,7 +43,7 @@ class MissingLoiError(Error):
     """
 
     def __init__(self, message=''):
-        super().__init__()
+        super().__init__(message)
         self.message = message
 
 
@@ -56,7 +58,7 @@ class InvalidLoiError(Error):
     """
 
     def __init__(self, message=''):
-        super().__init__()
+        super().__init__(message)
         self.message = message
 
 

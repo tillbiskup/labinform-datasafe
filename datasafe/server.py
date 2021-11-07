@@ -1,3 +1,41 @@
+"""
+Server components of the LabInform datasafe.
+
+Different server components can be distinguished:
+
+* user-facing components
+* backend components
+
+Note that "user" is a broad term here, meaning any person and program
+accessing the datasafe. In this respect, the clients contained in
+:mod:`datasafe.client` are users as well.
+
+The backend components deal with the actual storage of data (in the file
+system) and the access to them.
+
+Eventually, there will be a HTTP interface as user-facing component, probably
+implemented using flask or similar, that can be run in a docker container or
+on a local network.
+
+But probably, there will be possibilities to access the datasafe locally as
+well, without needing to fire up a HTTP server. This could even include a
+CLI, although the CLI may be much more generic, allowing both, local and
+HTTP access.
+
+Some things that need to be decided about:
+
+* Where to store configuration?
+
+  At least the base directory for the datasafe needs to be defined in some way.
+
+  Other configuration values could be the issuer (number after the "42." of
+  a LOI)
+
+Perhaps one could store the configuration in a separate configuration class
+to start with and see how this goes...
+
+"""
+
 import os
 import shutil
 import tempfile
@@ -24,7 +62,7 @@ class MissingPathError(Error):
     """
 
     def __init__(self, message=''):
-        super().__init__()
+        super().__init__(message)
         self.message = message
 
 
@@ -39,7 +77,7 @@ class MissingContentError(Error):
     """
 
     def __init__(self, message=''):
-        super().__init__()
+        super().__init__(message)
         self.message = message
 
 
@@ -80,7 +118,14 @@ class Server:
 
 class StorageBackend:
     """
-    File system backend for the datasafe, actually handling directories
+    File system backend for the datasafe, actually handling directories.
+
+    The storage backend does not care at all about LOIs, but only operates
+    on paths within the file system. As far as datasets are concerned,
+    the backend requires a manifest file to accompany each dataset. However,
+    it does *not* create such file. Furthermore, data are deposited (using
+    :meth:`deposit`) and retrieved (using :meth:`retrieve`) as streams
+    containing the contents of ZIP archives.
 
     Attributes
     -----------
@@ -250,6 +295,7 @@ class StorageBackend:
         ----------
         path : :class:`str`
             path to deposit content to
+
         content : :class:`bytes`
             byte representation of a ZIP archive containing the contents to
             be extracted in the directory corresponding to path
@@ -258,6 +304,7 @@ class StorageBackend:
         ------
         datasafe.directory.MissingPathError
             Raised if no path is provided
+
         datasafe.directory.MissingContentError
             Raised if no content is provided
 
@@ -294,6 +341,7 @@ class StorageBackend:
         ------
         datasafe.directory.MissingPathError
             Raised if no path is provided
+
         OSError
             Raised if path does not exist
 
@@ -341,6 +389,12 @@ class StorageBackend:
         data and metadata, the other covering only the data. Usually,
         the former is returned. If you need to get the checksum covering the
         data only, set the second parameter ``data`` to ``True``.
+
+        .. todo::
+
+            Decide whether checksums are stored in files or whether they are
+            only stored in the Manifest file and retrieved from there. The
+            latter seems more plausible.
 
         Parameters
         ----------

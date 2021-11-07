@@ -26,10 +26,9 @@ setuptools.setup(
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
         "Intended Audience :: Science/Research",
@@ -38,5 +37,5 @@ setuptools.setup(
     ],
     install_requires=[
     ],
-    python_requires='>=3.5',
+    python_requires='>=3.7',
 )
