@@ -481,6 +481,9 @@ class Parser(LoiMixin):
     """
     def __init__(self):
         super().__init__()
+        self.issuer = ''
+        self.type = ''
+        self.id = ''
 
     def parse(self, loi=''):
         """
@@ -510,14 +513,32 @@ class Parser(LoiMixin):
         checker = LoiChecker()
         if not checker.check(loi):
             raise InvalidLoiError('String is not a valid LOI.')
+        self.issuer = loi.split(self.separator)[0].split(
+                self.root_issuer_separator)[1]
+        self.type = loi.split(self.separator)[1]
+        self.id = self.separator.join(loi.split(self.separator)[2:])
         parser_dict = {
             'root': loi.split(self.separator)[0].split(
                 self.root_issuer_separator)[0],
-            'issuer': loi.split(self.separator)[0].split(
-                self.root_issuer_separator)[1],
-            'type': loi.split(self.separator)[1],
-            'id': self.separator.join(loi.split(self.separator)[2:]),
+            'issuer': self.issuer,
+            'type': self.type,
+            'id': self.id,
         }
 
         return parser_dict
 
+    def split_id(self):
+        """
+        Split id part of LOI at separator and return list of components.
+
+        Returns
+        -------
+        id_parts : :class:`list`
+            List (of strings) with parts of ID split at separator
+
+            Empty list if no LOI has been parsed
+        """
+        id_parts = []
+        if self.id:
+            id_parts = self.id.split(self.separator)
+        return id_parts

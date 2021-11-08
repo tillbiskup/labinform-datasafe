@@ -171,6 +171,26 @@ class TestLoiParser(unittest.TestCase):
         with self.assertRaises(loi_.InvalidLoiError):
             self.parser.parse('FOO')
 
+    def test_parse_sets_issuer(self):
+        self.parser.parse(self.loi)
+        self.assertEqual('1001', self.parser.issuer)
+
+    def test_parse_sets_real_issuer(self):
+        self.parser.parse(self.loi.replace('1001', '1002'))
+        self.assertEqual('1002', self.parser.issuer)
+
+    def test_parse_sets_issuer_length_independent(self):
+        self.parser.parse(self.loi.replace('1001', '1001001'))
+        self.assertEqual('1001001', self.parser.issuer)
+
+    def test_parse_sets_type(self):
+        self.parser.parse(self.loi)
+        self.assertEqual('ds', self.parser.type)
+
+    def test_parse_sets_id(self):
+        self.parser.parse(self.loi)
+        self.assertEqual('exp/sa/42/cwepr/1', self.parser.id)
+
     def test_parse_returns_dict(self):
         self.assertIsInstance(self.parser.parse(self.loi), dict)
 
@@ -202,6 +222,17 @@ class TestLoiParser(unittest.TestCase):
     def test_parse_returns_id(self):
         dict_ = self.parser.parse(self.loi)
         self.assertEqual(dict_['id'], 'exp/sa/42/cwepr/1')
+
+    def test_split_id_returns_list(self):
+        self.assertIsInstance(self.parser.split_id(), list)
+
+    def test_split_id_without_parsed_loi_returns_empty_list(self):
+        self.assertEqual([], self.parser.split_id())
+
+    def test_split_id_wit_parsed_loi_returns_id_parts(self):
+        self.parser.parse(self.loi)
+        self.assertEqual(self.parser.id.split(self.parser.separator),
+                         self.parser.split_id())
 
 
 if __name__ == '__main__':
