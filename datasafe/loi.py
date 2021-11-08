@@ -237,7 +237,8 @@ class LoiChecker(AbstractLoiChecker):
     Begin of the cascading chain to validate a given LOI. Checking starts
     with the first part of the LOI that should start with 42. Following,
     the data type will be surveyed and depending on the result, further
-    downstream checkers will be involved. Returns `True` if string is valid LOI.
+    downstream checkers will be involved. Returns `True` if string is valid 
+    LOI.
 
     Attributes
     ----------

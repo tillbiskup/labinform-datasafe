@@ -78,10 +78,10 @@ class Generator:
         """
         Create checksum for list of strings
 
-        The strings will be sorted before generating the checksum. Hence, if you
-        want to create a checksum of checksums (e.g., for a checksum of several
-        files), sorting is independent of the data_filenames and only depends on the
-        actual file contents, resulting in stable hashes.
+        The strings will be sorted before generating the checksum. Hence,
+        if you want to create a checksum of checksums (e.g., for a checksum
+        of several files), sorting is independent of the data_filenames and
+        only depends on the actual file contents, resulting in stable hashes.
 
         Parameters
         ----------
@@ -106,8 +106,8 @@ class Generator:
 
         For a single file, the checksum will be generated of its content.
 
-        For a list of files, for each file, the checksum of its contents will be
-        generated and afterwards the checksum over the checksums.
+        For a list of files, for each file, the checksum of its contents
+        will be generated and afterwards the checksum over the checksums.
 
         The checksums of the individual files will be sorted before generating
         the final checksum. Hence, sorting is independent of the data_filenames

@@ -79,21 +79,6 @@ class MissingInformationError(Error):
         self.message = message
 
 
-class MissingFileError(Error):
-    """Exception raised when required file does not exist
-
-    Attributes
-    ----------
-    message : :class:`str`
-        explanation of the error
-
-    """
-
-    def __init__(self, message=''):
-        super().__init__(message)
-        self.message = message
-
-
 class Manifest:
     """
     Representation of the information contained in a manifest file
@@ -101,7 +86,8 @@ class Manifest:
     A file named ``MANIFEST.yaml`` contains relevant information about the
     data storage of a single measurement. Beside the type and format of the
     ``MANIFEST.yaml`` itself, it contains the LOI of the dataset, the names,
-    format and versions of data and metadata files and the respective checksums.
+    format and versions of data and metadata files and the respective
+    checksums.
 
     Attributes
     ----------
@@ -168,14 +154,14 @@ class Manifest:
         ------
         MissingInformationError
             Raised if no filename to read from is provided
-        MissingFileError
+        FileNotFoundError
             Raised if file to read from does not exist on the file system
 
         """
         if not filename:
             raise MissingInformationError(message="No filename provided")
         if not os.path.exists(filename):
-            raise MissingFileError(message="File does not exist")
+            raise FileNotFoundError("File does not exist")
         with open(filename, 'r') as file:
             manifest_dict = yaml.safe_load(file)
         self.from_dict(manifest_dict)
@@ -192,23 +178,22 @@ class Manifest:
         Raises
         ------
         MissingInformationError
-            Raised if either :attr:`data_filenames` or
-            :attr:`metadata_filenames` is empty
-        MissingFileError
+            Raised if :attr:`data_filenames` is empty
+        FileNotFoundError
             Raised if any of the files listed in either
             :attr:`data_filenames` or :attr:`metadata_filenames` does not
             exist on the file system
         """
         if not self.data_filenames:
             raise MissingInformationError(message='Data filenames missing')
-        if not self.metadata_filenames:
-            raise MissingInformationError(message='Metadata filenames missing')
         for filename in self.data_filenames:
             if not os.path.exists(filename):
-                raise MissingFileError(message='data file(s) not existent')
+                raise FileNotFoundError('Data file %s does not exist.' %
+                                        filename)
         for filename in self.metadata_filenames:
             if not os.path.exists(filename):
-                raise MissingFileError(message='metadata file(s) not existent')
+                raise FileNotFoundError('Metadata file %s does not exist' %
+                                        filename)
         manifest_ = self._create_manifest_dict()
         for filename in self.data_filenames:
             # noinspection PyTypeChecker
@@ -333,6 +318,12 @@ class FormatDetector:
     metadata_filenames : :class:`list`
         filenames of metadata files
 
+
+    Raises
+    ------
+    FileNotFoundError
+        Raised if no data file(s) are provided
+
     """
 
     def __init__(self):
@@ -356,9 +347,10 @@ class FormatDetector:
             List of ordered dicts (:class:`collections.OrderedDict`) each
             containing "name", "format", and "version" as fields.
 
+            If no metadata filenames are provided in
+            :attr:`metadata_filenames`, an empty list is returned.
+
         """
-        if not self.metadata_filenames:
-            raise MissingFileError(message='No metadata filenames')
         metadata_info = []
         for filename in self.metadata_filenames:
             extension = os.path.splitext(filename)[1]
@@ -406,9 +398,15 @@ class FormatDetector:
         data_format : :class:`str`
             Name of the format of the data files
 
+
+        Raises
+        ------
+        FileNotFoundError
+            Raised if no data file(s) are provided
+
         """
         if not self.data_filenames:
-            raise MissingFileError(message='No data filenames')
+            raise FileNotFoundError('No data filenames')
         return self._detect_data_format()
 
     # noinspection PyMethodMayBeStatic
