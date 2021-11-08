@@ -158,6 +158,7 @@ class TestStorageBackend(unittest.TestCase):
 
     def setUp(self):
         self.backend = server.StorageBackend()
+        self.backend.root_directory = ''
         self.path = 'path'
         self.subdir = 'bla'
         self.root = 'root'

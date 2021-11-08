@@ -40,6 +40,7 @@ import os
 import shutil
 import tempfile
 
+import datasafe.config as config
 import datasafe.loi as loi_
 from datasafe.manifest import Manifest
 from datasafe.checksum import Generator
@@ -83,7 +84,7 @@ class MissingContentError(Error):
 
 class Server:
     """
-    Provide the server part of the datasafe.
+    Server part of the datasafe.
 
     The server interacts with the storage backend to store and retrieve
     contents and provides the user interface.
@@ -169,7 +170,7 @@ class Server:
         Parameters
         ----------
         loi : :class:`str`
-            LOI for which storage should be created
+            LOI the storage should be created for
 
         content : :class:`bytes`
             byte representation of a ZIP archive containing the contents to
@@ -203,7 +204,7 @@ class Server:
         Parameters
         ----------
         loi : :class:`str`
-            LOI for which storage should be created
+            LOI the data should be downloaded for
 
         Returns
         -------
@@ -260,10 +261,13 @@ class StorageBackend:
 
     """
     def __init__(self):
-        self.checksum_filename = 'CHECKSUM'
-        self.checksum_data_filename = 'CHECKSUM.data'
-        self.manifest_filename = 'MANIFEST.yaml'
-        self.root_directory = ''
+        self.config = config.StorageBackend()
+        self.checksum_filename = self.config.checksum_filename or 'CHECKSUM'
+        self.checksum_data_filename =\
+            self.config.checksum_data_filename or 'CHECKSUM.data'
+        self.manifest_filename = \
+            self.config.manifest_filename or 'MANIFEST.yaml'
+        self.root_directory = self.config.root_directory or ''
 
     def working_path(self, path=''):
         """

@@ -12,7 +12,9 @@ module.
 """
 
 
+import contextlib
 import importlib
+import os
 
 
 def object_from_name(module_name='', class_name=''):
@@ -38,3 +40,45 @@ def object_from_name(module_name='', class_name=''):
     # get the class, will raise AttributeError if class cannot be found
     class_ = getattr(module, class_name)
     return class_()
+
+
+@contextlib.contextmanager
+def change_working_dir(path=''):  # pylint: disable=redefined-outer-name
+    """
+    Context manager for temporarily changing the working directory.
+
+    Sometimes it is necessary to temporarily change the working directory,
+    but one would like to ensure that the directory is reverted even in case
+    an exception is raised.
+
+    Due to its nature as a context manager, this function can be used with a
+    ``with`` statement. See below for an example.
+
+
+    Parameters
+    ----------
+    path : :class:`str`
+        Path the current working directory should be changed to.
+
+
+    Examples
+    --------
+    To temporarily change the working directory:
+
+    .. code-block::
+
+        with change_working_dir(os.path.join('some', 'path')):
+            # Do something that may raise an exception
+
+    This can come in quite handy in case of tests.
+
+
+    .. versionadded:: 0.6
+
+    """
+    oldpwd = os.getcwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(oldpwd)
