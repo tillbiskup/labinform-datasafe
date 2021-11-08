@@ -97,24 +97,25 @@ class AbstractChecker:
     :meth:`check`. This method returns a Boolean value depending on the
     test results.
     """
+
     def check(self, string):
         """
-       Return result of private method :meth:`_check`
+        Return result of private method :meth:`_check`
 
-       Parameters
-       ----------
-       string : :class:`str`
+        Parameters
+        ----------
+        string : :class:`str`
            string to check
 
-       Returns
-       -------
-       : :class:`bool`
+        Returns
+        -------
+        : :class:`bool`
            Bool True if string fulfills criteria.
-       """
+        """
         return self._check(string)
 
     def _check(self, string):
-        pass
+        return False
 
 
 class InListChecker(AbstractChecker):
@@ -126,6 +127,7 @@ class InListChecker(AbstractChecker):
     list : :class:`list`
         List of strings that are possible options for the given string.
     """
+
     def __init__(self):
         self.list = None
 
@@ -187,16 +189,36 @@ class AbstractLoiChecker(LoiMixin):
 
     This class contains the public method :meth:`check` which calls the private
     method :meth:`_check` that is to be overwritten in derived checkers.
-
-    Attributes
-    ----------
-    next_checker: :class:`str`
-        Next checker class that should be called.
-
     """
     def __init__(self):
         super().__init__()
-        self.next_checker = None
+        self._ignore_check = ''
+        self._next_checker = None
+
+    @property
+    def ignore_check(self):
+        """Check that should be ignored."""
+        return self._ignore_check
+
+    @ignore_check.setter
+    def ignore_check(self, ignore_check):
+        self._ignore_check = ignore_check
+        if ignore_check and self._next_checker:
+            self._next_checker.ignore_check = ignore_check
+            self.next_checker = self._next_checker
+
+    @property
+    def next_checker(self):
+        """Next checker class that should be called."""
+        return self._next_checker
+
+    @next_checker.setter
+    def next_checker(self, next_checker):
+        if not self.ignore_check or self.ignore_check not in str(next_checker):
+            self._next_checker = next_checker
+            self._next_checker.ignore_check = self.ignore_check
+        else:
+            self._next_checker = None
 
     def check(self, string):
         """
@@ -239,11 +261,6 @@ class LoiChecker(AbstractLoiChecker):
     the data type will be surveyed and depending on the result, further
     downstream checkers will be involved. Returns `True` if string is valid 
     LOI.
-
-    Attributes
-    ----------
-    next_checker : :class:`str`
-        Defines checker class for the next part of the chain
     """
     def __init__(self):
         super().__init__()
@@ -511,6 +528,7 @@ class Parser(LoiMixin):
         if not loi:
             raise MissingLoiError('No LOI provided.')
         checker = LoiChecker()
+        checker.ignore_check = 'LoiDsChecker'
         if not checker.check(loi):
             raise InvalidLoiError('String is not a valid LOI.')
         self.issuer = loi.split(self.separator)[0].split(

@@ -150,6 +150,30 @@ class TestLoiChecker(unittest.TestCase):
         self.assertFalse(self.checker.check('42.1001/info/tb/project/foo?'))
         self.assertFalse(self.checker.check('42.1001/info/tb/project/FOO'))
 
+    def test_exp_loi_ignoring_wrong_ds(self):
+        self.checker.ignore_check = 'LoiDsChecker'
+        self.assertTrue(self.checker.check('42.1001/ds/foo'))
+
+    def test_exp_loi_ignoring_wrong_exp(self):
+        self.checker.ignore_check = 'LoiExpChecker'
+        self.assertTrue(self.checker.check('42.1001/ds/exp/foo'))
+
+    def test_exp_loi_ignoring_wrong_basa_number(self):
+        self.checker.ignore_check = 'BaSaNumberChecker'
+        self.assertTrue(self.checker.check('42.1001/ds/exp/sa/foo'))
+
+    def test_exp_loi_ignoring_wrong_exp_method(self):
+        self.checker.ignore_check = 'LoiExpMethodChecker'
+        self.assertTrue(self.checker.check('42.1001/ds/exp/sa/42/foo'))
+
+    def test_exp_loi_ignoring_wrong_measurement_number(self):
+        self.checker.ignore_check = 'LoiMeasurementNumberChecker'
+        self.assertTrue(self.checker.check('42.1001/ds/exp/sa/42/cwepr/foo'))
+
+    def test_exp_loi_ignoring_missing_measurement_number(self):
+        self.checker.ignore_check = 'LoiMeasurementNumberChecker'
+        self.assertTrue(self.checker.check('42.1001/ds/exp/sa/42/cwepr'))
+
 
 class TestLoiParser(unittest.TestCase):
     def setUp(self):

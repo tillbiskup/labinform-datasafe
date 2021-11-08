@@ -81,39 +81,162 @@ class MissingContentError(Error):
         self.message = message
 
 
-class Backend:
+class Server:
     """
-    Provide backend functionality for the server part of the datasafe.
+    Provide the server part of the datasafe.
 
-    The datasafe-server provides the actual file and directory structure
-    within the datasafe. It retrieves datasets, stores them and should check,
+    The server interacts with the storage backend to store and retrieve
+    contents and provides the user interface.
+
+    It retrieves datasets, stores them and should check,
     whether its content is complete and not compromised.
 
     The transfer occurs as bytes of the zipped dataset that is received by
     the server, decoded, unzipped, and archived into the correct directory.
 
-    .. todo::
-        Define and implement form of communication to pass commands from
-        client to server. Might be URL-like.
+    Attributes
+    ----------
+    storage : :class:`StorageBackend`
+
+    loi : :class:`datasafe.loi.Parser`
+
     """
-    def get(self, loi=''):
+
+    def __init__(self):
+        self.storage = StorageBackend()
+        self.loi = loi_.Parser()
+        self._loi_checker = loi_.LoiChecker()
+
+    def new(self, loi=''):
+        """
+        Create new LOI.
+
+        The storage corresponding to the LOI will be created and the LOI
+        returned if successful. This does, however, *not* add any data to
+        the datasafe. Therefore, calling :meth:`new` will usually be
+        followed by calling :meth:`upload` at some later point. On the other
+        hand, before calling :meth:`upload`, you *need to* call :meth:`new`
+        to create the new LOI storage space.
+
+        Parameters
+        ----------
+        loi : :class:`str`
+            LOI for which storage should be created
+
+        Returns
+        -------
+        loi : :class:`str`
+            LOI the storage has been created for
+
+        Raises
+        ------
+        datasafe.loi.MissingLoiError
+            Raised if no LOI is provided
+
+        datasafe.loi.InvalidLoiError
+            Raised if LOI is not valid (for the given operation)
+
+        """
         if not loi:
             raise loi_.MissingLoiError('No LOI provided.')
-        checker = loi_.LoiChecker()
-        if not checker.check(loi):
+        self._check_loi(loi=loi, validate=False)
+        id_parts = self.loi.split_id()
+        if id_parts[0] != 'exp':
+            raise loi_.InvalidLoiError('Loi ist not a valid experiment LOI')
+        self._loi_checker.ignore_check = 'LoiMeasurementNumberChecker'
+        if not self._loi_checker.check(loi):
             raise loi_.InvalidLoiError('String is not a valid LOI.')
-        if not self._is_datasafe_loi(loi):
+        date_checker = loi_.IsDateChecker()
+        if date_checker.check(id_parts[1]):
+            path = self.loi.separator.join(id_parts[0:3])
+        else:
+            path = self.loi.separator.join(id_parts[0:4])
+        if not self.storage.exists(path):
+            self.storage.create(path)
+        new_path = self.storage.create_next_id(path)
+        new_loi = self.loi.separator.join([
+            self.loi.root_issuer_separator.join([self.loi.root,
+                                                 self.loi.issuer]),
+            self.loi.type, *new_path.split(os.sep)])
+        return new_loi
+
+    def upload(self, loi='', content=None):
+        """
+        Upload data to the datasafe.
+
+        Data are upload as bytes of the zipped content (dataset).
+
+        Parameters
+        ----------
+        loi : :class:`str`
+            LOI for which storage should be created
+
+        content : :class:`bytes`
+            byte representation of a ZIP archive containing the contents to
+            be extracted in the directory corresponding to path
+
+        Raises
+        ------
+        datasafe.loi.MissingLoiError
+            Raised if no LOI is provided
+
+        ValueError
+            Raised if storage corresponding to LOI does not exist
+
+        FileExistsError
+            Raised if storage corresponding to LOI is not empty
+
+        """
+        if not loi:
+            raise loi_.MissingLoiError('No LOI provided.')
+        self._check_loi(loi=loi)
+        if not self.storage.exists(self.loi.id):
+            raise ValueError('LOI does not exist.')
+        if not self.storage.isempty(path=self.loi.id):
+            raise FileExistsError('Directory not empty')
+        self.storage.deposit(path=self.loi.id, content=content)
+
+    def download(self, loi=''):
+        """
+        Download data from the datasafe.
+
+        Parameters
+        ----------
+        loi : :class:`str`
+            LOI for which storage should be created
+
+        Returns
+        -------
+        content : :class:`bytes`
+            byte representation of a ZIP archive containing the contents of
+            the directory corresponding to path
+
+        Raises
+        ------
+        datasafe.loi.MissingLoiError
+            Raised if no LOI is provided
+
+        ValueError
+            Raised if storage corresponding to LOI does not exist or has no
+            content
+
+        """
+        if not loi:
+            raise loi_.MissingLoiError('No LOI provided.')
+        self._check_loi(loi=loi)
+        if not self.storage.exists(self.loi.id):
+            raise ValueError('LOI does not exist.')
+        if self.storage.isempty(self.loi.id):
+            raise ValueError('LOI does not have content.')
+        return self.storage.retrieve(path=self.loi.id)
+
+    def _check_loi(self, loi='', validate=True):
+        self.loi.parse(loi)
+        if not self.loi.type == 'ds':
             raise loi_.InvalidLoiError('LOI is not a datasafe LOI.')
-
-    @staticmethod
-    def _is_datasafe_loi(loi):
-        """ Check if LOI belongs to datasafe. """
-        parser = loi_.Parser()
-        return parser.parse(loi)['type'] == 'ds'
-
-
-class Server:
-    pass
+        if validate:
+            if not self._loi_checker.check(loi):
+                raise loi_.InvalidLoiError('String is not a valid LOI.')
 
 
 class StorageBackend:
@@ -281,7 +404,9 @@ class StorageBackend:
             path the subdirectory should be created in
 
         """
-        self.create(os.path.join(path, str(self.get_highest_id(path) + 1)))
+        new_path = os.path.join(path, str(self.get_highest_id(path) + 1))
+        self.create(new_path)
+        return new_path
 
     def deposit(self, path='', content=None):
         """
@@ -353,6 +478,7 @@ class StorageBackend:
                                           root_dir=self.working_path(path))
         with open(zip_archive, 'rb') as zip_file:
             contents = zip_file.read()
+        # noinspection PyTypeChecker
         os.remove(tmpfile[1] + '.zip')
         return contents
 

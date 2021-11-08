@@ -10,3 +10,4 @@ For later versions
 
 * Generalise and subclass :class:`datasafe.manifest.Manifest` to work with items different from datasets.
 
+* Backend worker updating a database with LOIs and corresponding checksums for easy checking of already existing datasets
