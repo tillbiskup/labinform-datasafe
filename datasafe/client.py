@@ -19,11 +19,13 @@ Probably, clients will be able to work both, with local servers and those
 using the HTTP(S) protocol.
 
 """
+import glob
 import os
 import shutil
 import tempfile
 
 import datasafe.loi as loi_
+from datasafe.manifest import Manifest
 import datasafe.server as server
 from datasafe.utils import change_working_dir
 
@@ -42,11 +44,17 @@ class Client:
 
     loi : :class:`datasafe.loi.Parser`
 
+    metadata_extensions : :class:`tuple`
+        File extensions that are regarded as metadata files
+
+        Default: ('.info', '.yaml', '.yml')
+
     """
 
     def __init__(self):
         self.server = server.Server()
         self.loi = loi_.Parser()
+        self.metadata_extensions = ('.info', '.yaml', '.yml')
         self._loi_checker = loi_.LoiChecker()
 
     def create(self, loi=''):
@@ -90,40 +98,64 @@ class Client:
             raise loi_.InvalidLoiError('String is not a valid LOI.')
         return self.server.new(loi=loi)
 
-    def create_manifest(self):
+    def create_manifest(self, filename='', path=''):
         """
         Create a manifest file for a given dataset.
 
         Things to decide about and implement:
 
-        * How to define which data belong to the dataset?
-
-          Perhaps two parameters: file and path; where file is a file
-          (base)name and path is a directory assumed to only contain files
-          belonging to a single dataset
-
-        * How to define which files are metadata and which are data files?
-
-          Probably, for info and yaml files (the latter excluding
-          Manifest.yaml), this can be done entirely automatically. Data
-          files will be the remaining files.
-
         * How to define or detect the file format?
 
-        """
-        pass
+        Parameters
+        ----------
+        filename : :class:`str`
+            Name of the file(s) belonging to a dataset.
 
-    def upload(self):
+            This is taken as pattern and extended with ".*" and used with
+            :func:`glob.glob` if given.
+
+        path : :class:`str`
+            File system path where to look for files belonging to a dataset
+
+        """
+        manifest = Manifest()
+        with change_working_dir(path):
+            file_pattern = filename + '.*' if filename else '*'
+            filenames = glob.glob(file_pattern)
+            filenames = [x for x in filenames if os.path.isfile(x)]
+            manifest.metadata_filenames = \
+                [x for x in filenames if x.endswith(self.metadata_extensions)]
+            manifest.data_filenames = \
+                [x for x in filenames if x not in manifest.metadata_filenames]
+            if manifest.manifest_filename in manifest.metadata_filenames:
+                manifest.metadata_filenames.remove(manifest.manifest_filename)
+            manifest.to_file()
+
+    def upload(self, loi=''):
         """
         Upload data belonging to a dataset to the datasafe.
 
-        Should probably automatically create a Manifest file if it does not
-        exist, alternatively raise an exception if no Manifest file exists.
-
         Should create checksums/look them up in the Manifest file and check
         after the upload that they are identical to those for the datasafe.
+
+        Parameters
+        ----------
+        loi : :class:`str`
+            LOI the data should be downloaded for
+
         """
-        pass
+        if not loi:
+            raise loi_.MissingLoiError('No LOI provided.')
+        self._check_loi(loi=loi, validate=False)
+        if not os.path.exists(Manifest().manifest_filename):
+            self.create_manifest()
+        manifest = Manifest()
+        manifest.from_file(manifest.manifest_filename)
+        filenames = manifest.metadata_filenames
+        filenames.extend(manifest.data_filenames)
+        filenames.append(manifest.manifest_filename)
+        self.server.upload(loi=loi,
+                           content=self._create_zip_archive(filenames))
 
     def download(self, loi=''):
         """
@@ -179,3 +211,14 @@ class Client:
         if validate:
             if not self._loi_checker.check(loi):
                 raise loi_.InvalidLoiError('String is not a valid LOI.')
+
+    @staticmethod
+    def _create_zip_archive(filenames=None):
+        tmpdir = tempfile.mkdtemp()
+        for filename in filenames:
+            shutil.copy(filename, tmpdir)
+        zip_archive = shutil.make_archive(base_name='dataset', format='zip',
+                                          root_dir=tmpdir)
+        with open(zip_archive, 'rb') as zip_file:
+            contents = zip_file.read()
+        return contents

@@ -244,9 +244,11 @@ class TestManifest(unittest.TestCase):
         if os.path.exists(metadata_filename_):
             os.remove(metadata_filename_)
 
-    def test_from_file_without_filename_raises(self):
-        with self.assertRaises(manifest.MissingInformationError):
-            self.manifest.from_file()
+    def test_from_file_without_filename_uses_default_filename(self):
+        self.create_data_and_metadata_files()
+        self.manifest.to_file()
+        self.manifest.from_file()
+        self.assertTrue(self.manifest.data_filenames)
 
     def test_from_file_with_missing_file_raises(self):
         with self.assertRaises(FileNotFoundError):

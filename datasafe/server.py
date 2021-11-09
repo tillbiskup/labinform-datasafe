@@ -266,7 +266,7 @@ class StorageBackend:
         self.checksum_data_filename =\
             self.config.checksum_data_filename or 'CHECKSUM.data'
         self.manifest_filename = \
-            self.config.manifest_filename or 'MANIFEST.yaml'
+            self.config.manifest_filename or Manifest().manifest_filename
         self.root_directory = self.config.root_directory or ''
 
     def working_path(self, path=''):

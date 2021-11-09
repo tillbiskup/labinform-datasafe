@@ -138,7 +138,7 @@ class Manifest:
             else:
                 self.data_checksum = checksum['value']
 
-    def from_file(self, filename=''):
+    def from_file(self, filename='MANIFEST.yaml'):
         """
         Obtain information from Manifest file
 
@@ -149,6 +149,8 @@ class Manifest:
         ----------
         filename : :class:`str`
             Name of the file to read manifest from
+
+            Default: "MANIFEST.yaml"
 
         Raises
         ------

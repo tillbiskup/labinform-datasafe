@@ -77,7 +77,8 @@ def change_working_dir(path=''):  # pylint: disable=redefined-outer-name
 
     """
     oldpwd = os.getcwd()
-    os.chdir(path)
+    if path:
+        os.chdir(path)
     try:
         yield
     finally:

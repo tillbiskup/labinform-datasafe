@@ -25,3 +25,8 @@ class TestChangeWorkingDir(unittest.TestCase):
         with utils.change_working_dir('..'):
             pass
         self.assertEqual(oldpwd, os.getcwd())
+
+    def test_change_working_dir_with_empty_path(self):
+        with utils.change_working_dir(''):
+            working_dir = os.path.abspath(os.getcwd())
+        self.assertEqual(os.getcwd(), working_dir)

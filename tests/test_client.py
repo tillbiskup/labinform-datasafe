@@ -1,6 +1,7 @@
 import os
-import unittest
 import shutil
+import unittest
+from unittest import mock
 
 import datasafe.client as client
 import datasafe.config as config
@@ -21,12 +22,14 @@ class TestClient(unittest.TestCase):
         self.tempdir = 'tmp'
         self.data_filename = 'bar.dat'
         self.metadata_filename = 'bar.info'
+        self.manifest_filename = Manifest().manifest_filename
 
     def tearDown(self):
         for directory in [self.path, self.storage_root, self.tempdir]:
             if os.path.exists(directory):
                 shutil.rmtree(directory)
-        for file in [self.data_filename, self.metadata_filename]:
+        for file in [self.data_filename, self.metadata_filename,
+                     self.manifest_filename]:
             if os.path.exists(file):
                 os.remove(file)
 
@@ -129,13 +132,114 @@ class TestClient(unittest.TestCase):
         self.path = self.client.download(self.loi)
         self.assertTrue(os.path.exists(self.path))
 
-    # @unittest.skip
     def test_tmp_directory_contains_manifest(self):
         self.server.new(loi=self.loi)
         self.server.upload(loi=self.loi, content=self.create_zip_archive())
         self.path = self.client.download(self.loi)
         self.assertTrue(os.path.isfile(os.path.join(self.path,
-                                                    'MANIFEST.yaml')))
+                                                    self.manifest_filename)))
+
+    def test_create_manifest_creates_manifest(self):
+        os.mkdir(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+            self.client.create_manifest()
+            self.assertTrue(os.path.isfile(self.manifest_filename))
+
+    def test_create_manifest_autodetects_infofile_as_metadata(self):
+        os.mkdir(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+            self.client.create_manifest()
+            manifest = Manifest()
+            manifest.from_file()
+            self.assertEqual([self.metadata_filename],
+                             manifest.metadata_filenames)
+
+    def test_create_manifest_sets_data_files_as_sum_of_non_metadata_files(self):
+        os.mkdir(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+            self.client.create_manifest()
+            manifest = Manifest()
+            manifest.from_file()
+            self.assertEqual([self.data_filename],
+                             manifest.data_filenames)
+
+    def test_create_manifest_excludes_manifest_file_from_metadata(self):
+        os.mkdir(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+            self.create_manifest_file()
+            self.client.create_manifest()
+            manifest = Manifest()
+            manifest.from_file()
+            self.assertEqual([self.metadata_filename],
+                             manifest.metadata_filenames)
+
+    def test_create_manifest_with_given_filename(self):
+        os.mkdir(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+            for filename in ['asdf', 'sdfg']:
+                with open(filename, 'w+') as f:
+                    f.write('')
+            self.client.create_manifest(filename='bar')
+            manifest = Manifest()
+            manifest.from_file()
+            self.assertEqual([self.data_filename],
+                             manifest.data_filenames)
+
+    def test_create_manifest_with_given_path(self):
+        os.mkdir(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+        self.client.create_manifest(path=self.tempdir)
+        manifest = Manifest()
+        manifest.from_file(os.path.join(self.tempdir,
+                                        manifest.manifest_filename))
+        self.assertEqual([self.data_filename], manifest.data_filenames)
+
+    def test_upload_without_loi_raises(self):
+        with self.assertRaises(loi_.MissingLoiError):
+            self.client.upload()
+
+    def test_upload_with_invalid_loi_raises(self):
+        with self.assertRaises(loi_.InvalidLoiError):
+            self.client.upload(loi='foo')
+
+    def test_upload_with_no_datasafe_loi_raises(self):
+        with self.assertRaises(loi_.InvalidLoiError):
+            self.client.upload(loi='42.1001/rec/42')
+
+    def test_upload_creates_manifest(self):
+        os.mkdir(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+            self.client.create(loi=self.loi)
+            self.client.upload(loi=self.loi)
+            self.assertTrue(os.path.isfile(self.manifest_filename))
+
+    def test_upload_creates_manifest_only_if_it_does_not_exist(self):
+        self.client.create(loi=self.loi)
+        os.mkdir(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+            self.create_manifest_file()
+            self.client.create_manifest = mock.MagicMock()
+            self.client.create(loi=self.loi)
+            self.client.upload(loi=self.loi)
+            self.client.create_manifest.assert_not_called()
+
+    def test_upload_creates_downloadable_items_in_datasafe(self):
+        os.mkdir(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+            self.client.create(loi=self.loi)
+            self.client.upload(loi=self.loi)
+            self.path = self.client.download(self.loi)
+        self.assertTrue(os.path.isfile(os.path.join(self.path,
+                                                    self.manifest_filename)))
 
 
 if __name__ == '__main__':
