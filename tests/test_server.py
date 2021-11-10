@@ -1,10 +1,12 @@
 import os
 import shutil
 import unittest
+from unittest import mock
 
 import datasafe.loi as loi_
 import datasafe.server as server
 from datasafe.manifest import Manifest
+from datasafe.utils import change_working_dir
 
 
 class TestServer(unittest.TestCase):
@@ -15,25 +17,42 @@ class TestServer(unittest.TestCase):
         self.storage.root_directory = 'backend_root'
         self.server.storage = self.storage
         self.tempdir = 'tmp'
+        self.manifest_filename = Manifest().manifest_filename
+        self.data_filename = 'foo'
+        self.metadata_filename = 'bar'
 
     def tearDown(self):
         for directory in [self.storage.root_directory, self.tempdir]:
             if os.path.exists(directory):
                 shutil.rmtree(directory)
-
-    def create_tmp_file(self):
-        os.makedirs(self.tempdir)
-        with open(os.path.join(self.tempdir, 'test.txt'), 'w+') as f:
-            f.write('Test')
+        for filename in [self.data_filename, self.metadata_filename,
+                         self.manifest_filename]:
+            if os.path.exists(filename):
+                os.remove(filename)
 
     def create_zip_archive(self):
-        self.create_tmp_file()
+        os.makedirs(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+            self.create_manifest_file()
         zip_archive = shutil.make_archive(base_name='test', format='zip',
                                           root_dir=self.tempdir)
         with open(zip_archive, 'rb') as zip_file:
             contents = zip_file.read()
         os.remove('test.zip')
         return contents
+
+    def create_manifest_file(self, path=''):
+        manifest = Manifest()
+        manifest.data_filenames = [self.data_filename]
+        manifest.metadata_filenames = [self.metadata_filename]
+        manifest.to_file()
+
+    def create_data_and_metadata_files(self, path=''):
+        with open(os.path.join(path, self.data_filename), 'w+') as f:
+            f.write('')
+        with open(os.path.join(path, self.metadata_filename), 'w+') as f:
+            f.write('')
 
     def test_instantiate_class(self):
         pass
@@ -163,9 +182,9 @@ class TestStorageBackend(unittest.TestCase):
         self.subdir = 'bla'
         self.root = 'root'
         self.tempdir = 'tmp'
-        self.manifest_filename = 'MANIFEST.yaml'
         self.checksum_filename = 'CHECKSUM'
         self.checksum_data_filename = 'CHECKSUM.data'
+        self.manifest_filename = Manifest().manifest_filename
         self.data_filename = 'foo'
         self.metadata_filename = 'bar'
 
@@ -173,17 +192,16 @@ class TestStorageBackend(unittest.TestCase):
         for directory in [self.path, self.root, self.tempdir, self.subdir]:
             if os.path.exists(directory):
                 shutil.rmtree(directory)
-        for filename in [self.data_filename, self.metadata_filename]:
+        for filename in [self.data_filename, self.metadata_filename,
+                         self.manifest_filename]:
             if os.path.exists(filename):
                 os.remove(filename)
 
-    def create_tmp_file(self):
-        os.makedirs(self.tempdir)
-        with open(os.path.join(self.tempdir, 'test.txt'), 'w+') as f:
-            f.write('Test')
-
     def create_zip_archive(self):
-        self.create_tmp_file()
+        os.makedirs(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+            self.create_manifest_file()
         zip_archive = shutil.make_archive(base_name='test', format='zip',
                                           root_dir=self.tempdir)
         with open(zip_archive, 'rb') as zip_file:
@@ -350,14 +368,24 @@ class TestStorageBackend(unittest.TestCase):
     def test_deposit_writes_files(self):
         self.backend.create(self.path)
         self.backend.deposit(path=self.path, content=self.create_zip_archive())
-        self.assertTrue(os.path.exists(os.path.join(self.path, 'test.txt')))
+        self.assertTrue(os.path.exists(
+            os.path.join(self.path, Manifest().manifest_filename)))
 
     def test_deposit_with_root_writes_files(self):
         self.backend.root_directory = self.root
         self.backend.create(self.path)
         self.backend.deposit(path=self.path, content=self.create_zip_archive())
-        self.assertTrue(os.path.exists(os.path.join(self.root, self.path,
-                                                    'test.txt')))
+        self.assertTrue(os.path.exists(
+            os.path.join(self.root, self.path, Manifest().manifest_filename)))
+
+    def test_deposit_checks_for_consistency_of_checksums(self):
+        self.backend.root_directory = self.root
+        self.backend.create(self.path)
+        mock_ = mock.MagicMock()
+        with mock.patch('datasafe.server.Manifest.compare_checksums', mock_):
+            self.backend.deposit(path=self.path,
+                                 content=self.create_zip_archive())
+        mock_.assert_called()
 
     def test_retrieve_without_path_raises(self):
         self.backend.create(self.path)
@@ -402,37 +430,6 @@ class TestStorageBackend(unittest.TestCase):
             f.write(manifest_contents)
         self.assertEqual(manifest_contents, self.backend.get_manifest(
             self.path))
-
-    def test_get_checksum_without_path_raises(self):
-        self.backend.create(self.path)
-        with self.assertRaises(server.MissingPathError):
-            self.backend.get_checksum()
-
-    def test_get_checksum_with_non_existing_path_raises(self):
-        with self.assertRaises(OSError):
-            self.backend.get_checksum(path=self.path)
-
-    def test_get_checksum_with_non_existing_checksum_file_raises(self):
-        self.backend.create(self.path)
-        with self.assertRaises(server.MissingContentError):
-            self.backend.get_checksum(path=self.path)
-
-    def test_get_checksum_returns_contents_as_string(self):
-        self.backend.create(self.path)
-        checksum_contents = 'bar'
-        with open(os.path.join(self.path, self.checksum_filename), 'w+') as f:
-            f.write(checksum_contents)
-        self.assertEqual(checksum_contents,
-                         self.backend.get_checksum(self.path))
-
-    def test_get_checksum_for_data_returns_contents_as_string(self):
-        self.backend.create(self.path)
-        checksum_contents = 'bar'
-        with open(os.path.join(self.path, self.checksum_data_filename),
-                  'w+') as f:
-            f.write(checksum_contents)
-        self.assertEqual(checksum_contents, self.backend.get_checksum(
-            self.path, data=True))
 
     def test_get_index_returns_list_of_paths(self):
         self.backend.create(self.path)

@@ -14,6 +14,8 @@ For later versions
 
 * Move all exceptions to own module, and ensure all exceptions to issue messages.
 
+* Handle proper cross-boundary transfer of exceptions between server and client (probably only necessary once the transfer layer is implemented).
+
 
 Todos
 =====

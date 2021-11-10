@@ -44,6 +44,7 @@ from datasafe import config
 import datasafe.loi as loi_
 from datasafe.manifest import Manifest
 from datasafe.checksum import Generator
+from datasafe.utils import change_working_dir
 
 
 class Error(Exception):
@@ -165,13 +166,6 @@ class Server:
 
         Data are upload as bytes of the zipped content (dataset).
 
-        .. todo::
-
-            The server should compare the checksums stored in the Manifest
-            file with those newly created for the files after depositing via
-            the backend.
-
-
         Parameters
         ----------
         loi : :class:`str`
@@ -268,9 +262,6 @@ class StorageBackend:
 
     def __init__(self):
         self.config = config.StorageBackend()
-        self.checksum_filename = self.config.checksum_filename or 'CHECKSUM'
-        self.checksum_data_filename =\
-            self.config.checksum_data_filename or 'CHECKSUM.data'
         self.manifest_filename = \
             self.config.manifest_filename or Manifest().manifest_filename
         self.root_directory = self.config.root_directory or ''
@@ -421,11 +412,15 @@ class StorageBackend:
 
     def deposit(self, path='', content=None):
         """
-        Deposit data provided as content in directory corresponding to path
+        Deposit data provided as content in directory corresponding to path.
 
         Content is the byte representation of a ZIP archive containing the
         actual content. This byte representation is saved in a temporary
         file and afterwards unpacked in the directory corresponding to path.
+
+        After depositing the content (including unzipping), the checksums in
+        the manifest are checked for consistency with newly generated
+        checksums, and in case of inconsistencies, an exception is raised.
 
         Parameters
         ----------
@@ -453,6 +448,10 @@ class StorageBackend:
         with open(tmpfile[1], "wb") as file:
             file.write(content)
         shutil.unpack_archive(tmpfile[1], self.working_path(path))
+        with change_working_dir(self.working_path(path)):
+            manifest = Manifest()
+            manifest.from_file(manifest.manifest_filename)
+            manifest.compare_checksums()
         os.remove(tmpfile[1])
 
     def retrieve(self, path=''):
@@ -518,50 +517,6 @@ class StorageBackend:
                   encoding='utf8') as file:
             manifest_contents = file.read()
         return manifest_contents
-
-    def get_checksum(self, path='', data=False):
-        """
-        Retrieve checksum for a dataset stored in path.
-
-        To each dataset, two checksum files exist: one covering both,
-        data and metadata, the other covering only the data. Usually,
-        the former is returned. If you need to get the checksum covering the
-        data only, set the second parameter ``data`` to ``True``.
-
-        .. todo::
-
-            Decide whether checksums are stored in files or whether they are
-            only stored in the Manifest file and retrieved from there. The
-            latter seems more plausible.
-
-        Parameters
-        ----------
-        path : :class:`str`
-            path to the dataset the manifest should be retrieved for
-
-        data : :class:`bool`
-            switch for returning the checksum over data only
-
-        Returns
-        -------
-        content : :class:`str`
-            contents of the checksum file
-
-        """
-        if not path:
-            raise MissingPathError(message='No path provided.')
-        if not os.path.exists(path):
-            raise OSError
-        if data:
-            checksum_filename = self.checksum_data_filename
-        else:
-            checksum_filename = self.checksum_filename
-        if not os.path.exists(os.path.join(path, checksum_filename)):
-            raise MissingContentError(message='No checksum file found.')
-        with open(os.path.join(path, checksum_filename), 'r',
-                  encoding='utf8') as file:
-            checksum_contents = file.read()
-        return checksum_contents
 
     def get_index(self):
         """
