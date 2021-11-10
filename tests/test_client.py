@@ -4,7 +4,7 @@ import unittest
 from unittest import mock
 
 import datasafe.client as client
-import datasafe.config as config
+import datasafe.configuration as config
 import datasafe.loi as loi_
 from datasafe.manifest import Manifest
 from datasafe.server import Server
@@ -238,6 +238,16 @@ class TestClient(unittest.TestCase):
             self.client.create(loi=self.loi)
             self.client.upload(loi=self.loi)
             self.client.create_manifest.assert_not_called()
+
+    def test_upload_sets_loi_in_manifest(self):
+        os.mkdir(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+            self.client.create(loi=self.loi)
+            self.client.upload(loi=self.loi)
+            manifest = Manifest()
+            manifest.from_file(self.manifest_filename)
+            self.assertTrue(manifest.loi)
 
     def test_upload_creates_downloadable_items_in_datasafe(self):
         os.mkdir(self.tempdir)

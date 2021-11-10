@@ -50,7 +50,6 @@ metadata in ``test.info``):
 
 """
 
-import collections
 import os
 
 import oyaml as yaml
@@ -89,6 +88,9 @@ class Manifest:
 
     Attributes
     ----------
+    loi : :class:`str`
+        lab object identifier (LOI) corresponding to dataset
+
     data_filenames : :class:`list`
         filenames of data files
 
@@ -110,6 +112,7 @@ class Manifest:
     """
 
     def __init__(self):
+        self.loi = ''
         self.data_filenames = []
         self.metadata_filenames = []
         self.data_checksum = ''
@@ -136,6 +139,7 @@ class Manifest:
                 self.checksum = checksum['value']
             else:
                 self.data_checksum = checksum['value']
+        self.loi = manifest_dict['dataset']['loi']
 
     def from_file(self, filename='MANIFEST.yaml'):
         """
@@ -201,19 +205,20 @@ class Manifest:
             manifest_['files']['data']['names'].append(filename)
         manifest_['files']['data']['format'] = self._get_data_format()
         manifest_['files']['metadata'] = self._get_metadata_info()
-        manifest_['files']['checksums'].append(collections.OrderedDict([
-            ('name', 'CHECKSUM'),
-            ('format', 'MD5 checksum'),
-            ('span', 'data, metadata'),
-            ('value', self._generate_checksum(self.data_filenames +
-                                              self.metadata_filenames)),
-        ]))
-        manifest_['files']['checksums'].append(collections.OrderedDict([
-            ('name', 'CHECKSUM_data'),
-            ('format', 'MD5 checksum'),
-            ('span', 'data'),
-            ('value', self._generate_checksum(self.data_filenames)),
-        ]))
+        manifest_['files']['checksums'].append({
+            'name': 'CHECKSUM',
+            'format': 'MD5 checksum',
+            'span': 'data, metadata',
+            'value': self._generate_checksum(self.data_filenames +
+                                             self.metadata_filenames),
+        })
+        manifest_['files']['checksums'].append({
+            'name': 'CHECKSUM_data',
+            'format': 'MD5 checksum',
+            'span': 'data',
+            'value': self._generate_checksum(self.data_filenames),
+        })
+        manifest_['dataset']['loi'] = self.loi
         return manifest_
 
     def to_file(self):
@@ -265,25 +270,25 @@ class Manifest:
             basic structure of a manifest as (ordered) dict
 
         """
-        manifest_format = collections.OrderedDict([
-            ("type", "datasafe dataset manifest"),
-            ("version", "0.1.0"),
-        ])
-        manifest_dataset = collections.OrderedDict([
-            ("loi", ""),
-            ("complete", False),
-        ])
-        manifest_files = collections.OrderedDict([
-            ("metadata", []),
-            ("data", collections.OrderedDict([('format', ''), ('names', [])])),
-            ("checksums", []),
-        ])
+        manifest_format = {
+            "type": "datasafe dataset manifest",
+            "version": "0.1.0",
+        }
+        manifest_dataset = {
+            "loi": "",
+            "complete": False,
+        }
+        manifest_files = {
+            "metadata": [],
+            "data": {'format': '', 'names': []},
+            "checksums": [],
+        }
         manifest_keys_level_one = [
             ('format', manifest_format),
             ('dataset', manifest_dataset),
             ('files', manifest_files),
         ]
-        manifest_ = collections.OrderedDict(manifest_keys_level_one)
+        manifest_ = dict(manifest_keys_level_one)
         return manifest_
 
     def _get_metadata_info(self):
@@ -388,11 +393,11 @@ class FormatDetector:
             except AttributeError:
                 format_ = 'test'
                 version = '0.1.0'
-            info = collections.OrderedDict([
-                ('name', filename),
-                ('format', format_),
-                ('version', version)
-            ])
+            info = {
+                'name': filename,
+                'format': format_,
+                'version': version
+            }
             metadata_info.append(info)
         return metadata_info
 

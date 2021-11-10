@@ -204,6 +204,8 @@ class Client:
             self.create_manifest()
         manifest = Manifest()
         manifest.from_file(manifest.manifest_filename)
+        manifest.loi = loi
+        manifest.to_file()
         filenames = manifest.metadata_filenames
         filenames.extend(manifest.data_filenames)
         filenames.append(manifest.manifest_filename)

@@ -59,11 +59,11 @@ class TestManifest(unittest.TestCase):
         self.assertTrue(hasattr(self.manifest, 'to_dict'))
         self.assertTrue(callable(self.manifest.to_dict))
 
-    def test_to_dict_returns_ordered_dict(self):
+    def test_to_dict_returns_dict(self):
         self.create_data_and_metadata_files()
-        self.assertIsInstance(self.manifest.to_dict(), collections.OrderedDict)
+        self.assertIsInstance(self.manifest.to_dict(), dict)
 
-    def test_to_dict_returns_ordered_dict_with_correct_keys(self):
+    def test_to_dict_returns_dict_with_correct_keys(self):
         self.create_data_and_metadata_files()
         manifest_keys_level_one = ['format', 'dataset', 'files']
         self.assertEqual(list(self.manifest.to_dict()), manifest_keys_level_one)
@@ -192,6 +192,12 @@ class TestManifest(unittest.TestCase):
         for name in metadata_filenames:
             os.remove(name)
 
+    def test_to_dict_with_loi_sets_loi(self):
+        self.create_data_and_metadata_files()
+        self.manifest.loi = '42.1001/ds/'
+        dict_ = self.manifest.to_dict()
+        self.assertEqual(self.manifest.loi, dict_['dataset']['loi'])
+
     def test_to_file_creates_yaml_file(self):
         self.create_data_and_metadata_files()
         self.manifest.to_file()
@@ -243,6 +249,16 @@ class TestManifest(unittest.TestCase):
                          new_manifest.metadata_filenames[1])
         if os.path.exists(metadata_filename_):
             os.remove(metadata_filename_)
+
+    def test_from_dict_sets_loi(self):
+        self.create_data_and_metadata_files()
+        self.manifest.loi = '42.1001/ds/foo'
+        self.manifest.to_file()
+        with open(self.manifest_filename, 'r') as file:
+            manifest_dict = yaml.safe_load(file)
+        new_manifest = manifest.Manifest()
+        new_manifest.from_dict(manifest_dict)
+        self.assertEqual(self.manifest.loi, new_manifest.loi)
 
     def test_from_file_without_filename_uses_default_filename(self):
         self.create_data_and_metadata_files()
@@ -337,11 +353,10 @@ class TestFormatDetector(unittest.TestCase):
     def test_metadata_format_without_metadata_returns_empty_list(self):
         self.assertEqual([], self.detector.metadata_format())
 
-    def test_metadata_format_returns_list_of_ordered_dicts(self):
+    def test_metadata_format_returns_list_of_dicts(self):
         self.detector.metadata_filenames = ['foo']
         self.assertIsInstance(self.detector.metadata_format(), list)
-        self.assertIsInstance(self.detector.metadata_format()[0],
-                              collections.OrderedDict)
+        self.assertIsInstance(self.detector.metadata_format()[0], dict)
 
     def test_metadata_format_dict_contains_filename(self):
         self.detector.metadata_filenames = ['foo']

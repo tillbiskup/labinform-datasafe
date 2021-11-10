@@ -40,7 +40,7 @@ import os
 import shutil
 import tempfile
 
-from datasafe import config
+from datasafe import configuration
 import datasafe.loi as loi_
 from datasafe.manifest import Manifest
 from datasafe.checksum import Generator
@@ -261,7 +261,7 @@ class StorageBackend:
     """
 
     def __init__(self):
-        self.config = config.StorageBackend()
+        self.config = configuration.StorageBackend()
         self.manifest_filename = \
             self.config.manifest_filename or Manifest().manifest_filename
         self.root_directory = self.config.root_directory or ''

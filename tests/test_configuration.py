@@ -1,6 +1,6 @@
 import unittest
 
-import datasafe.config as config
+import datasafe.configuration as config
 
 
 class TestStorageBackendConfig(unittest.TestCase):
