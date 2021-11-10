@@ -165,6 +165,13 @@ class Server:
 
         Data are upload as bytes of the zipped content (dataset).
 
+        .. todo::
+
+            The server should compare the checksums stored in the Manifest
+            file with those newly created for the files after depositing via
+            the backend.
+
+
         Parameters
         ----------
         loi : :class:`str`

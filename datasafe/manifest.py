@@ -128,6 +128,7 @@ class Manifest:
 
         """
         self.data_filenames = manifest_dict['files']['data']['names']
+        self.metadata_filenames = []
         for metadata_file in manifest_dict['files']['metadata']:
             self.metadata_filenames.append(metadata_file['name'])
         for checksum in manifest_dict['files']['checksums']:
@@ -227,6 +228,31 @@ class Manifest:
         with open(self.manifest_filename, mode='w+', encoding='utf8') as \
                 output_file:
             yaml.dump(self.to_dict(), output_file)
+
+    def compare_checksums(self):
+        """
+        Compare checksums stored in manifest with those newly created.
+
+        Allows to check for consistency of manifest and data, and hence to
+        detect any corruption of the data.
+
+        Raises
+        ------
+        ValueError
+            Raised if not all necessary information is available.
+
+            Raised if either of the stored checksums differs with newly
+            created checksum over actual data.
+
+        """
+        if not all([self.data_filenames, self.metadata_filenames,
+                    self.data_checksum, self.checksum]):
+            raise ValueError
+        if self.checksum != self._generate_checksum(self.data_filenames +
+                                                    self.metadata_filenames):
+            raise ValueError('Checksum over data and metadata differs')
+        if self.data_checksum != self._generate_checksum(self.data_filenames):
+            raise ValueError('Checksum over data differs')
 
     @staticmethod
     def _create_manifest_dict():

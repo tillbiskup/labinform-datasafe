@@ -139,6 +139,14 @@ class TestClient(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(self.path,
                                                     self.manifest_filename)))
 
+    def test_download_checks_for_consistency_of_checksums(self):
+        self.server.new(loi=self.loi)
+        self.server.upload(loi=self.loi, content=self.create_zip_archive())
+        mock_ = mock.MagicMock()
+        with mock.patch('datasafe.client.Manifest.compare_checksums', mock_):
+            self.path = self.client.download(self.loi)
+        mock_.assert_called()
+
     def test_create_manifest_creates_manifest(self):
         os.mkdir(self.tempdir)
         with change_working_dir(self.tempdir):

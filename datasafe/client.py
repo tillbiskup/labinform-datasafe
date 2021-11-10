@@ -188,9 +188,7 @@ class Client:
 
         .. todo::
 
-            The server should compare the checksums stored in the Manifest
-            file with those newly created for the files after the upload to
-            the datasafe.
+            Handle filename and path, similar to :meth:`create_manifest`
 
 
         Parameters
@@ -220,16 +218,6 @@ class Client:
         will be done on the server side, resulting in exceptions raised if
         there are some problems.
 
-        .. todo::
-
-            Check checksums obtained for downloaded data with those contained
-            in the manifest file and warn/raise if differences are detected.
-
-            In case of differences, one might even obtain new checksums from
-            the datasafe and compare them, thus detecting whether the
-            problem was during transit or is more severe, *i.e.* corrupted
-            data storage.
-
         Parameters
         ----------
         loi : :class:`str`
@@ -257,9 +245,33 @@ class Client:
                 file.write(content)
             shutil.unpack_archive(archive_file, '.')
             os.remove(archive_file)
+            manifest = Manifest()
+            manifest.from_file(manifest.manifest_filename)
+            manifest.compare_checksums()
         return download_dir
 
     def _check_loi(self, loi='', validate=True):
+        """
+        Check a LOI.
+
+        Parameters
+        ----------
+        loi : :class:`str`
+            LOI to be checked
+
+        validate : :class:`bool`
+            Whether to validate the LOI
+
+            If False, the LOI will only be checked to be a datasafe LOI.
+
+            Default: True
+
+        Raises
+        ------
+        datasafe.loi.InvalidLoiError
+            Raised if LOI is not a datasafe LOI/not valid
+
+        """
         self.loi_parser.parse(loi)
         if self.loi_parser.type != 'ds':
             raise loi_.InvalidLoiError('LOI is not a datasafe LOI.')

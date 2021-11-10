@@ -276,6 +276,34 @@ class TestManifest(unittest.TestCase):
             else:
                 self.assertEqual(checksum['value'], new_manifest.data_checksum)
 
+    def test_has_compare_checksums_method(self):
+        self.assertTrue(hasattr(self.manifest, 'compare_checksums'))
+        self.assertTrue(callable(self.manifest.compare_checksums))
+
+    def test_compare_checksums_with_missing_information_raises(self):
+        with self.assertRaises(ValueError):
+            self.manifest.compare_checksums()
+
+    def test_compare_checksums_successfully_returns_none(self):
+        self.create_data_and_metadata_files()
+        self.manifest.from_dict(self.manifest.to_dict())
+        self.assertIsNone(self.manifest.compare_checksums())
+
+    def test_compare_checksum_unsuccessfully_raises(self):
+        self.create_data_and_metadata_files()
+        self.manifest.from_dict(self.manifest.to_dict())
+        self.manifest.checksum = 'foo'
+        with self.assertRaisesRegex(ValueError, 'Checksum over data and '
+                                                'metadata differs'):
+            self.manifest.compare_checksums()
+
+    def test_compare_data_checksum_unsuccessfully_raises(self):
+        self.create_data_and_metadata_files()
+        self.manifest.from_dict(self.manifest.to_dict())
+        self.manifest.data_checksum = 'foo'
+        with self.assertRaisesRegex(ValueError, 'Checksum over data differs'):
+            self.manifest.compare_checksums()
+
 
 class TestFormatDetector(unittest.TestCase):
 
