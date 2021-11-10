@@ -2,6 +2,7 @@
 
 
 class StorageBackend:
+    """Configuration for storage backend."""
 
     def __init__(self):
         self.checksum_filename = ''

@@ -1,0 +1,1 @@
+"""Datasafe component of LabInform."""

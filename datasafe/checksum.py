@@ -46,6 +46,7 @@ class Generator:
         Hash algorithm to use.
 
         Defaults to "md5", can be everything available in hashlib module.
+
     """
 
     def __init__(self):
@@ -158,7 +159,7 @@ class Generator:
 
         """
         hash_function = self._get_hash_function()
-        with open(filename, "rb") as f:
-            for chunk in iter(lambda: f.read(4096), b""):
+        with open(filename, "rb") as file:
+            for chunk in iter(lambda: file.read(4096), b""):
                 hash_function.update(chunk)
         return hash_function.hexdigest()

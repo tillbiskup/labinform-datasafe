@@ -23,13 +23,11 @@ consistency and compliance to the LOI scheme developed so far.
 
 import re
 
-import datasafe.utils as utils
+from datasafe import utils
 
 
 class Error(Exception):
     """Base class for exceptions in this module."""
-
-    pass
 
 
 class MissingLoiError(Error):
@@ -80,6 +78,7 @@ class LoiMixin:
         Character separating root and issuer; default: ``.``
 
     """
+
     def __init__(self):
         self.separator = '/'
         self.root = '42'
@@ -105,16 +104,17 @@ class AbstractChecker:
         Parameters
         ----------
         string : :class:`str`
-           string to check
+            string to check
 
         Returns
         -------
         : :class:`bool`
-           Bool True if string fulfills criteria.
+            Bool True if string fulfills criteria.
+
         """
         return self._check(string)
 
-    def _check(self, string):
+    def _check(self, string):  # noqa
         return False
 
 
@@ -126,6 +126,7 @@ class InListChecker(AbstractChecker):
     ----------
     list : :class:`list`
         List of strings that are possible options for the given string.
+
     """
 
     def __init__(self):
@@ -136,6 +137,16 @@ class InListChecker(AbstractChecker):
 
 
 class StartsWithChecker(AbstractChecker):
+    """
+    Check whether a string starts with the given string.
+
+    Attributes
+    ----------
+    string : :class:`str`
+        Pattern the string should start with
+
+    """
+
     def __init__(self):
         self.string = ''
 
@@ -144,6 +155,15 @@ class StartsWithChecker(AbstractChecker):
 
 
 class IsPatternChecker(AbstractChecker):
+    """
+    Check whether a string matches the given pattern.
+
+    Attributes
+    ----------
+    pattern : :class:`str`
+        Pattern the string should match
+
+    """
 
     def __init__(self):
         self.pattern = ''
@@ -153,21 +173,36 @@ class IsPatternChecker(AbstractChecker):
 
 
 class IsNumberChecker(IsPatternChecker):
+    r"""
+    Check whether a string contains only numbers.
+
+    Attributes
+    ----------
+    pattern : :class:`str`
+        Pattern defining numbers: "\d+"
+
+    """
+
     def __init__(self):
         super().__init__()
-        self.pattern = "\d+"
+        self.pattern = r"\d+"
 
 
 class IsDateChecker(IsPatternChecker):
     """
-    Checks date in given form (YYYY-MM-DD), doesn't validate if date exists.
+    Check for date in given form (YYYY-MM-DD).
+
+    Note that currently, the checker doesn't validate if the date is valid date.
     """
+
     def __init__(self):
         super().__init__()
-        self.pattern = "\d{4}-[0-1][0-9]-[0-3][0-9]"
+        self.pattern = r"\d{4}-[0-1][0-9]-[0-3][0-9]"
 
 
 class IsFriendlyStringChecker(IsPatternChecker):
+    """Check whether the string contains only "friendly" characters."""
+
     def __init__(self):
         super().__init__()
         self.pattern = "[a-z0-9-_]+"
@@ -190,6 +225,7 @@ class AbstractLoiChecker(LoiMixin):
     This class contains the public method :meth:`check` which calls the private
     method :meth:`_check` that is to be overwritten in derived checkers.
     """
+
     def __init__(self):
         super().__init__()
         self._ignore_check = ''
@@ -238,6 +274,7 @@ class AbstractLoiChecker(LoiMixin):
         -------
         result : :class:`bool`
             Returns true if part of the string is valid.
+
         """
         result = self._check(string.split(self.separator)[0])
         if result and self.next_checker:
@@ -245,16 +282,16 @@ class AbstractLoiChecker(LoiMixin):
             result = self.next_checker.check(substring)
         return result
 
-    def _check(self, string):
-        """
-        Private checking method, has to be overwritten in derived classes.
-        """
+    def _check(self, string):  # noqa
+        """Private checking method, has to be overridden in derived classes."""
         return False
 
 
 class LoiChecker(AbstractLoiChecker):
     """
-    User only needs to instantiate this class for checking a LOI.
+    Check a lab object identifier (LOI) to conform to scheme.
+
+    A user only needs to instantiate this class for checking a LOI.
 
     Begin of the cascading chain to validate a given LOI. Checking starts
     with the first part of the LOI that should start with 42. Following,
@@ -262,6 +299,7 @@ class LoiChecker(AbstractLoiChecker):
     downstream checkers will be involved. Returns `True` if string is valid 
     LOI.
     """
+
     def __init__(self):
         super().__init__()
         self.next_checker = LoiTypeChecker()
@@ -282,12 +320,14 @@ class LoiChecker(AbstractLoiChecker):
         -------
         result : :class:`bool`
             Returns true if string is valid LOI.
+
         """
         checker = LoiStartsWithCorrectRootChecker()
         return checker.check(string)
 
 
 class LoiStartsWithCorrectRootChecker(AbstractLoiChecker):
+    """Check root of LOI."""
 
     def _check(self, string):
         checker = StartsWithChecker()
@@ -296,6 +336,7 @@ class LoiStartsWithCorrectRootChecker(AbstractLoiChecker):
 
 
 class LoiTypeChecker(AbstractLoiChecker):
+    """Check type of LOI."""
 
     def _check(self, string):
         checker = InListChecker()
@@ -308,6 +349,7 @@ class LoiTypeChecker(AbstractLoiChecker):
 
 
 class LoiRecChecker(AbstractLoiChecker):
+    """Check rec type of LOI."""
 
     def _check(self, string):
         checker = IsNumberChecker()
@@ -315,6 +357,7 @@ class LoiRecChecker(AbstractLoiChecker):
 
 
 class LoiDsChecker(AbstractLoiChecker):
+    """Check ds type of LOI."""
 
     def _check(self, string):
         checker = InListChecker()
@@ -327,6 +370,8 @@ class LoiDsChecker(AbstractLoiChecker):
 
 
 class LoiExpChecker(AbstractLoiChecker):
+    """Check exp type of LOI."""
+
     def __init__(self):
         super().__init__()
         self.next_checker = LoiExpMethodChecker()
@@ -342,6 +387,7 @@ class LoiExpChecker(AbstractLoiChecker):
 
 
 class BaSaChecker(AbstractLoiChecker):
+    """Check ba/sa of LOI."""
 
     def _check(self, string):
         checker = InListChecker()
@@ -350,6 +396,8 @@ class BaSaChecker(AbstractLoiChecker):
 
 
 class BaSaNumberChecker(AbstractLoiChecker):
+    """Check ba/sa number type of LOI."""
+
     def __init__(self):
         super().__init__()
         self.next_checker = LoiExpMethodChecker()
@@ -360,6 +408,8 @@ class BaSaNumberChecker(AbstractLoiChecker):
 
 
 class LoiExpMethodChecker(AbstractLoiChecker):
+    """Check experimental method of LOI."""
+
     def __init__(self):
         super().__init__()
         self.next_checker = LoiMeasurementNumberChecker()
@@ -371,12 +421,16 @@ class LoiExpMethodChecker(AbstractLoiChecker):
 
 
 class LoiMeasurementNumberChecker(AbstractLoiChecker):
+    """Check measurement number of LOI."""
+
     def _check(self, string):
         checker = IsNumberChecker()
         return checker.check(string)
 
 
 class LoiCalcChecker(AbstractLoiChecker):
+    """Check calc of LOI."""
+
     def __init__(self):
         super().__init__()
         self.next_checker = LoiCalcObjectNumberChecker()
@@ -388,18 +442,23 @@ class LoiCalcChecker(AbstractLoiChecker):
 
 
 class LoiCalcObjectNumberChecker(AbstractLoiChecker):
+    """Check calc object number of LOI."""
+
     def _check(self, string):
         checker = IsNumberChecker()
         return checker.check(string)
 
 
 class LoiImgChecker(AbstractLoiChecker):
+    """Check img of LOI."""
 
     def _check(self, string):
         return True
 
 
 class LoiInfoChecker(AbstractLoiChecker):
+    """Check info of LOI."""
+
     def __init__(self):
         super().__init__()
         self.next_checker = LoiInfoKindChecker()
@@ -411,6 +470,8 @@ class LoiInfoChecker(AbstractLoiChecker):
 
 
 class LoiInfoKindChecker(AbstractLoiChecker):
+    """Check info kind of LOI."""
+
     def _check(self, string):
         checker = InListChecker()
         checker.list = ['sample', 'calculation', 'project', 'publication',
@@ -423,36 +484,40 @@ class LoiInfoKindChecker(AbstractLoiChecker):
 
 
 class LoiInfoOtherKindChecker(AbstractLoiChecker):
+    """Check info other kind of LOI."""
+
     def _check(self, string):
         checker = IsFriendlyStringChecker()
         return checker.check(string)
 
 
 class LoiInfoProjectChecker(LoiInfoOtherKindChecker):
-    pass
+    """Check info project of LOI."""
 
 
 class LoiInfoPublicationChecker(LoiInfoOtherKindChecker):
-    pass
+    """Check info publication of LOI."""
 
 
 class LoiInfoGrantChecker(LoiInfoOtherKindChecker):
-    pass
+    """Check info grant of LOI."""
 
 
 class LoiInfoDeviceChecker(LoiInfoOtherKindChecker):
-    pass
+    """Check info device of LOI."""
 
 
 class LoiInfoChemicalChecker(LoiInfoOtherKindChecker):
-    pass
+    """Check info chemical of LOI."""
 
 
 class LoiInfoPersonChecker(LoiInfoOtherKindChecker):
-    pass
+    """Check info person of LOI."""
 
 
 class LoiInfoSampleChecker(AbstractLoiChecker):
+    """Check info sample of LOI."""
+
     def __init__(self):
         super().__init__()
         self.next_checker = IsNumberChecker()
@@ -465,6 +530,8 @@ class LoiInfoSampleChecker(AbstractLoiChecker):
 
 
 class LoiInfoCalculationChecker(AbstractLoiChecker):
+    """Check info calculation of LOI."""
+
     def __init__(self):
         super().__init__()
         self.next_checker = IsNumberChecker()
@@ -496,11 +563,12 @@ class Parser(LoiMixin):
     For general aspects of LOIs, such as root and separator(s), refer to the
     :class:`LoiMixin` class.
     """
+
     def __init__(self):
         super().__init__()
         self.issuer = ''
         self.type = ''
-        self.id = ''
+        self.id = ''  # noqa
 
     def parse(self, loi=''):
         """
@@ -531,8 +599,8 @@ class Parser(LoiMixin):
         checker.ignore_check = 'LoiDsChecker'
         if not checker.check(loi):
             raise InvalidLoiError('String is not a valid LOI.')
-        self.issuer = loi.split(self.separator)[0].split(
-                self.root_issuer_separator)[1]
+        self.issuer = \
+            loi.split(self.separator)[0].split(self.root_issuer_separator)[1]
         self.type = loi.split(self.separator)[1]
         self.id = self.separator.join(loi.split(self.separator)[2:])
         parser_dict = {
@@ -555,6 +623,7 @@ class Parser(LoiMixin):
             List (of strings) with parts of ID split at separator
 
             Empty list if no LOI has been parsed
+
         """
         id_parts = []
         if self.id:

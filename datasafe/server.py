@@ -40,7 +40,7 @@ import os
 import shutil
 import tempfile
 
-import datasafe.config as config
+from datasafe import config
 import datasafe.loi as loi_
 from datasafe.manifest import Manifest
 from datasafe.checksum import Generator
@@ -48,8 +48,6 @@ from datasafe.checksum import Generator
 
 class Error(Exception):
     """Base class for exceptions in this module."""
-
-    pass
 
 
 class MissingPathError(Error):
@@ -233,7 +231,7 @@ class Server:
 
     def _check_loi(self, loi='', validate=True):
         self.loi.parse(loi)
-        if not self.loi.type == 'ds':
+        if self.loi.type != 'ds':
             raise loi_.InvalidLoiError('LOI is not a datasafe LOI.')
         if validate:
             if not self._loi_checker.check(loi):
@@ -252,7 +250,7 @@ class StorageBackend:
     containing the contents of ZIP archives.
 
     Attributes
-    -----------
+    ----------
     root_directory : :class:`str`
         base directory for the datasafe
 
@@ -260,6 +258,7 @@ class StorageBackend:
         name of manifest file
 
     """
+
     def __init__(self):
         self.config = config.StorageBackend()
         self.checksum_filename = self.config.checksum_filename or 'CHECKSUM'
@@ -277,6 +276,7 @@ class StorageBackend:
         -------
         working_path : :class:`str`
             full path to work on
+
         """
         return os.path.join(self.root_directory, path)
 
@@ -443,8 +443,8 @@ class StorageBackend:
         if not content:
             raise MissingContentError(message='No content provided to deposit.')
         tmpfile = tempfile.mkstemp(suffix='.zip')
-        with open(tmpfile[1], "wb") as f:
-            f.write(content)
+        with open(tmpfile[1], "wb") as file:
+            file.write(content)
         shutil.unpack_archive(tmpfile[1], self.working_path(path))
         os.remove(tmpfile[1])
 
@@ -507,8 +507,9 @@ class StorageBackend:
             raise OSError
         if not os.path.exists(os.path.join(path, self.manifest_filename)):
             raise MissingContentError(message='No MANIFEST file found.')
-        with open(os.path.join(path, self.manifest_filename), 'r') as f:
-            manifest_contents = f.read()
+        with open(os.path.join(path, self.manifest_filename), 'r',
+                  encoding='utf8') as file:
+            manifest_contents = file.read()
         return manifest_contents
 
     def get_checksum(self, path='', data=False):
@@ -550,8 +551,9 @@ class StorageBackend:
             checksum_filename = self.checksum_filename
         if not os.path.exists(os.path.join(path, checksum_filename)):
             raise MissingContentError(message='No checksum file found.')
-        with open(os.path.join(path, checksum_filename), 'r') as f:
-            checksum_contents = f.read()
+        with open(os.path.join(path, checksum_filename), 'r',
+                  encoding='utf8') as file:
+            checksum_contents = file.read()
         return checksum_contents
 
     def get_index(self):
@@ -577,7 +579,7 @@ class StorageBackend:
         else:
             top = '.'
         paths = []
-        for root, dirs, files in os.walk(top):
+        for root, dirs, _ in os.walk(top):
             for dir_ in dirs:
                 files_in_dir = os.listdir(os.path.join(root, dir_))
                 if not files_in_dir or self.manifest_filename in files_in_dir:
@@ -615,5 +617,5 @@ class StorageBackend:
         integrity = {
             'data': data_checksum == manifest.data_checksum,
             'all': checksum == manifest.checksum,
-            }
+        }
         return integrity

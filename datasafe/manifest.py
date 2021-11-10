@@ -61,8 +61,6 @@ import datasafe.checksum
 class Error(Exception):
     """Base class for exceptions in this module."""
 
-    pass
-
 
 class MissingInformationError(Error):
     """Exception raised when necessary information is not provided
@@ -164,7 +162,7 @@ class Manifest:
             raise MissingInformationError(message="No filename provided")
         if not os.path.exists(filename):
             raise FileNotFoundError("File does not exist")
-        with open(filename, 'r') as file:
+        with open(filename, 'r', encoding='utf8') as file:
             manifest_dict = yaml.safe_load(file)
         self.from_dict(manifest_dict)
 
@@ -185,17 +183,17 @@ class Manifest:
             Raised if any of the files listed in either
             :attr:`data_filenames` or :attr:`metadata_filenames` does not
             exist on the file system
+
         """
         if not self.data_filenames:
             raise MissingInformationError(message='Data filenames missing')
         for filename in self.data_filenames:
             if not os.path.exists(filename):
-                raise FileNotFoundError('Data file %s does not exist.' %
-                                        filename)
+                raise FileNotFoundError(f'Data file {filename} does not exist.')
         for filename in self.metadata_filenames:
             if not os.path.exists(filename):
-                raise FileNotFoundError('Metadata file %s does not exist' %
-                                        filename)
+                raise FileNotFoundError(f'Metadata file {filename} does not '
+                                        'exist')
         manifest_ = self._create_manifest_dict()
         for filename in self.data_filenames:
             # noinspection PyTypeChecker
@@ -226,7 +224,8 @@ class Manifest:
         The dict populated this way is then written to a yaml file (usually)
         named ``MANIFEST.yaml`` (as specified by :attr:`manifest_filename`).
         """
-        with open(self.manifest_filename, mode='w+') as output_file:
+        with open(self.manifest_filename, mode='w+', encoding='utf8') as \
+                output_file:
             yaml.dump(self.to_dict(), output_file)
 
     @staticmethod
@@ -262,12 +261,12 @@ class Manifest:
         return manifest_
 
     def _get_metadata_info(self):
-        """ Retrieve general information about metadata file """
+        """Retrieve general information about metadata file."""
         self.format_detector.metadata_filenames = self.metadata_filenames
         return self.format_detector.metadata_format()
 
     def _get_data_format(self):
-        """ Retrieve format of data files """
+        """Retrieve format of data files."""
         self.format_detector.data_filenames = self.data_filenames
         return self.format_detector.data_format()
 
@@ -285,6 +284,7 @@ class Manifest:
         -------
         result : :class:`str`
             Returns checksum (over checksums) of files.
+
         """
         checksum_generator = datasafe.checksum.Generator()
         return checksum_generator.generate(filenames=filenames)
@@ -372,7 +372,7 @@ class FormatDetector:
 
     @staticmethod
     def _parse_info(filename=''):
-        with open(filename, 'r') as file:
+        with open(filename, 'r', encoding='utf8') as file:
             info_line = file.readline()
         info_parts = info_line.split(' - ')
         _, version, _ = info_parts[1].split()
@@ -381,7 +381,7 @@ class FormatDetector:
 
     @staticmethod
     def _parse_yaml(filename=''):
-        with open(filename, 'r') as file:
+        with open(filename, 'r', encoding='utf8') as file:
             info = yaml.safe_load(file)
         format_ = info['format']['type']
         version = info['format']['version']
@@ -412,20 +412,20 @@ class FormatDetector:
         return self._detect_data_format()
 
     # noinspection PyMethodMayBeStatic
-    def _detect_data_format(self):
+    def _detect_data_format(self):  # noqa
         return 'test'
 
 
 if __name__ == '__main__':
     # Create Manifest.yaml file for demonstration purposes
-    data_filename = 'test'
-    metadata_filename = 'test.info'
-    for filename_ in [data_filename, metadata_filename]:
-        with open(filename_, 'w+') as f:
+    DATA_FILENAME = 'test'
+    METADATA_FILENAME = 'test.info'
+    for filename_ in [DATA_FILENAME, METADATA_FILENAME]:
+        with open(filename_, 'w+', encoding='utf8') as f:
             f.write('')
     manifest_obj = Manifest()
-    manifest_obj.data_filenames = [data_filename]
-    manifest_obj.metadata_filenames = [metadata_filename]
+    manifest_obj.data_filenames = [DATA_FILENAME]
+    manifest_obj.metadata_filenames = [METADATA_FILENAME]
     manifest_obj.to_file()
-    for filename_ in [data_filename, metadata_filename]:
+    for filename_ in [DATA_FILENAME, METADATA_FILENAME]:
         os.remove(filename_)

@@ -43,7 +43,7 @@ def object_from_name(module_name='', class_name=''):
 
 
 @contextlib.contextmanager
-def change_working_dir(path=''):  # pylint: disable=redefined-outer-name
+def change_working_dir(path=''):
     """
     Context manager for temporarily changing the working directory.
 

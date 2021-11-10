@@ -26,7 +26,7 @@ import tempfile
 
 import datasafe.loi as loi_
 from datasafe.manifest import Manifest
-import datasafe.server as server
+from datasafe import server
 from datasafe.utils import change_working_dir
 
 
@@ -42,24 +42,36 @@ class Client:
     ----------
     server : :class:`datasafe.server.Server`
 
-    loi : :class:`datasafe.loi.Parser`
+        Datasafe server component to talk to. The server itself will
+        communicate with a backend to do the actual storage.
+
+    loi_parser : :class:`datasafe.loi.Parser`
+
+        Parser for lab object identifiers (LOIs). Used to check a given LOI
+        for complying to certain criteria (and be a valid LOI).
 
     metadata_extensions : :class:`tuple`
-        File extensions that are regarded as metadata files
+        File extensions that are regarded as metadata files.
 
-        Default: ('.info', '.yaml', '.yml')
+        Used when automatically creating manifest files to distinguish
+        between data and metadata files of a dataset.
+
+        Default: ('.info', '.yaml')
 
     """
 
     def __init__(self):
         self.server = server.Server()
-        self.loi = loi_.Parser()
-        self.metadata_extensions = ('.info', '.yaml', '.yml')
+        self.loi_parser = loi_.Parser()
+        self.metadata_extensions = ('.info', '.yaml')
         self._loi_checker = loi_.LoiChecker()
 
     def create(self, loi=''):
         """
         Create new LOI.
+
+        Useful to "reserve" and register a LOI in the datasafe, *e.g.* at
+        the start of a new measurement.
 
         The storage corresponding to the LOI will be created and the LOI
         returned if successful. This does, however, *not* add any data to
@@ -90,7 +102,7 @@ class Client:
         if not loi:
             raise loi_.MissingLoiError('No LOI provided.')
         self._check_loi(loi=loi, validate=False)
-        id_parts = self.loi.split_id()
+        id_parts = self.loi_parser.split_id()
         if id_parts[0] != 'exp':
             raise loi_.InvalidLoiError('Loi ist not a valid experiment LOI')
         self._loi_checker.ignore_check = 'LoiMeasurementNumberChecker'
@@ -102,9 +114,46 @@ class Client:
         """
         Create a manifest file for a given dataset.
 
+        Different scenarios for determining which files belong to the
+        dataset and for distinguishing between data and metadata files are:
+
+        * Neither parameter ``filename`` nor ``path`` given
+
+          All files of the current directory will be assumed to belong to
+          the dataset.
+
+        * Parameter ``filename`` given
+
+          Only files starting with the value of ``filename`` will be
+          considered. Note that the value is used as pattern.
+
+        * Parameter ``path``, but no parameter ``filename`` given
+
+          Only files in the directory given by ``path`` will be considered.
+
+        * Both parameters, ``filename`` and ``path`` given
+
+          Only files starting with the value of ``filename`` and located in
+          the directory given by ``path`` will be considered. Note that the
+          value is used as pattern.
+
+        Metadata will be identified by using the :attr:`metadata_extensions`
+        attribute of the class. For details see there.
+
+        .. note::
+
+            As the manifest file has always the same name, it is generally a
+            good idea to have one dataset per directory. Otherwise, only one
+            manifest file (for one dataset) at a time can be created.
+
+
         Things to decide about and implement:
 
         * How to define or detect the file format?
+
+        .. todo::
+
+            Handle directories, not only files
 
         Parameters
         ----------
@@ -135,8 +184,14 @@ class Client:
         """
         Upload data belonging to a dataset to the datasafe.
 
-        Should create checksums/look them up in the Manifest file and check
-        after the upload that they are identical to those for the datasafe.
+        If no manifest file exists, it will automatically be created.
+
+        .. todo::
+
+            The server should compare the checksums stored in the Manifest
+            file with those newly created for the files after the upload to
+            the datasafe.
+
 
         Parameters
         ----------
@@ -205,8 +260,8 @@ class Client:
         return download_dir
 
     def _check_loi(self, loi='', validate=True):
-        self.loi.parse(loi)
-        if not self.loi.type == 'ds':
+        self.loi_parser.parse(loi)
+        if self.loi_parser.type != 'ds':
             raise loi_.InvalidLoiError('LOI is not a datasafe LOI.')
         if validate:
             if not self._loi_checker.check(loi):
