@@ -65,7 +65,7 @@ class TestManifest(unittest.TestCase):
 
     def test_to_dict_returns_dict_with_correct_keys(self):
         self.create_data_and_metadata_files()
-        manifest_keys_level_one = ['format', 'dataset', 'files']
+        manifest_keys_level_one = ['format', 'dataset', 'files', 'checksums']
         self.assertEqual(list(self.manifest.to_dict()), manifest_keys_level_one)
 
     def test_to_dict_type_is_datasafe_manifest(self):
@@ -92,7 +92,7 @@ class TestManifest(unittest.TestCase):
     def test_to_dict_files_has_minimal_structure(self):
         self.create_data_and_metadata_files()
         manifest_ = self.manifest.to_dict()
-        manifest_files_keys = ["metadata", "data", "checksums"]
+        manifest_files_keys = ["metadata", "data"]
         self.assertEqual(list(manifest_["files"].keys()),
                          manifest_files_keys)
 
@@ -123,24 +123,24 @@ class TestManifest(unittest.TestCase):
     def test_to_dict_with_files_populates_checksums(self):
         self.create_data_and_metadata_files()
         manifest_ = self.manifest.to_dict()
-        self.assertEqual(len(manifest_['files']['checksums']), 2)
+        self.assertEqual(len(manifest_['checksums']), 2)
 
     def test_to_dict_with_files_creates_checksums_structure(self):
         self.create_data_and_metadata_files()
         self.manifest.data_filenames = [self.data_filename]
         manifest_ = self.manifest.to_dict()
         self.assertEqual(
-            list(manifest_['files']['checksums'][0].keys()),
+            list(manifest_['checksums'][0].keys()),
             ['name', 'format', 'span', 'value'])
 
     def test_to_dict_with_files_creates_correct_checksums(self):
         self.create_data_and_metadata_files()
         manifest_ = self.manifest.to_dict()
         self.assertEqual(
-            manifest_['files']['checksums'][0]['value'],
+            manifest_['checksums'][0]['value'],
             '020eb29b524d7ba672d9d48bc72db455')
         self.assertEqual(
-            manifest_['files']['checksums'][1]['value'],
+            manifest_['checksums'][1]['value'],
             '74be16979710d4c4e7c6647856088456')
 
     def test_to_dict_without_data_filenames_raises(self):
@@ -286,7 +286,7 @@ class TestManifest(unittest.TestCase):
         new_manifest.from_file(self.manifest_filename)
         with open(self.manifest_filename, 'r') as file:
             manifest_dict = yaml.safe_load(file)
-        for checksum in manifest_dict['files']['checksums']:
+        for checksum in manifest_dict['checksums']:
             if 'metadata' in checksum['span']:
                 self.assertEqual(checksum['value'], new_manifest.checksum)
             else:

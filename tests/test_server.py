@@ -488,8 +488,8 @@ class TestStorageBackend(unittest.TestCase):
         import oyaml as yaml
         with open(os.path.join(self.path, self.manifest_filename), 'r') as file:
             manifest_dict = yaml.safe_load(file)
-        manifest_dict['files']['checksums'][0]['value'] = 'foo'
-        manifest_dict['files']['checksums'][1]['value'] = 'bar'
+        manifest_dict['checksums'][0]['value'] = 'foo'
+        manifest_dict['checksums'][1]['value'] = 'bar'
         with open(os.path.join(self.path, self.manifest_filename), 'w+') as f:
             yaml.dump(manifest_dict, f)
         # Check that integrity for both fields is False

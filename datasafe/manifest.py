@@ -31,21 +31,21 @@ metadata in ``test.info``):
     files:
       metadata:
       - name: test.info
-        format: info file
-        version: 0.1.0
+        format: cwEPR Info file
+        version: 0.1.4
       data:
         format: test
         names:
         - test
-      checksums:
-      - name: CHECKSUM
-        format: MD5 checksum
-        span: data, metadata
-        value: 020eb29b524d7ba672d9d48bc72db455
-      - name: CHECKSUM_data
-        format: MD5 checksum
-        span: data
-        value: 74be16979710d4c4e7c6647856088456
+    checksums:
+    - name: CHECKSUM
+      format: MD5 checksum
+      span: data, metadata
+      value: f46475b4905fe2e1a388dc5c6a07ecbc
+    - name: CHECKSUM_data
+      format: MD5 checksum
+      span: data
+      value: 74be16979710d4c4e7c6647856088456
 
 
 """
@@ -134,7 +134,7 @@ class Manifest:
         self.metadata_filenames = []
         for metadata_file in manifest_dict['files']['metadata']:
             self.metadata_filenames.append(metadata_file['name'])
-        for checksum in manifest_dict['files']['checksums']:
+        for checksum in manifest_dict['checksums']:
             if 'metadata' in checksum['span']:
                 self.checksum = checksum['value']
             else:
@@ -205,14 +205,14 @@ class Manifest:
             manifest_['files']['data']['names'].append(filename)
         manifest_['files']['data']['format'] = self._get_data_format()
         manifest_['files']['metadata'] = self._get_metadata_info()
-        manifest_['files']['checksums'].append({
+        manifest_['checksums'].append({
             'name': 'CHECKSUM',
             'format': 'MD5 checksum',
             'span': 'data, metadata',
             'value': self._generate_checksum(self.data_filenames +
                                              self.metadata_filenames),
         })
-        manifest_['files']['checksums'].append({
+        manifest_['checksums'].append({
             'name': 'CHECKSUM_data',
             'format': 'MD5 checksum',
             'span': 'data',
@@ -281,12 +281,12 @@ class Manifest:
         manifest_files = {
             "metadata": [],
             "data": {'format': '', 'names': []},
-            "checksums": [],
         }
         manifest_keys_level_one = [
             ('format', manifest_format),
             ('dataset', manifest_dataset),
             ('files', manifest_files),
+            ('checksums', []),
         ]
         manifest_ = dict(manifest_keys_level_one)
         return manifest_
@@ -451,9 +451,10 @@ if __name__ == '__main__':
     # Create Manifest.yaml file for demonstration purposes
     DATA_FILENAME = 'test'
     METADATA_FILENAME = 'test.info'
-    for filename_ in [DATA_FILENAME, METADATA_FILENAME]:
-        with open(filename_, 'w+', encoding='utf8') as f:
-            f.write('')
+    with open(DATA_FILENAME, 'w+', encoding='utf8') as f:
+        f.write('')
+    with open(METADATA_FILENAME, 'w+', encoding='utf8') as f:
+        f.write('cwEPR Info file - v. 0.1.4 (2020-01-21)')
     manifest_obj = Manifest()
     manifest_obj.data_filenames = [DATA_FILENAME]
     manifest_obj.metadata_filenames = [METADATA_FILENAME]

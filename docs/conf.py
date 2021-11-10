@@ -108,5 +108,5 @@ html_logo = './logo.png'
 # -- Extension configuration -------------------------------------------------
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
-    'matplotlib': ('https://matplotlib.org/', None),
+#    'matplotlib': ('https://matplotlib.org/', None),
 }
