@@ -143,7 +143,7 @@ class TestClient(unittest.TestCase):
         self.server.new(loi=self.loi)
         self.server.upload(loi=self.loi, content=self.create_zip_archive())
         mock_ = mock.MagicMock()
-        with mock.patch('datasafe.client.Manifest.compare_checksums', mock_):
+        with mock.patch('datasafe.client.Manifest.check_integrity', mock_):
             self.path = self.client.download(self.loi)
         mock_.assert_called()
 

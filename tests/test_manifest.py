@@ -292,33 +292,36 @@ class TestManifest(unittest.TestCase):
             else:
                 self.assertEqual(checksum['value'], new_manifest.data_checksum)
 
-    def test_has_compare_checksums_method(self):
-        self.assertTrue(hasattr(self.manifest, 'compare_checksums'))
-        self.assertTrue(callable(self.manifest.compare_checksums))
+    def test_has_check_integrity_method(self):
+        self.assertTrue(hasattr(self.manifest, 'check_integrity'))
+        self.assertTrue(callable(self.manifest.check_integrity))
 
-    def test_compare_checksums_with_missing_information_raises(self):
+    def test_check_integrity_with_missing_information_raises(self):
         with self.assertRaises(ValueError):
-            self.manifest.compare_checksums()
+            self.manifest.check_integrity()
 
-    def test_compare_checksums_successfully_returns_none(self):
+    def test_check_integrity_returns_dict(self):
         self.create_data_and_metadata_files()
         self.manifest.from_dict(self.manifest.to_dict())
-        self.assertIsNone(self.manifest.compare_checksums())
+        self.assertIsInstance(self.manifest.check_integrity(), dict)
 
-    def test_compare_checksum_unsuccessfully_raises(self):
+    def test_check_integrity_dict_contains_correct_fields(self):
+        self.create_data_and_metadata_files()
+        self.manifest.from_dict(self.manifest.to_dict())
+        self.assertCountEqual(['data', 'all'],
+                              self.manifest.check_integrity().keys())
+
+    def test_check_integrity_with_incorrect_overall_checksum(self):
         self.create_data_and_metadata_files()
         self.manifest.from_dict(self.manifest.to_dict())
         self.manifest.checksum = 'foo'
-        with self.assertRaisesRegex(ValueError, 'Checksum over data and '
-                                                'metadata differs'):
-            self.manifest.compare_checksums()
+        self.assertFalse(self.manifest.check_integrity()['all'])
 
-    def test_compare_data_checksum_unsuccessfully_raises(self):
+    def test_check_integrity_with_incorrect_data_checksum(self):
         self.create_data_and_metadata_files()
         self.manifest.from_dict(self.manifest.to_dict())
         self.manifest.data_checksum = 'foo'
-        with self.assertRaisesRegex(ValueError, 'Checksum over data differs'):
-            self.manifest.compare_checksums()
+        self.assertFalse(self.manifest.check_integrity()['data'])
 
 
 class TestFormatDetector(unittest.TestCase):

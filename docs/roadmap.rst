@@ -5,6 +5,19 @@ Roadmap
 A few ideas how to develop the project further, currently a list as a reminder for the main developers themselves, in no particular order, though with a tendency to list more important aspects first:
 
 
+For version 0.1
+===============
+
+* Client gets file format information and passes it to manifest
+
+* HTTP transport layer between server and client
+
+  * HTTP server (backend)
+  * HTTP client
+
+* Handle proper cross-boundary transfer of exceptions between server and client (probably only necessary once the transfer layer is implemented).
+
+
 For later versions
 ==================
 
@@ -13,8 +26,6 @@ For later versions
 * Backend worker updating a database with LOIs and corresponding checksums for easy checking of already existing datasets
 
 * Move all exceptions to own module, and ensure all exceptions to issue messages.
-
-* Handle proper cross-boundary transfer of exceptions between server and client (probably only necessary once the transfer layer is implemented).
 
 
 Todos

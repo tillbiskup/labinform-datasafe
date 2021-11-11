@@ -249,7 +249,7 @@ class Client:
             os.remove(archive_file)
             manifest = Manifest()
             manifest.from_file(manifest.manifest_filename)
-            manifest.compare_checksums()
+            manifest.check_integrity()
         return download_dir
 
     def _check_loi(self, loi='', validate=True):

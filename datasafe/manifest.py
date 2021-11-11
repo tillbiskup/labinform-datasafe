@@ -234,30 +234,40 @@ class Manifest:
                 output_file:
             yaml.dump(self.to_dict(), output_file)
 
-    def compare_checksums(self):
+    def check_integrity(self):
         """
-        Compare checksums stored in manifest with those newly created.
+        Check integrity of dataset, comparing stored with generated checksums.
+
+        To check the integrity of a dataset, the checksums stored within the
+        manifest file will be compared to newly generated checksums over
+        data and metadata together as well as over data alone.
 
         Allows to check for consistency of manifest and data, and hence to
         detect any corruption of the data.
+
+        Returns
+        -------
+        integrity : :class:`dict`
+            dict with fields ``data`` and ``all`` containing boolean values
+
 
         Raises
         ------
         ValueError
             Raised if not all necessary information is available.
 
-            Raised if either of the stored checksums differs with newly
-            created checksum over actual data.
-
         """
         if not all([self.data_filenames, self.metadata_filenames,
                     self.data_checksum, self.checksum]):
             raise ValueError
-        if self.checksum != self._generate_checksum(self.data_filenames +
-                                                    self.metadata_filenames):
-            raise ValueError('Checksum over data and metadata differs')
-        if self.data_checksum != self._generate_checksum(self.data_filenames):
-            raise ValueError('Checksum over data differs')
+        checksum = self._generate_checksum(self.data_filenames +
+                                           self.metadata_filenames)
+        data_checksum = self._generate_checksum(self.data_filenames)
+        integrity = {
+            'data': data_checksum == self.data_checksum,
+            'all': checksum == self.checksum,
+        }
+        return integrity
 
     @staticmethod
     def _create_manifest_dict():

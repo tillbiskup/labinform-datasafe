@@ -382,7 +382,7 @@ class TestStorageBackend(unittest.TestCase):
         self.backend.root_directory = self.root
         self.backend.create(self.path)
         mock_ = mock.MagicMock()
-        with mock.patch('datasafe.server.Manifest.compare_checksums', mock_):
+        with mock.patch('datasafe.server.Manifest.check_integrity', mock_):
             self.backend.deposit(path=self.path,
                                  content=self.create_zip_archive())
         mock_.assert_called()

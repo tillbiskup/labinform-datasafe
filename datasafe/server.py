@@ -451,7 +451,7 @@ class StorageBackend:
         with change_working_dir(self.working_path(path)):
             manifest = Manifest()
             manifest.from_file(manifest.manifest_filename)
-            manifest.compare_checksums()
+            manifest.check_integrity()
         os.remove(tmpfile[1])
 
     def retrieve(self, path=''):
@@ -572,12 +572,4 @@ class StorageBackend:
             raise MissingContentError(message='No manifest file found.')
         manifest = Manifest()
         manifest.from_file(os.path.join(path, self.manifest_filename))
-        checksum_generator = Generator()
-        data_checksum = checksum_generator.generate(manifest.data_filenames)
-        checksum = checksum_generator.generate(manifest.data_filenames +
-                                               manifest.metadata_filenames)
-        integrity = {
-            'data': data_checksum == manifest.data_checksum,
-            'all': checksum == manifest.checksum,
-        }
-        return integrity
+        return manifest.check_integrity()
