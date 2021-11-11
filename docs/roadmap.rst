@@ -10,6 +10,8 @@ For version 0.1
 
 * Client gets file format information and passes it to manifest
 
+* Configuration handling: via configuration files or else
+
 * HTTP transport layer between server and client
 
   * HTTP server (backend)

@@ -40,6 +40,9 @@ import os
 import shutil
 import tempfile
 
+from flask import Flask, request
+from flask.views import MethodView
+
 from datasafe import configuration
 import datasafe.loi as loi_
 from datasafe.manifest import Manifest
@@ -593,3 +596,40 @@ class StorageBackend:
         manifest = Manifest()
         manifest.from_file(os.path.join(path, self.manifest_filename))
         return manifest.check_integrity()
+
+
+def create_http_server(test_config=None):
+    app = Flask(__name__)  #, instance_relative_config=True)
+    # app.config.from_object(Config())
+    if test_config:
+        app.config.from_mapping(test_config)
+
+    @app.route('/heartbeat')
+    def heartbeat():
+        return "alive"
+
+    @app.route('/api/')
+    def api_test():
+        return "alive"
+
+    dataset = HTTPServerAPI.as_view('datasets')
+    app.add_url_rule('/api/<path:loi>', view_func=dataset)
+
+    return app
+
+
+class HTTPServerAPI(MethodView):
+
+    def __init__(self):
+        self.server = Server()
+
+    def post(self, loi=''):
+        new_loi = self.server.new(loi=loi)
+        return new_loi, 201
+
+    def get(self, loi=''):
+        return '', 404
+
+    def put(self, loi='', ):
+        integrity = self.server.upload(loi=loi, content=request.data)
+        return integrity, 200

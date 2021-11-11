@@ -14,8 +14,6 @@ class TestServer(unittest.TestCase):
         self.server = server.Server()
         self.loi = '42.1001/ds/exp/sa/42/cwepr/1'
         self.storage = server.StorageBackend()
-        self.storage.root_directory = 'backend_root'
-        self.server.storage = self.storage
         self.tempdir = 'tmp'
         self.manifest_filename = Manifest().manifest_filename
         self.data_filename = 'foo'
@@ -42,7 +40,7 @@ class TestServer(unittest.TestCase):
         os.remove('test.zip')
         return contents
 
-    def create_manifest_file(self, path=''):
+    def create_manifest_file(self):
         manifest = Manifest()
         manifest.data_filenames = [self.data_filename]
         manifest.metadata_filenames = [self.metadata_filename]
