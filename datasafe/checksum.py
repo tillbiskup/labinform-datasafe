@@ -34,6 +34,7 @@ the :class:`Checksum` class is MD5.
 """
 
 import importlib
+import os.path
 
 
 class Generator:
@@ -129,15 +130,17 @@ class Generator:
             Checksum generated over (list of) file(s)
 
         """
-        if not isinstance(filenames, list):
-            return self._hash_file_content(filenames)
+        checksum = ''
+        if isinstance(filenames, list):
+            file_checksum = []
+            for filename in filenames:
+                if not os.path.isdir(filename):
+                    file_checksum.append(self._hash_file_content(filename))
 
-        file_checksum = []
-        for filename in filenames:
-            file_checksum.append(
-                self._hash_file_content(filename))
-
-        return self.hash_strings(file_checksum)
+            checksum = self.hash_strings(file_checksum)
+        elif not os.path.isdir(filenames):
+            checksum = self._hash_file_content(filenames)
+        return checksum
 
     def _hash_file_content(self, filename):
         """

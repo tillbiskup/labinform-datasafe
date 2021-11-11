@@ -152,9 +152,6 @@ class Client:
 
         * How to define or detect the file format?
 
-        .. todo::
-
-            Handle directories, not only files
 
         Parameters
         ----------
@@ -172,7 +169,6 @@ class Client:
         with change_working_dir(path):
             file_pattern = filename + '.*' if filename else '*'
             filenames = glob.glob(file_pattern)
-            filenames = [x for x in filenames if os.path.isfile(x)]
             manifest.metadata_filenames = \
                 [x for x in filenames if x.endswith(self.metadata_extensions)]
             manifest.data_filenames = \
@@ -233,6 +229,10 @@ class Client:
         The LOI is checked for belonging to the datasafe. Further checks
         will be done on the server side, resulting in exceptions raised if
         there are some problems.
+
+        Upon successful download data are checked for integrity and in case
+        of possible data or metadata corruption a warning is issued. Take
+        care of handling this warning downstream accordingly.
 
 
         Parameters
@@ -311,13 +311,20 @@ class Client:
             if not self._loi_checker.check(loi):
                 raise loi_.InvalidLoiError('String is not a valid LOI.')
 
-    @staticmethod
-    def _create_zip_archive(filenames=None):
-        tmpdir = tempfile.mkdtemp()
-        for filename in filenames:
-            shutil.copy(filename, tmpdir)
-        zip_archive = shutil.make_archive(base_name='dataset', format='zip',
-                                          root_dir=tmpdir)
-        with open(zip_archive, 'rb') as zip_file:
-            contents = zip_file.read()
+    def _create_zip_archive(self, filenames=None):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            for filename in filenames:
+                self._copy_file(filename, tmpdir)
+            zip_archive = shutil.make_archive(base_name='dataset', format='zip',
+                                              root_dir=tmpdir)
+            with open(zip_archive, 'rb') as zip_file:
+                contents = zip_file.read()
         return contents
+
+    def _copy_file(self, source, destination):
+        if os.path.isdir(source):
+            os.mkdir(os.path.join(destination, source))
+            for item in os.listdir(source):
+                self._copy_file(os.path.join(source, item), destination)
+        else:
+            shutil.copy(source, destination)

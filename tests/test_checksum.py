@@ -1,4 +1,5 @@
 import os
+import shutil
 import unittest
 
 from datasafe import checksum
@@ -9,11 +10,14 @@ class TestChecksumGenerator(unittest.TestCase):
         self.generator = checksum.Generator()
         self.filenames = ['foo', 'bar']
         self.strings = ['foo', 'bar']
+        self.directory = 'baz'
 
     def tearDown(self):
         for filename in self.filenames:
             if os.path.exists(filename):
                 os.remove(filename)
+        if os.path.exists(self.directory):
+            shutil.rmtree(self.directory)
 
     def _create_files(self):
         for idx, filename in enumerate(self.filenames):
@@ -65,6 +69,10 @@ class TestChecksumGenerator(unittest.TestCase):
         self._create_files()
         self.assertEqual(self.generator.generate(self.filenames),
                          '7813987d9dc87851f49ecbed9f875968')
+
+    def test_generate_with_directory_returns_empty_checksum(self):
+        os.mkdir(self.directory)
+        self.assertEqual('', self.generator.generate(self.directory))
 
 
 if __name__ == '__main__':

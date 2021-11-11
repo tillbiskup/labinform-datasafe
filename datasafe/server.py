@@ -502,12 +502,14 @@ class StorageBackend:
         if not path:
             raise MissingPathError(message='No path provided.')
         tmpfile = tempfile.mkstemp()
-        zip_archive = shutil.make_archive(base_name=tmpfile[1], format='zip',
+        zip_archive = shutil.make_archive(base_name=tmpfile[1],
+                                          format='zip',
                                           root_dir=self.working_path(path))
         with open(zip_archive, 'rb') as zip_file:
             contents = zip_file.read()
         # noinspection PyTypeChecker
         os.remove(tmpfile[1] + '.zip')
+        os.remove(tmpfile[1])
         return contents
 
     def get_manifest(self, path=''):
