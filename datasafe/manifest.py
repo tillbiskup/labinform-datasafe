@@ -243,7 +243,21 @@ class Manifest:
         data and metadata together as well as over data alone.
 
         Allows to check for consistency of manifest and data, and hence to
-        detect any corruption of the data.
+        detect any corruption of the data. You may check for integrity like
+        this:
+
+        .. code-block::
+
+            integrity = manifest.check_integrity()
+            if not all(integrity.values()):
+                fails = [key for key, value in integrity.items() if not value]
+                for fail in fails:
+                    print(f"The following checksum failed: '{fail}'")
+
+        This would first check if there are any failed checks, and if so,
+        for each fail print the failing key. Of course, in your case you
+        will do more sensible things than just printing the keys.
+
 
         Returns
         -------

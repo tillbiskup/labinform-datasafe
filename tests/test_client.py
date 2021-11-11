@@ -147,6 +147,37 @@ class TestClient(unittest.TestCase):
             self.path = self.client.download(self.loi)
         mock_.assert_called()
 
+    def test_download_warns_if_only_overall_checksum_is_false(self):
+        self.server.new(loi=self.loi)
+        self.server.upload(loi=self.loi, content=self.create_zip_archive())
+        mock_ = mock.MagicMock()
+        mock_.return_value = {'all': False, 'data': True}
+        with mock.patch('datasafe.client.Manifest.check_integrity', mock_):
+            message = 'Integrity check failed, metadata may be corrupted.'
+            with self.assertWarnsRegex(UserWarning, message):
+                self.path = self.client.download(self.loi)
+
+    def test_download_warns_if_only_data_checksum_is_false(self):
+        self.server.new(loi=self.loi)
+        self.server.upload(loi=self.loi, content=self.create_zip_archive())
+        mock_ = mock.MagicMock()
+        mock_.return_value = {'all': True, 'data': False}
+        with mock.patch('datasafe.client.Manifest.check_integrity', mock_):
+            message = 'Integrity check failed, data may be corrupted.'
+            with self.assertWarnsRegex(UserWarning, message):
+                self.path = self.client.download(self.loi)
+
+    def test_download_warns_if_both_checksums_are_false(self):
+        self.server.new(loi=self.loi)
+        self.server.upload(loi=self.loi, content=self.create_zip_archive())
+        mock_ = mock.MagicMock()
+        mock_.return_value = {'all': False, 'data': False}
+        with mock.patch('datasafe.client.Manifest.check_integrity', mock_):
+            message = 'Integrity check failed, data and metadata may be ' \
+                      'corrupted.'
+            with self.assertWarnsRegex(UserWarning, message):
+                self.path = self.client.download(self.loi)
+
     def test_create_manifest_creates_manifest(self):
         os.mkdir(self.tempdir)
         with change_working_dir(self.tempdir):
@@ -258,6 +289,14 @@ class TestClient(unittest.TestCase):
             self.path = self.client.download(self.loi)
         self.assertTrue(os.path.isfile(os.path.join(self.path,
                                                     self.manifest_filename)))
+
+    def test_upload_returns_results_of_integrity_check(self):
+        os.mkdir(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+            self.client.create(loi=self.loi)
+            integrity = self.client.upload(loi=self.loi)
+        self.assertCountEqual(['all', 'data'], integrity.keys())
 
 
 if __name__ == '__main__':

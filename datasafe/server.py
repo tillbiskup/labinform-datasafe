@@ -43,7 +43,6 @@ import tempfile
 from datasafe import configuration
 import datasafe.loi as loi_
 from datasafe.manifest import Manifest
-from datasafe.checksum import Generator
 from datasafe.utils import change_working_dir
 
 
@@ -173,7 +172,16 @@ class Server:
 
         content : :class:`bytes`
             byte representation of a ZIP archive containing the contents to
-            be extracted in the directory corresponding to path
+            be stored via the backend
+
+
+        Returns
+        -------
+        integrity : :class:`dict`
+            dict with fields ``data`` and ``all`` containing boolean values
+
+            For details see :meth:`datasafe.manifest.Manifest.check_integrity`.
+
 
         Raises
         ------
@@ -194,7 +202,7 @@ class Server:
             raise ValueError('LOI does not exist.')
         if not self.storage.isempty(path=self.loi.id):
             raise FileExistsError('Directory not empty')
-        self.storage.deposit(path=self.loi.id, content=content)
+        return self.storage.deposit(path=self.loi.id, content=content)
 
     def download(self, loi=''):
         """
@@ -431,6 +439,15 @@ class StorageBackend:
             byte representation of a ZIP archive containing the contents to
             be extracted in the directory corresponding to path
 
+
+        Returns
+        -------
+        integrity : :class:`dict`
+            dict with fields ``data`` and ``all`` containing boolean values
+
+            For details see :meth:`datasafe.manifest.Manifest.check_integrity`.
+
+
         Raises
         ------
         datasafe.directory.MissingPathError
@@ -451,8 +468,9 @@ class StorageBackend:
         with change_working_dir(self.working_path(path)):
             manifest = Manifest()
             manifest.from_file(manifest.manifest_filename)
-            manifest.check_integrity()
+            integrity = manifest.check_integrity()
         os.remove(tmpfile[1])
+        return integrity
 
     def retrieve(self, path=''):
         """

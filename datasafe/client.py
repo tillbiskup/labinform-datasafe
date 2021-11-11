@@ -23,6 +23,7 @@ import glob
 import os
 import shutil
 import tempfile
+import warnings
 
 import datasafe.loi as loi_
 from datasafe.manifest import Manifest
@@ -196,6 +197,19 @@ class Client:
         loi : :class:`str`
             LOI the data should be downloaded for
 
+
+        Returns
+        -------
+        integrity : :class:`dict`
+            dict with fields ``data`` and ``all`` containing boolean values
+
+            For details see :meth:`datasafe.manifest.Manifest.check_integrity`.
+
+        Raises
+        ------
+        datasafe.loi.MissingLoiError
+            Raised if no LOI is provided
+
         """
         if not loi:
             raise loi_.MissingLoiError('No LOI provided.')
@@ -209,8 +223,8 @@ class Client:
         filenames = manifest.metadata_filenames
         filenames.extend(manifest.data_filenames)
         filenames.append(manifest.manifest_filename)
-        self.server.upload(loi=loi,
-                           content=self._create_zip_archive(filenames))
+        return self.server.upload(loi=loi,
+                                  content=self._create_zip_archive(filenames))
 
     def download(self, loi=''):
         """
@@ -219,6 +233,7 @@ class Client:
         The LOI is checked for belonging to the datasafe. Further checks
         will be done on the server side, resulting in exceptions raised if
         there are some problems.
+
 
         Parameters
         ----------
@@ -229,6 +244,12 @@ class Client:
         -------
         download_dir : :class:`str`
             Directory the data obtained from the datasafe have been saved to
+
+        Warns
+        -----
+        UserWarning
+            Issued if the consistency check fails, *i.e.* data or metadata
+            may be corrupted
 
         Raises
         ------
@@ -249,7 +270,16 @@ class Client:
             os.remove(archive_file)
             manifest = Manifest()
             manifest.from_file(manifest.manifest_filename)
-            manifest.check_integrity()
+            integrity = manifest.check_integrity()
+        if not all(integrity.values()):
+            if not any(integrity.values()):
+                message = 'Integrity check failed, data and metadata may be ' \
+                          'corrupted.'
+            elif integrity['data']:
+                message = 'Integrity check failed, metadata may be corrupted.'
+            else:
+                message = 'Integrity check failed, data may be corrupted.'
+            warnings.warn(message)
         return download_dir
 
     def _check_loi(self, loi='', validate=True):

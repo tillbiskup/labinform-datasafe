@@ -145,6 +145,12 @@ class TestServer(unittest.TestCase):
         with self.assertRaises(FileExistsError):
             self.server.upload(loi=self.loi, content=content)
 
+    def test_upload_returns_results_of_integrity_check(self):
+        self.server.new(self.loi)
+        integrity = self.server.upload(loi=self.loi,
+                                       content=self.create_zip_archive())
+        self.assertCountEqual(['all', 'data'], integrity.keys())
+
     def test_download_without_loi_raises(self):
         with self.assertRaises(loi_.MissingLoiError):
             self.server.download()
@@ -386,6 +392,13 @@ class TestStorageBackend(unittest.TestCase):
             self.backend.deposit(path=self.path,
                                  content=self.create_zip_archive())
         mock_.assert_called()
+
+    def test_deposit_returns_results_of_integrity_check(self):
+        self.backend.root_directory = self.root
+        self.backend.create(self.path)
+        integrity = self.backend.deposit(path=self.path,
+                                         content=self.create_zip_archive())
+        self.assertCountEqual(['all', 'data'], integrity.keys())
 
     def test_retrieve_without_path_raises(self):
         self.backend.create(self.path)
