@@ -177,21 +177,49 @@ class Client:
                 manifest.metadata_filenames.remove(manifest.manifest_filename)
             manifest.to_file()
 
-    def upload(self, loi=''):
+    def upload(self, loi='', filename='', path=''):
         """
         Upload data belonging to a dataset to the datasafe.
 
         If no manifest file exists, it will automatically be created.
 
-        .. todo::
+        Different scenarios for determining which files belong to the
+        dataset and for distinguishing between data and metadata files are:
 
-            Handle filename and path, similar to :meth:`create_manifest`
+        * Neither parameter ``filename`` nor ``path`` given
+
+          All files of the current directory will be assumed to belong to
+          the dataset.
+
+        * Parameter ``filename`` given
+
+          Only files starting with the value of ``filename`` will be
+          considered. Note that the value is used as pattern.
+
+        * Parameter ``path``, but no parameter ``filename`` given
+
+          Only files in the directory given by ``path`` will be considered.
+
+        * Both parameters, ``filename`` and ``path`` given
+
+          Only files starting with the value of ``filename`` and located in
+          the directory given by ``path`` will be considered. Note that the
+          value is used as pattern.
 
 
         Parameters
         ----------
         loi : :class:`str`
             LOI the data should be downloaded for
+
+        filename : :class:`str`
+            Name of the file(s) belonging to a dataset.
+
+            This is taken as pattern and extended with ".*" and used with
+            :func:`glob.glob` if given.
+
+        path : :class:`str`
+            File system path where to look for files belonging to a dataset
 
 
         Returns
@@ -210,17 +238,19 @@ class Client:
         if not loi:
             raise loi_.MissingLoiError('No LOI provided.')
         self._check_loi(loi=loi, validate=False)
-        if not os.path.exists(Manifest().manifest_filename):
-            self.create_manifest()
-        manifest = Manifest()
-        manifest.from_file(manifest.manifest_filename)
-        manifest.loi = loi
-        manifest.to_file()
-        filenames = manifest.metadata_filenames
-        filenames.extend(manifest.data_filenames)
-        filenames.append(manifest.manifest_filename)
+        with change_working_dir(path):
+            if not os.path.exists(Manifest().manifest_filename):
+                self.create_manifest(filename=filename)
+            manifest = Manifest()
+            manifest.from_file(manifest.manifest_filename)
+            manifest.loi = loi
+            manifest.to_file()
+            filenames = manifest.metadata_filenames
+            filenames.extend(manifest.data_filenames)
+            filenames.append(manifest.manifest_filename)
+            content = self._create_zip_archive(filenames)
         return self.server.upload(loi=loi,
-                                  content=self._create_zip_archive(filenames))
+                                  content=content)
 
     def download(self, loi=''):
         """

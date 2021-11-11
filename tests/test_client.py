@@ -280,6 +280,31 @@ class TestClient(unittest.TestCase):
             manifest.from_file(self.manifest_filename)
             self.assertTrue(manifest.loi)
 
+    def test_upload_with_given_filename(self):
+        os.mkdir(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+            for filename in ['asdf', 'sdfg']:
+                with open(filename, 'w+') as f:
+                    f.write('')
+            self.client.create(loi=self.loi)
+            self.client.upload(loi=self.loi, filename='bar')
+            manifest = Manifest()
+            manifest.from_file()
+            self.assertEqual([self.data_filename],
+                             manifest.data_filenames)
+
+    def test_upload_with_given_path(self):
+        os.mkdir(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+        self.client.create(loi=self.loi)
+        self.client.upload(loi=self.loi, path=self.tempdir)
+        manifest = Manifest()
+        manifest.from_file(os.path.join(self.tempdir,
+                                        manifest.manifest_filename))
+        self.assertEqual([self.data_filename], manifest.data_filenames)
+
     def test_upload_creates_downloadable_items_in_datasafe(self):
         os.mkdir(self.tempdir)
         with change_working_dir(self.tempdir):
