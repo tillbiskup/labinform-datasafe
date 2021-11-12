@@ -148,3 +148,49 @@ class TestAPI(flask_unittest.ClientTestCase):
         client.post("/api/" + self.loi)
         response = client.get("/api/" + self.loi)
         self.assertStatus(response, 204)
+
+    def test_patch_with_valid_loi_deposits_data(self, client):
+        data = self.create_zip_archive()
+        storage_dir = os.path.join(self.storage.root_directory,
+                                   *self.loi.split('/')[2:])
+        client.post("/api/" + self.loi)
+        client.put("/api/" + self.loi, data=data)
+        with change_working_dir(storage_dir):
+            os.rename(self.manifest_filename, 'foo.yaml')
+        client.patch("/api/" + self.loi, data=data)
+        self.assertNotIn('foo.yaml', os.listdir(storage_dir))
+
+    def test_patch_with_valid_loi_returns_integrity(self, client):
+        data = self.create_zip_archive()
+        client.post("/api/" + self.loi)
+        client.put("/api/" + self.loi, data=data)
+        integrity = client.patch("/api/" + self.loi, data=data)
+        self.assertDictEqual({'all': True, 'data': True},
+                             json.loads(integrity.data))
+
+    def test_patch_with_invalid_loi_returns_404(self, client):
+        response = client.patch("/api/" + "foo/bar/baz")
+        self.assertStatus(response, 404)
+
+    def test_patch_with_valid_loi_and_inexisting_directory(self, client):
+        data = self.create_zip_archive()
+        response = client.patch("/api/" + self.loi, data=data)
+        self.assertStatus(response, 400)
+        self.assertResponseEqual(response, 'LOI does not exist.'.encode())
+
+    def test_patch_with_valid_loi_and_no_payload(self, client):
+        data = self.create_zip_archive()
+        client.post("/api/" + self.loi)
+        client.put("/api/" + self.loi, data=data)
+        response = client.patch("/api/" + self.loi)
+        self.assertStatus(response, 400)
+        self.assertResponseEqual(response,
+                                 'No content provided to deposit.'.encode())
+
+    def test_patch_with_no_content_at_loi(self, client):
+        data = self.create_zip_archive()
+        client.post("/api/" + self.loi)
+        response = client.patch("/api/" + self.loi, data=data)
+        self.assertStatus(response, 405)
+        self.assertResponseEqual(response, 'Directory empty'.encode())
+        self.assertIn('PUT', response.allow)

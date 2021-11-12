@@ -70,6 +70,10 @@ class TestServer(unittest.TestCase):
         self.assertTrue(hasattr(self.server, 'download'))
         self.assertTrue(callable(self.server.download))
 
+    def test_server_has_update_method(self):
+        self.assertTrue(hasattr(self.server, 'update'))
+        self.assertTrue(callable(self.server.update))
+
     def test_new_without_loi_raises(self):
         with self.assertRaises(MissingLoiError):
             self.server.new()
@@ -179,6 +183,53 @@ class TestServer(unittest.TestCase):
         content = self.create_zip_archive()
         self.server.upload(loi=self.loi, content=content)
         self.assertEqual(content, self.server.download(self.loi))
+
+    def test_update_without_loi_raises(self):
+        with self.assertRaises(MissingLoiError):
+            self.server.update()
+
+    def test_update_with_invalid_loi_raises(self):
+        with self.assertRaises(InvalidLoiError):
+            self.server.update('foo')
+
+    def test_update_with_no_datasafe_loi_raises(self):
+        with self.assertRaises(InvalidLoiError):
+            self.server.update('42.1001/rec/42')
+
+    def test_update_with_inexisting_loi_raises(self):
+        with self.assertRaisesRegex(LoiNotFoundError, 'LOI does not exist.'):
+            self.server.update('42.1001/ds/exp/sa/42/cwepr/1')
+
+    def test_update_with_existing_loi(self):
+        storage_dir = os.path.join(self.storage.root_directory,
+                                   *self.loi.split('/')[2:])
+        data = self.create_zip_archive()
+        self.server.new(self.loi)
+        self.server.upload(loi=self.loi, content=data)
+        with change_working_dir(storage_dir):
+            os.rename(self.manifest_filename, 'foo.yaml')
+        self.server.update(loi=self.loi, content=data)
+        self.assertNotIn('foo.yaml', os.listdir(storage_dir))
+
+    def test_update_with_empty_resource_raises(self):
+        self.server.new(self.loi)
+        data = self.create_zip_archive()
+        with self.assertRaises(NoFileError):
+            self.server.update(loi=self.loi, content=data)
+
+    def test_update_without_data_raises(self):
+        self.server.new(self.loi)
+        data = self.create_zip_archive()
+        self.server.upload(loi=self.loi, content=data)
+        with self.assertRaises(MissingContentError):
+            self.server.update(loi=self.loi)
+
+    def test_update_returns_results_of_integrity_check(self):
+        data = self.create_zip_archive()
+        self.server.new(self.loi)
+        self.server.upload(loi=self.loi, content=data)
+        integrity = self.server.update(loi=self.loi, content=data)
+        self.assertCountEqual(['all', 'data'], integrity.keys())
 
 
 class TestStorageBackend(unittest.TestCase):

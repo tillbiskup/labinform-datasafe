@@ -92,12 +92,12 @@ class Server:
         Parameters
         ----------
         loi : :class:`str`
-            LOI for which storage should be created
+            LOI for which the resource should be created
 
         Returns
         -------
         loi : :class:`str`
-            LOI the storage has been created for
+            LOI the resource has been created for
 
         Raises
         ------
@@ -160,11 +160,11 @@ class Server:
         datasafe.exceptions.MissingLoiError
             Raised if no LOI is provided
 
-        ValueError
-            Raised if storage corresponding to LOI does not exist
+        datasafe.exceptions.LoiNotFoundError
+            Raised if resource corresponding to LOI does not exist
 
         datasafe.exceptions.ExistingFileError
-            Raised if storage corresponding to LOI is not empty
+            Raised if resource corresponding to LOI is not empty
 
         """
         if not loi:
@@ -197,10 +197,10 @@ class Server:
             Raised if no LOI is provided
 
         datasafe.exceptions.LoiNotFoundError
-            Raised if storage corresponding to LOI cannot be found
+            Raised if resource corresponding to LOI cannot be found
 
         datasafe.exceptions.MissingContentError
-            Raised if storage corresponding to LOI has no content
+            Raised if resource corresponding to LOI has no content
 
         """
         if not loi:
@@ -211,6 +211,53 @@ class Server:
         if self.storage.isempty(self.loi.id):
             raise MissingContentError('LOI does not have content.')
         return self.storage.retrieve(path=self.loi.id)
+
+    def update(self, loi='', content=None):
+        """
+        Update data in the datasafe.
+
+        Data are upload as bytes of the zipped content (dataset).
+
+        Parameters
+        ----------
+        loi : :class:`str`
+            LOI the resource should be updated for
+
+        content : :class:`bytes`
+            byte representation of a ZIP archive containing the contents to
+            be updated via the backend
+
+
+        Returns
+        -------
+        integrity : :class:`dict`
+            dict with fields ``data`` and ``all`` containing boolean values
+
+            For details see :meth:`datasafe.manifest.Manifest.check_integrity`.
+
+
+        Raises
+        ------
+        datasafe.exceptions.MissingLoiError
+            Raised if no LOI is provided
+
+        datasafe.exceptions.LoiNotFoundError
+            Raised if resource corresponding to LOI does not exist
+
+        datasafe.exceptions.NoFileError
+            Raised if resource corresponding to LOI is not empty
+
+        """
+
+        if not loi:
+            raise MissingLoiError('No LOI provided.')
+        self._check_loi(loi=loi)
+        if not self.storage.exists(self.loi.id):
+            raise LoiNotFoundError('LOI does not exist.')
+        if self.storage.isempty(path=self.loi.id):
+            raise NoFileError('Directory empty')
+        self.storage.remove(path=self.loi.id, force=True)
+        return self.storage.deposit(path=self.loi.id, content=content)
 
     def _check_loi(self, loi='', validate=True):
         self.loi.parse(loi)
@@ -669,7 +716,16 @@ class HTTPServerAPI(MethodView):
 
     def post(self, loi=''):
         """
-        Handle post requests.
+        Handle POST requests.
+
+        A POST request will only create a new empty resource connected to
+        the LOI, but never upload data. For uploading, use put. While this
+        may seem like not conforming to the typical usage of POST requests,
+        the reason is simple: :meth:`post` returns the newly created LOI,
+        while :meth:`put` returns the JSON representation of the integrity
+        check dict. Hence, to be able to check that the data have been
+        successfully arrived at the datasafe storage backend,
+        it is essential to separate POST and PUT requests.
 
         The following responses are currently returned, depending on the
         status the request resulted in:
@@ -702,7 +758,12 @@ class HTTPServerAPI(MethodView):
 
     def put(self, loi='', ):
         """
-        Handle put requests.
+        Handle PUT requests.
+
+        PUT requests are used to transfer data to an *existing* resource of the
+        datasafe. To create a new resource, use :meth:`post` beforehand. If
+        data exist already at the resource, this will result in an error
+        (status code 405, see table below).
 
         The following responses are currently returned, depending on the
         status the request resulted in:
@@ -750,8 +811,69 @@ class HTTPServerAPI(MethodView):
         except (LoiNotFoundError, MissingContentError) as exception:
             content = exception.message
             status = 400
-        except ExistingFileError:
-            content = 'Directory not empty'
+        except ExistingFileError as exception:
+            content = exception.message
             status = 405
             header = {'allow': 'UPDATE'}
+        return content, status, header
+
+    def patch(self, loi=''):
+        """
+        Handle PATCH requests.
+
+        PATCH requests are used to *update* data at an existing resource of the
+        datasafe. To upload new data to an existing resource,
+        use :meth:`put`. If no data exist at the resource, this will result
+        in an error (status code 405, see table below).
+
+        The following responses are currently returned, depending on the
+        status the request resulted in:
+
+        =================== ==== ===========================================
+        Status              Code data
+        =================== ==== ===========================================
+        success             200  JSON representation of integrity check dict
+        does not exist      400  error message
+        missing content     400  error message
+        invalid             404  error message
+        no resource content       405  error message
+        =================== ==== ===========================================
+
+        The status "does not exist" refers to the LOI the data should be put
+        to not existing (in this case, you need to first create it using
+        PUSH). Therefore, in this particular case, status code 400 instead
+        of 404 ("not found") is returned.
+
+        The status "missing content" refers to the request missing data.
+
+        The status "no resource content" refers to no data present at the
+        storage referred to with the LOI. As generally, you could upload new
+        content using another method, a status code 405 ("method not
+        allowed") is returned in this case.
+
+        Parameters
+        ----------
+        loi : :class:`str`
+            LOI of put request
+
+        Returns
+        -------
+        response : class:`flask.Response`
+            Response object
+
+        """
+        header = None
+        try:
+            content = self.server.update(loi=loi, content=request.data)
+            status = 200
+        except InvalidLoiError as exception:
+            content = exception.message
+            status = 404
+        except (MissingContentError, LoiNotFoundError) as exception:
+            content = exception.message
+            status = 400
+        except NoFileError as exception:
+            content = exception.message
+            status = 405
+            header = {'allow': 'PUT'}
         return content, status, header
