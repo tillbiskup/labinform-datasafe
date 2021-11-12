@@ -43,7 +43,6 @@ import tempfile
 from flask import Flask, request
 from flask.views import MethodView
 
-import datasafe.loi
 from datasafe import configuration
 import datasafe.loi as loi_
 from datasafe.manifest import Manifest
@@ -600,7 +599,21 @@ class StorageBackend:
 
 
 def create_http_server(test_config=None):
-    app = Flask(__name__)  #, instance_relative_config=True)
+    """
+    Create a HTTP server for accessing the datasafe.
+
+    Parameters
+    ----------
+    test_config : :class:`dict`
+        Configuration for HTTP server
+
+    Returns
+    -------
+    app : :class:`flask.Flask`
+        WSGI application created via flask
+
+    """
+    app = Flask(__name__)  # , instance_relative_config=True)
     # app.config.from_object(Config())
     if test_config:
         app.config.from_mapping(test_config)
@@ -620,43 +633,158 @@ def create_http_server(test_config=None):
 
 
 class HTTPServerAPI(MethodView):
+    """
+    API view used in the HTTP server.
+
+    The actual server is created via :func:`create_http_server` and operates
+    via flask. This API view provides the actual API functionality to access
+    the datasafe and its underlying storage backend via HTTP.
+
+    The API provides methods for the HTTP methods, currently GET, POST, and PUT.
+
+    Attributes
+    ----------
+    server : :class:`datasafe.server.Server`
+        Server backend that communicates with the storage backend.
+
+    """
 
     def __init__(self):
         self.server = Server()
 
-    def post(self, loi=''):
-        try:
-            content = self.server.new(loi=loi)
-            status = 201
-        except datasafe.loi.InvalidLoiError:
-            content = ''
-            status = 404
-        return content, status
-
     def get(self, loi=''):
+        """
+        Handle get requests.
+
+        The following responses are currently returned, depending on the
+        status the request resulted in:
+
+        ========= ==== ==============================
+        Status    Code data
+        ========= ==== ==============================
+        success   200  dataset contents (ZIP archive)
+        no data   204  message
+        not found 404  error message
+        invalid   404  error message
+        ========= ==== ==============================
+
+        The status "no data" results from querying a LOI that has been
+        created (using POST), but no data uploaded to so far.
+
+        The status "invalid" differs from "not found" in that the LOI
+        requested is invalid.
+
+        Parameters
+        ----------
+        loi : :class:`str`
+            LOI of get request
+
+        Returns
+        -------
+        response : :class:`flask.Response`
+            Response object
+
+        """
         content = ''
         try:
             content = self.server.download(loi=loi)
             status = 200
         except ValueError as exception:
             if 'does not have content' in str(exception):
+                content = 'LOI does not have any content'
                 status = 204
             else:
+                content = 'LOI does not exist'
                 status = 404
+        except loi_.InvalidLoiError as exception:
+            content = exception.message
+            status = 404
+        return content, status
+
+    def post(self, loi=''):
+        """
+        Handle post requests.
+
+        The following responses are currently returned, depending on the
+        status the request resulted in:
+
+        ========= ==== ==============================
+        Status    Code data
+        ========= ==== ==============================
+        created   201  newly created LOI
+        invalid   404  error message
+        ========= ==== ==============================
+
+        Parameters
+        ----------
+        loi : :class:`str`
+            LOI of post request
+
+        Returns
+        -------
+        response : class:`flask.Response`
+            Response object
+
+        """
+        try:
+            content = self.server.new(loi=loi)
+            status = 201
+        except loi_.InvalidLoiError as exception:
+            content = exception.message
+            status = 404
         return content, status
 
     def put(self, loi='', ):
+        """
+        Handle put requests.
+
+        The following responses are currently returned, depending on the
+        status the request resulted in:
+
+        ================ ==== ===========================================
+        Status           Code data
+        ================ ==== ===========================================
+        success          200  JSON representation of integrity check dict
+        does not exist   400  error message
+        missing content  400  error message
+        invalid          404  error message
+        existing content 405  error message
+        ================ ==== ===========================================
+
+        The status "does not exist" refers to the LOI the data should be put
+        to not existing (in this case, you need to first create it using
+        PUSH). Therefore, in this particular case, status code 400 instead
+        of 404 ("not found") is returned.
+
+        The status "missing content" refers to the request missing data.
+
+        The status "existing content" refers to data already present at the
+        storage referred to with the LOI. As generally, you could update the
+        content using another method, a status code 405 ("method not
+        allowed") is returned in this case.
+
+        Parameters
+        ----------
+        loi : :class:`str`
+            LOI of put request
+
+        Returns
+        -------
+        response : class:`flask.Response`
+            Response object
+
+        """
         header = None
         try:
             content = self.server.upload(loi=loi, content=request.data)
             status = 200
-        except datasafe.loi.InvalidLoiError:
-            content = ''
+        except loi_.InvalidLoiError as exception:
+            content = exception.message
             status = 404
         except ValueError:
             content = 'LOI does not exist'
             status = 400
-        except datasafe.server.MissingContentError as exception:
+        except MissingContentError as exception:
             content = exception.message
             status = 400
         except FileExistsError:

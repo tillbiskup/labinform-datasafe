@@ -134,6 +134,9 @@ class TestAPI(flask_unittest.ClientTestCase):
     def test_get_non_existing_loi_returns_404(self, client):
         self.assertStatus(client.get("/api/" + self.loi), 404)
 
+    def test_get_invalid_loi_returns_404(self, client):
+        self.assertStatus(client.get("/api/" + "foo/bar/baz"), 404)
+
     def test_get_returns_dataset_zip(self, client):
         data = self.create_zip_archive()
         client.post("/api/" + self.loi)

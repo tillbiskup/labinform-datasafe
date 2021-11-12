@@ -109,4 +109,5 @@ html_logo = './logo.png'
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
 #    'matplotlib': ('https://matplotlib.org/', None),
+    'flask': ('https://flask.palletsprojects.com/en/2.0.x/', None),
 }
