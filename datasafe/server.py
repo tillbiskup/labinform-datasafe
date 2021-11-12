@@ -45,42 +45,11 @@ from flask.views import MethodView
 
 from datasafe import configuration
 import datasafe.loi as loi_
+from datasafe.exceptions import MissingPathError, MissingContentError, \
+    MissingLoiError, InvalidLoiError, ExistingFileError, LoiNotFoundError, \
+    NoFileError
 from datasafe.manifest import Manifest
 from datasafe.utils import change_working_dir
-
-
-class Error(Exception):
-    """Base class for exceptions in this module."""
-
-
-class MissingPathError(Error):
-    """Exception raised when no path is provided
-
-    Attributes
-    ----------
-    message : :class:`str`
-        explanation of the error
-
-    """
-
-    def __init__(self, message=''):
-        super().__init__(message)
-        self.message = message
-
-
-class MissingContentError(Error):
-    """Exception raised when no content is provided
-
-    Attributes
-    ----------
-    message : :class:`str`
-        explanation of the error
-
-    """
-
-    def __init__(self, message=''):
-        super().__init__(message)
-        self.message = message
 
 
 class Server:
@@ -132,22 +101,22 @@ class Server:
 
         Raises
         ------
-        datasafe.loi.MissingLoiError
+        datasafe.exceptions.MissingLoiError
             Raised if no LOI is provided
 
-        datasafe.loi.InvalidLoiError
+        datasafe.exceptions.InvalidLoiError
             Raised if LOI is not valid (for the given operation)
 
         """
         if not loi:
-            raise loi_.MissingLoiError('No LOI provided.')
+            raise MissingLoiError('No LOI provided.')
         self._check_loi(loi=loi, validate=False)
         id_parts = self.loi.split_id()
         if id_parts[0] != 'exp':
-            raise loi_.InvalidLoiError('Loi ist not a valid experiment LOI')
+            raise InvalidLoiError('Loi ist not a valid experiment LOI.')
         self._loi_checker.ignore_check = 'LoiMeasurementNumberChecker'
         if not self._loi_checker.check(loi):
-            raise loi_.InvalidLoiError('String is not a valid LOI.')
+            raise InvalidLoiError('String is not a valid LOI.')
         date_checker = loi_.IsDateChecker()
         if date_checker.check(id_parts[1]):
             path = self.loi.separator.join(id_parts[0:3])
@@ -188,23 +157,23 @@ class Server:
 
         Raises
         ------
-        datasafe.loi.MissingLoiError
+        datasafe.exceptions.MissingLoiError
             Raised if no LOI is provided
 
         ValueError
             Raised if storage corresponding to LOI does not exist
 
-        FileExistsError
+        datasafe.exceptions.ExistingFileError
             Raised if storage corresponding to LOI is not empty
 
         """
         if not loi:
-            raise loi_.MissingLoiError('No LOI provided.')
+            raise MissingLoiError('No LOI provided.')
         self._check_loi(loi=loi)
         if not self.storage.exists(self.loi.id):
-            raise ValueError('LOI does not exist.')
+            raise LoiNotFoundError('LOI does not exist.')
         if not self.storage.isempty(path=self.loi.id):
-            raise FileExistsError('Directory not empty')
+            raise ExistingFileError('Directory not empty')
         return self.storage.deposit(path=self.loi.id, content=content)
 
     def download(self, loi=''):
@@ -224,30 +193,32 @@ class Server:
 
         Raises
         ------
-        datasafe.loi.MissingLoiError
+        datasafe.exceptions.MissingLoiError
             Raised if no LOI is provided
 
-        ValueError
-            Raised if storage corresponding to LOI does not exist or has no
-            content
+        datasafe.exceptions.LoiNotFoundError
+            Raised if storage corresponding to LOI cannot be found
+
+        datasafe.exceptions.MissingContentError
+            Raised if storage corresponding to LOI has no content
 
         """
         if not loi:
-            raise loi_.MissingLoiError('No LOI provided.')
+            raise MissingLoiError('No LOI provided.')
         self._check_loi(loi=loi)
         if not self.storage.exists(self.loi.id):
-            raise ValueError('LOI does not exist.')
+            raise LoiNotFoundError('LOI does not exist.')
         if self.storage.isempty(self.loi.id):
-            raise ValueError('LOI does not have content.')
+            raise MissingContentError('LOI does not have content.')
         return self.storage.retrieve(path=self.loi.id)
 
     def _check_loi(self, loi='', validate=True):
         self.loi.parse(loi)
         if self.loi.type != 'ds':
-            raise loi_.InvalidLoiError('LOI is not a datasafe LOI.')
+            raise InvalidLoiError('LOI is not a datasafe LOI.')
         if validate:
             if not self._loi_checker.check(loi):
-                raise loi_.InvalidLoiError('String is not a valid LOI.')
+                raise InvalidLoiError('String is not a valid LOI.')
 
 
 class StorageBackend:
@@ -300,7 +271,7 @@ class StorageBackend:
 
         Raises
         ------
-        datasafe.directory.MissingPathError
+        datasafe.exceptions.MissingPathError
             Raised if no path is provided
 
         """
@@ -336,12 +307,12 @@ class StorageBackend:
 
         Raises
         ------
-        FileNotFoundError
+        datasafe.exceptions.NoFileError
             Raised if no path is provided
 
         """
         if not os.path.exists(self.working_path(path)):
-            raise FileNotFoundError
+            raise NoFileError
         return not os.listdir(self.working_path(path))
 
     def remove(self, path='', force=False):
@@ -453,10 +424,10 @@ class StorageBackend:
 
         Raises
         ------
-        datasafe.directory.MissingPathError
+        datasafe.exceptions.MissingPathError
             Raised if no path is provided
 
-        datasafe.directory.MissingContentError
+        datasafe.exceptions.MissingContentError
             Raised if no content is provided
 
         """
@@ -533,7 +504,7 @@ class StorageBackend:
         if not path:
             raise MissingPathError(message='No path provided.')
         if not os.path.exists(path):
-            raise OSError
+            raise MissingPathError(message=f'Path {path} does not exist.')
         if not os.path.exists(os.path.join(path, self.manifest_filename)):
             raise MissingContentError(message='No MANIFEST file found.')
         with open(os.path.join(path, self.manifest_filename), 'r',
@@ -685,18 +656,13 @@ class HTTPServerAPI(MethodView):
             Response object
 
         """
-        content = ''
         try:
             content = self.server.download(loi=loi)
             status = 200
-        except ValueError as exception:
-            if 'does not have content' in str(exception):
-                content = 'LOI does not have any content'
-                status = 204
-            else:
-                content = 'LOI does not exist'
-                status = 404
-        except loi_.InvalidLoiError as exception:
+        except MissingContentError:
+            content = 'LOI does not have any content'
+            status = 204
+        except (LoiNotFoundError, InvalidLoiError) as exception:
             content = exception.message
             status = 404
         return content, status
@@ -729,7 +695,7 @@ class HTTPServerAPI(MethodView):
         try:
             content = self.server.new(loi=loi)
             status = 201
-        except loi_.InvalidLoiError as exception:
+        except InvalidLoiError as exception:
             content = exception.message
             status = 404
         return content, status
@@ -778,16 +744,13 @@ class HTTPServerAPI(MethodView):
         try:
             content = self.server.upload(loi=loi, content=request.data)
             status = 200
-        except loi_.InvalidLoiError as exception:
+        except InvalidLoiError as exception:
             content = exception.message
             status = 404
-        except ValueError:
-            content = 'LOI does not exist'
-            status = 400
-        except MissingContentError as exception:
+        except (LoiNotFoundError, MissingContentError) as exception:
             content = exception.message
             status = 400
-        except FileExistsError:
+        except ExistingFileError:
             content = 'Directory not empty'
             status = 405
             header = {'allow': 'UPDATE'}

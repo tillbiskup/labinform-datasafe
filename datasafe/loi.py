@@ -24,40 +24,7 @@ consistency and compliance to the LOI scheme developed so far.
 import re
 
 from datasafe import utils
-
-
-class Error(Exception):
-    """Base class for exceptions in this module."""
-
-
-class MissingLoiError(Error):
-    """Exception raised when no LOI is provided
-
-    Attributes
-    ----------
-    message : :class:`str`
-        explanation of the error
-
-    """
-
-    def __init__(self, message=''):
-        super().__init__(message)
-        self.message = message
-
-
-class InvalidLoiError(Error):
-    """Exception raised when invalid LOI is provided
-
-    Attributes
-    ----------
-    message : :class:`str`
-        explanation of the error
-
-    """
-
-    def __init__(self, message=''):
-        super().__init__(message)
-        self.message = message
+from datasafe.exceptions import MissingLoiError, InvalidLoiError
 
 
 class LoiMixin:

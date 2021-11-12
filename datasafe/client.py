@@ -25,6 +25,7 @@ import shutil
 import tempfile
 import warnings
 
+from datasafe.exceptions import InvalidLoiError, MissingLoiError
 import datasafe.loi as loi_
 from datasafe.manifest import Manifest
 from datasafe import server
@@ -101,14 +102,14 @@ class Client:
 
         """
         if not loi:
-            raise loi_.MissingLoiError('No LOI provided.')
+            raise MissingLoiError('No LOI provided.')
         self._check_loi(loi=loi, validate=False)
         id_parts = self.loi_parser.split_id()
         if id_parts[0] != 'exp':
-            raise loi_.InvalidLoiError('Loi ist not a valid experiment LOI')
+            raise InvalidLoiError('Loi ist not a valid experiment LOI')
         self._loi_checker.ignore_check = 'LoiMeasurementNumberChecker'
         if not self._loi_checker.check(loi):
-            raise loi_.InvalidLoiError('String is not a valid LOI.')
+            raise InvalidLoiError('String is not a valid LOI.')
         return self.server.new(loi=loi)
 
     def create_manifest(self, filename='', path=''):
@@ -236,7 +237,7 @@ class Client:
 
         """
         if not loi:
-            raise loi_.MissingLoiError('No LOI provided.')
+            raise MissingLoiError('No LOI provided.')
         self._check_loi(loi=loi, validate=False)
         with change_working_dir(path):
             if not os.path.exists(Manifest().manifest_filename):
@@ -288,7 +289,7 @@ class Client:
 
         """
         if not loi:
-            raise loi_.MissingLoiError('No LOI provided.')
+            raise MissingLoiError('No LOI provided.')
         self._check_loi(loi=loi, validate=False)
         content = self.server.download(loi=loi)
         download_dir = tempfile.mkdtemp()
@@ -336,10 +337,10 @@ class Client:
         """
         self.loi_parser.parse(loi)
         if self.loi_parser.type != 'ds':
-            raise loi_.InvalidLoiError('LOI is not a datasafe LOI.')
+            raise InvalidLoiError('LOI is not a datasafe LOI.')
         if validate:
             if not self._loi_checker.check(loi):
-                raise loi_.InvalidLoiError('String is not a valid LOI.')
+                raise InvalidLoiError('String is not a valid LOI.')
 
     def _create_zip_archive(self, filenames=None):
         with tempfile.TemporaryDirectory() as tmpdir:

@@ -5,6 +5,9 @@ from unittest import mock
 
 import datasafe.loi as loi_
 import datasafe.server as server
+from datasafe.exceptions import ExistingFileError, LoiNotFoundError, \
+    MissingContentError, NoFileError, MissingLoiError, InvalidLoiError, \
+    MissingPathError
 from datasafe.manifest import Manifest
 from datasafe.utils import change_working_dir
 
@@ -68,25 +71,25 @@ class TestServer(unittest.TestCase):
         self.assertTrue(callable(self.server.download))
 
     def test_new_without_loi_raises(self):
-        with self.assertRaises(loi_.MissingLoiError):
+        with self.assertRaises(MissingLoiError):
             self.server.new()
 
     def test_new_with_invalid_loi_raises(self):
-        with self.assertRaises(loi_.InvalidLoiError):
+        with self.assertRaises(InvalidLoiError):
             self.server.new('foo')
 
     def test_new_with_no_datasafe_loi_raises(self):
-        with self.assertRaises(loi_.InvalidLoiError):
+        with self.assertRaises(InvalidLoiError):
             self.server.new('42.1001/rec/42')
 
     def test_new_with_non_exp_loi_raises(self):
         message = 'not a valid experiment LOI'
-        with self.assertRaisesRegex(loi_.InvalidLoiError, message):
+        with self.assertRaisesRegex(InvalidLoiError, message):
             self.server.new('42.1001/ds/calc')
 
     def test_new_with_invalid_exp_loi_raises(self):
         message = 'not a valid LOI'
-        with self.assertRaisesRegex(loi_.InvalidLoiError, message):
+        with self.assertRaisesRegex(InvalidLoiError, message):
             self.server.new('42.1001/ds/exp/foo')
 
     def test_new_with_loi_returns_string(self):
@@ -114,19 +117,19 @@ class TestServer(unittest.TestCase):
             self.storage.root_directory, 'exp/sa/42/cwepr/2')))
 
     def test_upload_without_loi_raises(self):
-        with self.assertRaises(loi_.MissingLoiError):
+        with self.assertRaises(MissingLoiError):
             self.server.upload()
 
     def test_upload_with_invalid_loi_raises(self):
-        with self.assertRaises(loi_.InvalidLoiError):
+        with self.assertRaises(InvalidLoiError):
             self.server.upload('foo')
 
     def test_upload_with_no_datasafe_loi_raises(self):
-        with self.assertRaises(loi_.InvalidLoiError):
+        with self.assertRaises(InvalidLoiError):
             self.server.upload('42.1001/rec/42')
 
     def test_upload_with_inexisting_loi_raises(self):
-        with self.assertRaisesRegex(ValueError, 'LOI does not exist.'):
+        with self.assertRaisesRegex(LoiNotFoundError, 'LOI does not exist.'):
             self.server.upload('42.1001/ds/exp/sa/42/cwepr/1')
 
     def test_upload_with_existing_loi(self):
@@ -140,7 +143,7 @@ class TestServer(unittest.TestCase):
         self.server.new(self.loi)
         content = self.create_zip_archive()
         self.server.upload(loi=self.loi, content=content)
-        with self.assertRaises(FileExistsError):
+        with self.assertRaises(ExistingFileError):
             self.server.upload(loi=self.loi, content=content)
 
     def test_upload_returns_results_of_integrity_check(self):
@@ -150,24 +153,25 @@ class TestServer(unittest.TestCase):
         self.assertCountEqual(['all', 'data'], integrity.keys())
 
     def test_download_without_loi_raises(self):
-        with self.assertRaises(loi_.MissingLoiError):
+        with self.assertRaises(MissingLoiError):
             self.server.download()
 
     def test_download_with_invalid_loi_raises(self):
-        with self.assertRaises(loi_.InvalidLoiError):
+        with self.assertRaises(InvalidLoiError):
             self.server.download('foo')
 
     def test_download_with_no_datasafe_loi_raises(self):
-        with self.assertRaises(loi_.InvalidLoiError):
+        with self.assertRaises(InvalidLoiError):
             self.server.download('42.1001/rec/42')
 
     def test_download_with_inexisting_loi_raises(self):
-        with self.assertRaisesRegex(ValueError, 'LOI does not exist.'):
+        with self.assertRaisesRegex(LoiNotFoundError, 'LOI does not exist.'):
             self.server.download('42.1001/ds/exp/sa/42/cwepr/1')
 
     def test_download_with_loi_with_empty_directory_raises(self):
         self.server.new(self.loi)
-        with self.assertRaisesRegex(ValueError, 'LOI does not have content.'):
+        with self.assertRaisesRegex(MissingContentError,
+                                    'LOI does not have content.'):
             self.server.download(self.loi)
 
     def test_download_with_loi(self):
@@ -238,7 +242,7 @@ class TestStorageBackend(unittest.TestCase):
         self.assertTrue(callable(self.backend.create))
 
     def test_create_without_path_raises(self):
-        with self.assertRaises(server.MissingPathError):
+        with self.assertRaises(MissingPathError):
             self.backend.create()
 
     def test_create_creates_directory(self):
@@ -272,7 +276,7 @@ class TestStorageBackend(unittest.TestCase):
         self.assertTrue(self.backend.isempty(self.path))
 
     def test_isempty_with_non_existing_directory_raises(self):
-        with self.assertRaises(FileNotFoundError):
+        with self.assertRaises(NoFileError):
             self.assertTrue(self.backend.isempty(self.path))
 
     def test_isempty_with_not_empty_directory_returns_false(self):
@@ -362,11 +366,11 @@ class TestStorageBackend(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(self.root, self.path, '1')))
 
     def test_deposit_without_path_raises(self):
-        with self.assertRaises(server.MissingPathError):
+        with self.assertRaises(MissingPathError):
             self.backend.deposit(content=self.create_zip_archive())
 
     def test_deposit_without_content_raises(self):
-        with self.assertRaises(server.MissingContentError):
+        with self.assertRaises(MissingContentError):
             self.backend.deposit(path=self.path)
 
     def test_deposit_writes_files(self):
@@ -400,7 +404,7 @@ class TestStorageBackend(unittest.TestCase):
 
     def test_retrieve_without_path_raises(self):
         self.backend.create(self.path)
-        with self.assertRaises(server.MissingPathError):
+        with self.assertRaises(MissingPathError):
             self.backend.retrieve()
 
     def test_retrieve_with_non_existing_path_raises(self):
@@ -422,16 +426,16 @@ class TestStorageBackend(unittest.TestCase):
 
     def test_get_manifest_without_path_raises(self):
         self.backend.create(self.path)
-        with self.assertRaises(server.MissingPathError):
+        with self.assertRaises(MissingPathError):
             self.backend.get_manifest()
 
     def test_get_manifest_with_non_existing_path_raises(self):
-        with self.assertRaises(OSError):
+        with self.assertRaises(MissingPathError):
             self.backend.get_manifest(path=self.path)
 
     def test_get_manifest_with_non_existing_manifest_raises(self):
         self.backend.create(self.path)
-        with self.assertRaises(server.MissingContentError):
+        with self.assertRaises(MissingContentError):
             self.backend.get_manifest(path=self.path)
 
     def test_get_manifest_returns_contents_as_string(self):
@@ -467,7 +471,7 @@ class TestStorageBackend(unittest.TestCase):
 
     def test_check_integrity_without_manifest_file_raises(self):
         self.backend.create(self.path)
-        with self.assertRaises(server.MissingContentError):
+        with self.assertRaises(MissingContentError):
             self.backend.check_integrity(self.path)
 
     def test_check_integrity_returns_dict(self):

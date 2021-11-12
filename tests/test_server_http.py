@@ -112,7 +112,7 @@ class TestAPI(flask_unittest.ClientTestCase):
         response = client.put("/api/" + self.loi,
                               data=self.create_zip_archive())
         self.assertStatus(response, 400)
-        self.assertResponseEqual(response, 'LOI does not exist'.encode())
+        self.assertResponseEqual(response, 'LOI does not exist.'.encode())
 
     def test_put_with_valid_loi_and_no_payload(self, client):
         client.post("/api/" + self.loi)

@@ -14,10 +14,7 @@ For version 0.1
 
 * HTTP transport layer between server and client
 
-  * HTTP server (backend)
   * HTTP client
-
-* Handle proper cross-boundary transfer of exceptions between server and client (probably only necessary once the transfer layer is implemented).
 
 
 For later versions

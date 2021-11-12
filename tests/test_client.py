@@ -5,6 +5,7 @@ from unittest import mock
 
 import datasafe.client as client
 import datasafe.configuration as config
+import datasafe.exceptions
 import datasafe.loi as loi_
 from datasafe.manifest import Manifest
 from datasafe.server import Server
@@ -74,25 +75,25 @@ class TestClient(unittest.TestCase):
         self.assertTrue(callable(self.client.create_manifest))
 
     def test_create_without_loi_raises(self):
-        with self.assertRaises(loi_.MissingLoiError):
+        with self.assertRaises(datasafe.exceptions.MissingLoiError):
             self.client.create()
 
     def test_create_with_invalid_loi_raises(self):
-        with self.assertRaises(loi_.InvalidLoiError):
+        with self.assertRaises(datasafe.exceptions.InvalidLoiError):
             self.client.create('foo')
 
     def test_create_with_no_datasafe_loi_raises(self):
-        with self.assertRaises(loi_.InvalidLoiError):
+        with self.assertRaises(datasafe.exceptions.InvalidLoiError):
             self.client.create('42.1001/rec/42')
 
     def test_create_with_non_exp_loi_raises(self):
         message = 'not a valid experiment LOI'
-        with self.assertRaisesRegex(loi_.InvalidLoiError, message):
+        with self.assertRaisesRegex(datasafe.exceptions.InvalidLoiError, message):
             self.client.create('42.1001/ds/calc')
 
     def test_create_with_invalid_exp_loi_raises(self):
         message = 'not a valid LOI'
-        with self.assertRaisesRegex(loi_.InvalidLoiError, message):
+        with self.assertRaisesRegex(datasafe.exceptions.InvalidLoiError, message):
             self.client.create('42.1001/ds/exp/foo')
 
     def test_create_with_loi_returns_string(self):
@@ -109,15 +110,15 @@ class TestClient(unittest.TestCase):
             self.storage_root, 'exp/sa/42/cwepr/1')))
 
     def test_download_without_loi_raises(self):
-        with self.assertRaises(loi_.MissingLoiError):
+        with self.assertRaises(datasafe.exceptions.MissingLoiError):
             self.client.download()
 
     def test_download_with_invalid_loi_raises(self):
-        with self.assertRaises(loi_.InvalidLoiError):
+        with self.assertRaises(datasafe.exceptions.InvalidLoiError):
             self.client.download('foo')
 
     def test_download_with_no_datasafe_loi_raises(self):
-        with self.assertRaises(loi_.InvalidLoiError):
+        with self.assertRaises(datasafe.exceptions.InvalidLoiError):
             self.client.download('42.1001/rec/42')
 
     def test_download_returns_string(self):
@@ -240,15 +241,15 @@ class TestClient(unittest.TestCase):
         self.assertEqual([self.data_filename], manifest.data_filenames)
 
     def test_upload_without_loi_raises(self):
-        with self.assertRaises(loi_.MissingLoiError):
+        with self.assertRaises(datasafe.exceptions.MissingLoiError):
             self.client.upload()
 
     def test_upload_with_invalid_loi_raises(self):
-        with self.assertRaises(loi_.InvalidLoiError):
+        with self.assertRaises(datasafe.exceptions.InvalidLoiError):
             self.client.upload(loi='foo')
 
     def test_upload_with_no_datasafe_loi_raises(self):
-        with self.assertRaises(loi_.InvalidLoiError):
+        with self.assertRaises(datasafe.exceptions.InvalidLoiError):
             self.client.upload(loi='42.1001/rec/42')
 
     def test_upload_creates_manifest(self):

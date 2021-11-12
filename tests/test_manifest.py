@@ -7,6 +7,7 @@ import collections
 import oyaml as yaml
 
 from datasafe import manifest
+from datasafe.exceptions import NoFileError, MissingInformationError
 
 
 class TestManifest(unittest.TestCase):
@@ -145,17 +146,17 @@ class TestManifest(unittest.TestCase):
 
     def test_to_dict_without_data_filenames_raises(self):
         self.manifest.data_filenames = []
-        with self.assertRaises(manifest.MissingInformationError):
+        with self.assertRaises(MissingInformationError):
             self.manifest.to_dict()
 
     def test_to_dict_with_missing_data_files_raises(self):
-        with self.assertRaisesRegex(FileNotFoundError, self.data_filename):
+        with self.assertRaisesRegex(NoFileError, self.data_filename):
             self.manifest.to_dict()
 
     def test_to_dict_with_missing_metadata_files_raises(self):
         with open(self.data_filename, 'w+') as f:
             f.write('')
-        with self.assertRaisesRegex(FileNotFoundError, self.metadata_filename):
+        with self.assertRaisesRegex(NoFileError, self.metadata_filename):
             self.manifest.to_dict()
 
     def test_to_dict_with_filenames_does_not_raise(self):
@@ -267,7 +268,7 @@ class TestManifest(unittest.TestCase):
         self.assertTrue(self.manifest.data_filenames)
 
     def test_from_file_with_missing_file_raises(self):
-        with self.assertRaises(FileNotFoundError):
+        with self.assertRaises(NoFileError):
             self.manifest.from_file(filename="foobar")
 
     def test_from_file_with_file_sets_properties_from_manifest(self):
@@ -297,7 +298,7 @@ class TestManifest(unittest.TestCase):
         self.assertTrue(callable(self.manifest.check_integrity))
 
     def test_check_integrity_with_missing_information_raises(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(MissingInformationError):
             self.manifest.check_integrity()
 
     def test_check_integrity_returns_dict(self):
@@ -388,7 +389,7 @@ class TestFormatDetector(unittest.TestCase):
 
     def test_data_format_without_metadata_raises(self):
         message = 'No data filenames'
-        with self.assertRaisesRegex(FileNotFoundError, message):
+        with self.assertRaisesRegex(NoFileError, message):
             self.detector.data_format()
 
     def test_data_format_returns_string(self):

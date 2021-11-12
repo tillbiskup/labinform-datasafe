@@ -1,5 +1,6 @@
 import unittest
 
+import datasafe.exceptions
 from datasafe import loi as loi_
 
 
@@ -188,11 +189,11 @@ class TestLoiParser(unittest.TestCase):
         self.assertTrue(callable(self.parser.parse))
 
     def test_parse_without_loi_raises(self):
-        with self.assertRaises(loi_.MissingLoiError):
+        with self.assertRaises(datasafe.exceptions.MissingLoiError):
             self.parser.parse()
 
     def test_parse_with_invalid_loi_raises(self):
-        with self.assertRaises(loi_.InvalidLoiError):
+        with self.assertRaises(datasafe.exceptions.InvalidLoiError):
             self.parser.parse('FOO')
 
     def test_parse_sets_issuer(self):

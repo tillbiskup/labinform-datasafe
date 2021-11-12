@@ -55,25 +55,7 @@ import os
 import oyaml as yaml
 
 import datasafe.checksum
-
-
-class Error(Exception):
-    """Base class for exceptions in this module."""
-
-
-class MissingInformationError(Error):
-    """Exception raised when necessary information is not provided
-
-    Attributes
-    ----------
-    message : :class:`str`
-        explanation of the error
-
-    """
-
-    def __init__(self, message=''):
-        super().__init__(message)
-        self.message = message
+from datasafe.exceptions import MissingInformationError, NoFileError
 
 
 class Manifest:
@@ -157,16 +139,16 @@ class Manifest:
 
         Raises
         ------
-        MissingInformationError
+        datasafe.exceptions.MissingInformationError
             Raised if no filename to read from is provided
-        FileNotFoundError
+        datasafe.exceptions.NoFileError
             Raised if file to read from does not exist on the file system
 
         """
         if not filename:
             raise MissingInformationError(message="No filename provided")
         if not os.path.exists(filename):
-            raise FileNotFoundError("File does not exist")
+            raise NoFileError("File does not exist")
         with open(filename, 'r', encoding='utf8') as file:
             manifest_dict = yaml.safe_load(file)
         self.from_dict(manifest_dict)
@@ -184,7 +166,7 @@ class Manifest:
         ------
         MissingInformationError
             Raised if :attr:`data_filenames` is empty
-        FileNotFoundError
+        NoFileError
             Raised if any of the files listed in either
             :attr:`data_filenames` or :attr:`metadata_filenames` does not
             exist on the file system
@@ -194,10 +176,10 @@ class Manifest:
             raise MissingInformationError(message='Data filenames missing')
         for filename in self.data_filenames:
             if not os.path.exists(filename):
-                raise FileNotFoundError(f'Data file {filename} does not exist.')
+                raise NoFileError(f'Data file {filename} does not exist.')
         for filename in self.metadata_filenames:
             if not os.path.exists(filename):
-                raise FileNotFoundError(f'Metadata file {filename} does not '
+                raise NoFileError(f'Metadata file {filename} does not '
                                         'exist')
         manifest_ = self._create_manifest_dict()
         for filename in self.data_filenames:
@@ -267,13 +249,13 @@ class Manifest:
 
         Raises
         ------
-        ValueError
+        datasafe.exceptions.MissingInformationError
             Raised if not all necessary information is available.
 
         """
         if not all([self.data_filenames, self.metadata_filenames,
                     self.data_checksum, self.checksum]):
-            raise ValueError
+            raise MissingInformationError('Some information missing')
         checksum = self._generate_checksum(self.data_filenames +
                                            self.metadata_filenames)
         data_checksum = self._generate_checksum(self.data_filenames)
@@ -378,7 +360,7 @@ class FormatDetector:
 
     Raises
     ------
-    FileNotFoundError
+    datasafe.exceptions.NoFileError
         Raised if no data file(s) are provided
 
     """
@@ -458,12 +440,12 @@ class FormatDetector:
 
         Raises
         ------
-        FileNotFoundError
+        datasafe.exceptions.NoFileError
             Raised if no data file(s) are provided
 
         """
         if not self.data_filenames:
-            raise FileNotFoundError('No data filenames')
+            raise NoFileError('No data filenames')
         return self._detect_data_format()
 
     # noinspection PyMethodMayBeStatic
