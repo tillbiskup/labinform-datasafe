@@ -3,8 +3,8 @@ Server components of the LabInform datasafe.
 
 Different server components can be distinguished:
 
-* user-facing components
-* backend components
+* user-facing components (frontends)
+* storage components (backends)
 
 Note that "user" is a broad term here, meaning any person and program
 accessing the datasafe. In this respect, the clients contained in
@@ -13,14 +13,48 @@ accessing the datasafe. In this respect, the clients contained in
 The backend components deal with the actual storage of data (in the file
 system) and the access to them.
 
-Eventually, there will be a HTTP interface as user-facing component, probably
-implemented using flask or similar, that can be run in a docker container or
-on a local network.
 
-But probably, there will be possibilities to access the datasafe locally as
-well, without needing to fire up a HTTP server. This could even include a
-CLI, although the CLI may be much more generic, allowing both, local and
-HTTP access.
+Frontends
+=========
+
+Frontends allow a "user" (mostly another program) to access the datasafe,
+without needing any details of how the data are actually stored.
+
+Currently, there are two frontends implemented, that have different use cases:
+
+* :class:`Server`
+
+  General frontend that can be used locally with
+  :class:`datasafe.client.LocalClient`.
+
+* :class:`HTTPServerAPI`
+
+  API for the HTTP server running via flask.
+
+  HTTP frontend that can be used via HTTP, *e.g.* using the
+  :class:`datasafe.client.HTTPClient` class. Using HTTP, this allows
+  generally to completely separate client and server in terms of their
+  locations and access data even remotely. However, keep in mind that remote
+  access comes with security implications that are currently not dealt with.
+
+  The actual HTTP server is created with the function
+  :func:`create_http_server`, but the API class is the interesting part here.
+
+
+Backends
+========
+
+Backends deal with actually storing the data.
+
+Currently, there is only one backend implemented:
+
+* :class:`StorageBackend`
+
+  A backend using the file system for storing data.
+
+
+Things to decide
+================
 
 Some things that need to be decided about:
 
@@ -33,6 +67,10 @@ Some things that need to be decided about:
 
 Perhaps one could store the configuration in a separate configuration class
 to start with and see how this goes...
+
+
+Module documentation
+====================
 
 """
 
@@ -657,7 +695,13 @@ class HTTPServerAPI(MethodView):
     via flask. This API view provides the actual API functionality to access
     the datasafe and its underlying storage backend via HTTP.
 
-    The API provides methods for the HTTP methods, currently GET, POST, and PUT.
+    The API provides methods for the HTTP methods, currently GET, POST, PUT,
+    and PATCH.
+
+    Furthermore, exceptions are converted into the appropriate HTTP status
+    codes and the message of the exception is contained in the response
+    body. Thus, clients such as :class:`datasafe.client.HTTPClient` can
+    convert the HTTP status codes back into Python exceptions.
 
     Attributes
     ----------

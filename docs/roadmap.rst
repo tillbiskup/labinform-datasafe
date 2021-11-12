@@ -8,8 +8,6 @@ A few ideas how to develop the project further, currently a list as a reminder f
 For version 0.1
 ===============
 
-* Handling of status codes from HTTP server in HTTP client
-
 * Client gets file format information and passes it to manifest
 
 * Configuration handling: via configuration files or else
@@ -22,7 +20,7 @@ For later versions
 
 * Backend worker updating a database with LOIs and corresponding checksums for easy checking of already existing datasets
 
-* Move all exceptions to own module, and ensure all exceptions to issue messages.
+* Implement delete methods.
 
 
 Todos

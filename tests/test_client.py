@@ -69,6 +69,10 @@ class TestClient(unittest.TestCase):
         self.assertTrue(hasattr(self.client, 'download'))
         self.assertTrue(callable(self.client.download))
 
+    def test_has_update_manifest_method(self):
+        self.assertTrue(hasattr(self.client, 'update'))
+        self.assertTrue(callable(self.client.update))
+
     def test_has_create_manifest_method(self):
         self.assertTrue(hasattr(self.client, 'create_manifest'))
         self.assertTrue(callable(self.client.create_manifest))
@@ -273,7 +277,6 @@ class TestClient(unittest.TestCase):
         os.mkdir(self.tempdir)
         with change_working_dir(self.tempdir):
             self.create_data_and_metadata_files()
-            # self.client.create(loi=self.loi)
             self.server.new(loi=self.loi)
             self.client.upload(loi=self.loi)
             self.assertTrue(os.path.isfile(self.manifest_filename))
@@ -285,7 +288,6 @@ class TestClient(unittest.TestCase):
             self.create_data_and_metadata_files()
             self.create_manifest_file()
             self.client.create_manifest = mock.MagicMock()
-            # self.client.create(loi=self.loi)
             self.server.new(loi=self.loi)
             self.client.upload(loi=self.loi)
             self.client.create_manifest.assert_not_called()
@@ -294,7 +296,6 @@ class TestClient(unittest.TestCase):
         os.mkdir(self.tempdir)
         with change_working_dir(self.tempdir):
             self.create_data_and_metadata_files()
-            # self.client.create(loi=self.loi)
             self.server.new(loi=self.loi)
             self.client.upload(loi=self.loi)
             manifest = Manifest()
@@ -308,9 +309,63 @@ class TestClient(unittest.TestCase):
             for filename in ['asdf', 'sdfg']:
                 with open(filename, 'w+') as f:
                     f.write('')
-            # self.client.create(loi=self.loi)
             self.server.new(loi=self.loi)
             self.client.upload(loi=self.loi, filename='bar')
+            manifest = Manifest()
+            manifest.from_file()
+            self.assertEqual([self.data_filename],
+                             manifest.data_filenames)
+
+    def test_update_without_loi_raises(self):
+        with self.assertRaises(MissingLoiError):
+            self.client.update()
+
+    def test_update_with_invalid_loi_raises(self):
+        with self.assertRaises(InvalidLoiError):
+            self.client.update(loi='foo')
+
+    def test_update_with_no_datasafe_loi_raises(self):
+        with self.assertRaises(InvalidLoiError):
+            self.client.update(loi='42.1001/rec/42')
+
+    def test_update_creates_manifest(self):
+        os.mkdir(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+            self.server.new(loi=self.loi)
+            self.client.update(loi=self.loi)
+            self.assertTrue(os.path.isfile(self.manifest_filename))
+
+    def test_update_creates_manifest_only_if_it_does_not_exist(self):
+        self.client.create(loi=self.loi)
+        os.mkdir(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+            self.create_manifest_file()
+            self.client.create_manifest = mock.MagicMock()
+            self.server.new(loi=self.loi)
+            self.client.update(loi=self.loi)
+            self.client.create_manifest.assert_not_called()
+
+    def test_update_sets_loi_in_manifest(self):
+        os.mkdir(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+            self.server.new(loi=self.loi)
+            self.client.update(loi=self.loi)
+            manifest = Manifest()
+            manifest.from_file(self.manifest_filename)
+            self.assertTrue(manifest.loi)
+
+    def test_update_with_given_filename(self):
+        os.mkdir(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+            for filename in ['asdf', 'sdfg']:
+                with open(filename, 'w+') as f:
+                    f.write('')
+            self.server.new(loi=self.loi)
+            self.client.update(loi=self.loi, filename='bar')
             manifest = Manifest()
             manifest.from_file()
             self.assertEqual([self.data_filename],
@@ -407,3 +462,15 @@ class TestLocalClient(unittest.TestCase):
         self.path = self.client.download(self.loi)
         self.assertTrue(os.path.isfile(os.path.join(self.path,
                                                     self.manifest_filename)))
+
+    def test_update_updates_data_at_resource(self):
+        storage_dir = os.path.join(self.storage_root, 'exp/sa/42/cwepr/1')
+        os.mkdir(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+        self.client.create(loi=self.loi)
+        self.client.upload(loi=self.loi, path=self.tempdir)
+        with change_working_dir(storage_dir):
+            os.rename(self.manifest_filename, 'foo.yaml')
+        self.client.update(loi=self.loi, path=self.tempdir)
+        self.assertNotIn('foo.yaml', os.listdir(storage_dir))

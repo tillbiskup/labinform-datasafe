@@ -15,8 +15,29 @@ are responsible for a series of different tasks:
   auto-detect the format and version of the metadata format,
   using :class:`datasafe.manifest.FormatDetector`. See there for details.
 
-Probably, clients will be able to work both, with local servers and those
-using the HTTP(S) protocol.
+
+Currently, there are two different clients implemented:
+
+* :class:`LocalClient`
+
+  A client connecting locally directly within Python to a local server.
+
+* :class:`HTTPClient`
+
+  A client connecting via HTTP to a remote server.
+
+  The remote server connected by this client needs to have an API conforming
+  to that implemented by :class:`datasafe.server.HTTPServerAPI`.
+
+  HTTP status codes returned from the server are handled correctly and
+  converted into exceptions.
+
+
+Furthermore, there is a base class :class:`Client` both concrete client
+implementations inherit from. This base class deals with all aspects of a
+client that can be performed completely local, such as Manifest creation and
+check of LOIs for overall validity. Thus, implementing concrete clients is
+rather straight-forward.
 
 """
 import glob
@@ -29,7 +50,7 @@ import warnings
 import requests
 
 from datasafe.exceptions import InvalidLoiError, MissingLoiError, \
-    LoiNotFoundError, ExistingFileError, MissingContentError
+    LoiNotFoundError, ExistingFileError, MissingContentError, NoFileError
 import datasafe.loi as loi_
 from datasafe.manifest import Manifest
 from datasafe import server
@@ -225,7 +246,7 @@ class Client:
         Parameters
         ----------
         loi : :class:`str`
-            LOI the data should be downloaded for
+            LOI the data should be uploaded for
 
         filename : :class:`str`
             Name of the file(s) belonging to a dataset.
@@ -333,6 +354,84 @@ class Client:
     def _server_download(self, loi=''):  # noqa
         return self._create_zip_archive(filenames=[])
 
+    def update(self, loi='', filename='', path=''):
+        """
+        Update data belonging to a dataset to the datasafe.
+
+        If no manifest file exists, it will automatically be created.
+
+        Different scenarios for determining which files belong to the
+        dataset and for distinguishing between data and metadata files are:
+
+        * Neither parameter ``filename`` nor ``path`` given
+
+          All files of the current directory will be assumed to belong to
+          the dataset.
+
+        * Parameter ``filename`` given
+
+          Only files starting with the value of ``filename`` will be
+          considered. Note that the value is used as pattern.
+
+        * Parameter ``path``, but no parameter ``filename`` given
+
+          Only files in the directory given by ``path`` will be considered.
+
+        * Both parameters, ``filename`` and ``path`` given
+
+          Only files starting with the value of ``filename`` and located in
+          the directory given by ``path`` will be considered. Note that the
+          value is used as pattern.
+
+
+        Parameters
+        ----------
+        loi : :class:`str`
+            LOI the data should be updated
+
+        filename : :class:`str`
+            Name of the file(s) belonging to a dataset.
+
+            This is taken as pattern and extended with ".*" and used with
+            :func:`glob.glob` if given.
+
+        path : :class:`str`
+            File system path where to look for files belonging to a dataset
+
+
+        Returns
+        -------
+        integrity : :class:`dict`
+            dict with fields ``data`` and ``all`` containing boolean values
+
+            For details see :meth:`datasafe.manifest.Manifest.check_integrity`.
+
+        Raises
+        ------
+        datasafe.loi.MissingLoiError
+            Raised if no LOI is provided
+
+        """
+        if not loi:
+            raise MissingLoiError('No LOI provided.')
+        self._check_loi(loi=loi, validate=False)
+        with change_working_dir(path):
+            if not os.path.exists(Manifest().manifest_filename):
+                self.create_manifest(filename=filename)
+            manifest = Manifest()
+            manifest.from_file(manifest.manifest_filename)
+            manifest.loi = loi
+            manifest.to_file()
+            filenames = manifest.metadata_filenames
+            filenames.extend(manifest.data_filenames)
+            filenames.append(manifest.manifest_filename)
+            content = self._create_zip_archive(filenames)
+        return self._server_update(loi=loi,
+                                   content=content)
+
+    def _server_update(self, loi='', content=None):  # noqa
+        return {'data': True, 'all': True}
+
     def _check_loi(self, loi='', validate=True):
         """
         Check a LOI.
@@ -407,10 +506,19 @@ class LocalClient(Client):
     def _server_download(self, loi=''):
         return self.server.download(loi=loi)
 
+    def _server_update(self, loi='', content=None):
+        return self.server.update(loi=loi, content=content)
+
 
 class HTTPClient(Client):
     """
     Client connecting via HTTP to a remote server.
+
+    The remote server connected by this client needs to have an API
+    conforming to that implemented by :class:`datasafe.server.HTTPServerAPI`.
+
+    HTTP status codes returned from the server are handled correctly and
+    converted into exceptions.
 
     Attributes
     ----------
@@ -458,3 +566,14 @@ class HTTPClient(Client):
             if 'not a valid LOI' in response.content.decode():
                 raise InvalidLoiError(message=response.content.decode())
         return response.content
+
+    def _server_update(self, loi='', content=None):
+        response = requests.patch(self.server_url + self.url_prefix + loi,
+                                  data=content)
+        if response.status_code == 400:
+            raise LoiNotFoundError(message=response.content.decode())
+        if response.status_code == 404:
+            raise InvalidLoiError(message=response.content.decode())
+        if response.status_code == 405:
+            raise NoFileError(message=response.content.decode())
+        return json.loads(response.content)

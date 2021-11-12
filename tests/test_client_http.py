@@ -6,7 +6,7 @@ import requests
 
 from datasafe import server, client
 from datasafe.exceptions import InvalidLoiError, LoiNotFoundError, \
-    ExistingFileError, MissingContentError
+    ExistingFileError, MissingContentError, NoFileError
 from datasafe.loi import LoiChecker
 from datasafe.manifest import Manifest
 from datasafe.utils import change_working_dir
@@ -138,7 +138,7 @@ class TestHTTPClient(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(self.path,
                                                     self.manifest_filename)))
 
-    def test_download_with_inexisting_resource_raises(self):
+    def test_download_with_not_existing_resource_raises(self):
         with self.assertRaisesRegex(LoiNotFoundError, 'does not exist'):
             self.path = self.client.download(self.loi)
 
@@ -151,3 +151,48 @@ class TestHTTPClient(unittest.TestCase):
         self.client.create(loi=self.loi)
         with self.assertRaises(MissingContentError):
             self.path = self.client.download(self.loi)
+
+    def test_update_updates_data_at_resource(self):
+        storage_dir = os.path.join(self.storage_root, 'exp/sa/42/cwepr/1')
+        os.mkdir(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+        self.client.create(loi=self.loi)
+        self.client.upload(loi=self.loi, path=self.tempdir)
+        with change_working_dir(storage_dir):
+            os.rename(self.manifest_filename, 'foo.yaml')
+        self.client.update(loi=self.loi, path=self.tempdir)
+        self.assertNotIn('foo.yaml', os.listdir(storage_dir))
+
+    def test_update_returns_results_of_integrity_check(self):
+        os.mkdir(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+            self.client.create(loi=self.loi)
+            self.client.upload(loi=self.loi)
+            integrity = self.client.update(loi=self.loi)
+        self.assertCountEqual(['all', 'data'], integrity.keys())
+
+    def test_update_with_invalid_loi_raises(self):
+        loi = '42.1001/ds/foo/bar/baz'
+        os.mkdir(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+            self.client.create(loi=self.loi)
+            with self.assertRaisesRegex(InvalidLoiError, 'not a valid LOI'):
+                self.client.update(loi=loi)
+
+    def test_update_with_not_existing_resource_raises(self):
+        os.mkdir(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+            with self.assertRaisesRegex(LoiNotFoundError, 'LOI does not exist'):
+                self.client.update(loi=self.loi)
+
+    def test_update_with_not_existing_resource_content_raises(self):
+        os.mkdir(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+            self.client.create(loi=self.loi)
+            with self.assertRaisesRegex(NoFileError, 'Directory empty'):
+                self.client.update(loi=self.loi)
