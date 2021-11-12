@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import unittest
@@ -69,6 +70,10 @@ class TestAPI(flask_unittest.ClientTestCase):
         self.assertStatus(client.get("/api"), 308)
         self.assertStatus(client.get("/api/"), 200)
 
+    def test_post_with_invalid_loi_returns_404(self, client):
+        response = client.post("/api/" + 'foo/bar/baz')
+        self.assertStatus(response, 404)
+
     def test_post_with_valid_loi_returns_new_loi(self, client):
         response = client.post("/api/" + self.loi)
         self.assertStatus(response, 201)
@@ -92,6 +97,40 @@ class TestAPI(flask_unittest.ClientTestCase):
                                    *self.loi.split('/')[2:])
         self.assertTrue(os.listdir(storage_dir))
 
+    def test_put_with_valid_loi_returns_integrity(self, client):
+        client.post("/api/" + self.loi)
+        integrity = client.put("/api/" + self.loi,
+                               data=self.create_zip_archive())
+        self.assertDictEqual({'all': True, 'data': True},
+                             json.loads(integrity.data))
+
+    def test_put_with_invalid_loi_returns_404(self, client):
+        response = client.put("/api/" + "foo/bar/baz")
+        self.assertStatus(response, 404)
+
+    def test_put_with_valid_loi_and_inexisting_directory(self, client):
+        response = client.put("/api/" + self.loi,
+                              data=self.create_zip_archive())
+        self.assertStatus(response, 400)
+        self.assertResponseEqual(response, 'LOI does not exist'.encode())
+
+    def test_put_with_valid_loi_and_no_payload(self, client):
+        client.post("/api/" + self.loi)
+        response = client.put("/api/" + self.loi)
+        self.assertStatus(response, 400)
+        self.assertResponseEqual(response,
+                                 'No content provided to deposit.'.encode())
+
+    def test_put_with_already_existing_content_at_loi(self, client):
+        data = self.create_zip_archive()
+        client.post("/api/" + self.loi)
+        client.put("/api/" + self.loi, data=data)
+        response = client.put("/api/" + self.loi, data=data)
+        self.assertStatus(response, 405)
+        self.assertResponseEqual(response,
+                                 'Directory not empty'.encode())
+        self.assertIn('UPDATE', response.allow)
+
     def test_get_non_existing_loi_returns_404(self, client):
         self.assertStatus(client.get("/api/" + self.loi), 404)
 
@@ -101,3 +140,8 @@ class TestAPI(flask_unittest.ClientTestCase):
         client.put("/api/" + self.loi, data=data)
         response = client.get("/api/" + self.loi)
         self.assertResponseEqual(response, data)
+
+    def test_get_empty_loi(self, client):
+        client.post("/api/" + self.loi)
+        response = client.get("/api/" + self.loi)
+        self.assertStatus(response, 204)

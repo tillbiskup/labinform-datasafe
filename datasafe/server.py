@@ -43,6 +43,7 @@ import tempfile
 from flask import Flask, request
 from flask.views import MethodView
 
+import datasafe.loi
 from datasafe import configuration
 import datasafe.loi as loi_
 from datasafe.manifest import Manifest
@@ -624,19 +625,42 @@ class HTTPServerAPI(MethodView):
         self.server = Server()
 
     def post(self, loi=''):
-        new_loi = self.server.new(loi=loi)
-        return new_loi, 201
+        try:
+            content = self.server.new(loi=loi)
+            status = 201
+        except datasafe.loi.InvalidLoiError:
+            content = ''
+            status = 404
+        return content, status
 
     def get(self, loi=''):
+        content = ''
         try:
             content = self.server.download(loi=loi)
-        except ValueError:
-            content = ''
-        if not content:
-            return '', 404
-        else:
-            return content, 200
+            status = 200
+        except ValueError as exception:
+            if 'does not have content' in str(exception):
+                status = 204
+            else:
+                status = 404
+        return content, status
 
     def put(self, loi='', ):
-        integrity = self.server.upload(loi=loi, content=request.data)
-        return integrity, 200
+        header = None
+        try:
+            content = self.server.upload(loi=loi, content=request.data)
+            status = 200
+        except datasafe.loi.InvalidLoiError:
+            content = ''
+            status = 404
+        except ValueError:
+            content = 'LOI does not exist'
+            status = 400
+        except datasafe.server.MissingContentError as exception:
+            content = exception.message
+            status = 400
+        except FileExistsError:
+            content = 'Directory not empty'
+            status = 405
+            header = {'allow': 'UPDATE'}
+        return content, status, header
