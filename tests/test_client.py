@@ -3,10 +3,9 @@ import shutil
 import unittest
 from unittest import mock
 
-import datasafe.client as client
-import datasafe.configuration as config
-import datasafe.exceptions
+from datasafe import client, configuration
 import datasafe.loi as loi_
+from datasafe.exceptions import MissingLoiError, InvalidLoiError
 from datasafe.manifest import Manifest
 from datasafe.server import Server
 from datasafe.utils import change_working_dir
@@ -17,7 +16,7 @@ class TestClient(unittest.TestCase):
         self.client = client.Client()
         self.server = Server()
         self.loi = '42.1001/ds/exp/sa/42/cwepr/1'
-        self.config = config.StorageBackend()
+        self.config = configuration.StorageBackend()
         self.storage_root = self.config.root_directory
         self.path = ''
         self.tempdir = 'tmp'
@@ -75,109 +74,127 @@ class TestClient(unittest.TestCase):
         self.assertTrue(callable(self.client.create_manifest))
 
     def test_create_without_loi_raises(self):
-        with self.assertRaises(datasafe.exceptions.MissingLoiError):
+        with self.assertRaises(MissingLoiError):
             self.client.create()
 
     def test_create_with_invalid_loi_raises(self):
-        with self.assertRaises(datasafe.exceptions.InvalidLoiError):
+        with self.assertRaises(InvalidLoiError):
             self.client.create('foo')
 
     def test_create_with_no_datasafe_loi_raises(self):
-        with self.assertRaises(datasafe.exceptions.InvalidLoiError):
+        with self.assertRaises(InvalidLoiError):
             self.client.create('42.1001/rec/42')
 
     def test_create_with_non_exp_loi_raises(self):
         message = 'not a valid experiment LOI'
-        with self.assertRaisesRegex(datasafe.exceptions.InvalidLoiError, message):
+        with self.assertRaisesRegex(InvalidLoiError, message):
             self.client.create('42.1001/ds/calc')
 
     def test_create_with_invalid_exp_loi_raises(self):
         message = 'not a valid LOI'
-        with self.assertRaisesRegex(datasafe.exceptions.InvalidLoiError, message):
+        with self.assertRaisesRegex(InvalidLoiError, message):
             self.client.create('42.1001/ds/exp/foo')
 
     def test_create_with_loi_returns_string(self):
         self.assertIsInstance(self.client.create(self.loi), str)
 
-    def test_create_with_loi_returns_valid_loi(self):
-        checker = loi_.LoiChecker()
-        self.assertTrue(checker.check(self.client.create(self.loi)))
-
-    def test_create_creates_directory_via_backend(self):
-        loi = '42.1001/ds/exp/sa/42/cwepr/'
-        self.client.create(loi)
-        self.assertTrue(os.path.exists(os.path.join(
-            self.storage_root, 'exp/sa/42/cwepr/1')))
-
     def test_download_without_loi_raises(self):
-        with self.assertRaises(datasafe.exceptions.MissingLoiError):
+        with self.assertRaises(MissingLoiError):
             self.client.download()
 
     def test_download_with_invalid_loi_raises(self):
-        with self.assertRaises(datasafe.exceptions.InvalidLoiError):
+        with self.assertRaises(InvalidLoiError):
             self.client.download('foo')
 
     def test_download_with_no_datasafe_loi_raises(self):
-        with self.assertRaises(datasafe.exceptions.InvalidLoiError):
+        with self.assertRaises(InvalidLoiError):
             self.client.download('42.1001/rec/42')
 
     def test_download_returns_string(self):
         self.server.new(loi=self.loi)
-        self.server.upload(loi=self.loi, content=self.create_zip_archive())
-        self.path = self.client.download(self.loi)
+        data = self.create_zip_archive()
+        self.server.upload(loi=self.loi, content=data)
+        mock_ = mock.MagicMock()
+        mock_.return_value = data
+        with mock.patch('datasafe.client.Client._server_download', mock_):
+            self.path = self.client.download(self.loi)
         self.assertTrue(self.path)
 
     def test_download_returns_path_to_tmp_folder(self):
         self.server.new(loi=self.loi)
-        self.server.upload(loi=self.loi, content=self.create_zip_archive())
-        self.path = self.client.download(self.loi)
+        data = self.create_zip_archive()
+        self.server.upload(loi=self.loi, content=data)
+        mock_ = mock.MagicMock()
+        mock_.return_value = data
+        with mock.patch('datasafe.client.Client._server_download', mock_):
+            self.path = self.client.download(self.loi)
         self.assertTrue(os.path.exists(self.path))
 
     def test_tmp_directory_contains_manifest(self):
         self.server.new(loi=self.loi)
-        self.server.upload(loi=self.loi, content=self.create_zip_archive())
-        self.path = self.client.download(self.loi)
+        data = self.create_zip_archive()
+        self.server.upload(loi=self.loi, content=data)
+        download = mock.MagicMock()
+        download.return_value = data
+        with mock.patch('datasafe.client.Client._server_download', download):
+            self.path = self.client.download(self.loi)
         self.assertTrue(os.path.isfile(os.path.join(self.path,
                                                     self.manifest_filename)))
 
     def test_download_checks_for_consistency_of_checksums(self):
         self.server.new(loi=self.loi)
-        self.server.upload(loi=self.loi, content=self.create_zip_archive())
-        mock_ = mock.MagicMock()
-        with mock.patch('datasafe.client.Manifest.check_integrity', mock_):
-            self.path = self.client.download(self.loi)
-        mock_.assert_called()
+        data = self.create_zip_archive()
+        self.server.upload(loi=self.loi, content=data)
+        check = mock.MagicMock()
+        download = mock.MagicMock()
+        download.return_value = data
+        with mock.patch('datasafe.client.Client._server_download', download):
+            with mock.patch('datasafe.client.Manifest.check_integrity', check):
+                self.path = self.client.download(self.loi)
+        check.assert_called()
 
     def test_download_warns_if_only_overall_checksum_is_false(self):
         self.server.new(loi=self.loi)
-        self.server.upload(loi=self.loi, content=self.create_zip_archive())
-        mock_ = mock.MagicMock()
-        mock_.return_value = {'all': False, 'data': True}
-        with mock.patch('datasafe.client.Manifest.check_integrity', mock_):
-            message = 'Integrity check failed, metadata may be corrupted.'
-            with self.assertWarnsRegex(UserWarning, message):
-                self.path = self.client.download(self.loi)
+        data = self.create_zip_archive()
+        self.server.upload(loi=self.loi, content=data)
+        check = mock.MagicMock()
+        check.return_value = {'all': False, 'data': True}
+        download = mock.MagicMock()
+        download.return_value = data
+        with mock.patch('datasafe.client.Client._server_download', download):
+            with mock.patch('datasafe.client.Manifest.check_integrity', check):
+                message = 'Integrity check failed, metadata may be corrupted.'
+                with self.assertWarnsRegex(UserWarning, message):
+                    self.path = self.client.download(self.loi)
 
     def test_download_warns_if_only_data_checksum_is_false(self):
         self.server.new(loi=self.loi)
-        self.server.upload(loi=self.loi, content=self.create_zip_archive())
-        mock_ = mock.MagicMock()
-        mock_.return_value = {'all': True, 'data': False}
-        with mock.patch('datasafe.client.Manifest.check_integrity', mock_):
-            message = 'Integrity check failed, data may be corrupted.'
-            with self.assertWarnsRegex(UserWarning, message):
-                self.path = self.client.download(self.loi)
+        data = self.create_zip_archive()
+        self.server.upload(loi=self.loi, content=data)
+        check = mock.MagicMock()
+        check.return_value = {'all': True, 'data': False}
+        download = mock.MagicMock()
+        download.return_value = data
+        with mock.patch('datasafe.client.Client._server_download', download):
+            with mock.patch('datasafe.client.Manifest.check_integrity', check):
+                message = 'Integrity check failed, data may be corrupted.'
+                with self.assertWarnsRegex(UserWarning, message):
+                    self.path = self.client.download(self.loi)
 
     def test_download_warns_if_both_checksums_are_false(self):
         self.server.new(loi=self.loi)
-        self.server.upload(loi=self.loi, content=self.create_zip_archive())
-        mock_ = mock.MagicMock()
-        mock_.return_value = {'all': False, 'data': False}
-        with mock.patch('datasafe.client.Manifest.check_integrity', mock_):
-            message = 'Integrity check failed, data and metadata may be ' \
-                      'corrupted.'
-            with self.assertWarnsRegex(UserWarning, message):
-                self.path = self.client.download(self.loi)
+        data = self.create_zip_archive()
+        self.server.upload(loi=self.loi, content=data)
+        check = mock.MagicMock()
+        check.return_value = {'all': False, 'data': False}
+        download = mock.MagicMock()
+        download.return_value = data
+        with mock.patch('datasafe.client.Client._server_download', download):
+            with mock.patch('datasafe.client.Manifest.check_integrity', check):
+                message = 'Integrity check failed, data and metadata may be ' \
+                          'corrupted.'
+                with self.assertWarnsRegex(UserWarning, message):
+                    self.path = self.client.download(self.loi)
 
     def test_create_manifest_creates_manifest(self):
         os.mkdir(self.tempdir)
@@ -241,22 +258,23 @@ class TestClient(unittest.TestCase):
         self.assertEqual([self.data_filename], manifest.data_filenames)
 
     def test_upload_without_loi_raises(self):
-        with self.assertRaises(datasafe.exceptions.MissingLoiError):
+        with self.assertRaises(MissingLoiError):
             self.client.upload()
 
     def test_upload_with_invalid_loi_raises(self):
-        with self.assertRaises(datasafe.exceptions.InvalidLoiError):
+        with self.assertRaises(InvalidLoiError):
             self.client.upload(loi='foo')
 
     def test_upload_with_no_datasafe_loi_raises(self):
-        with self.assertRaises(datasafe.exceptions.InvalidLoiError):
+        with self.assertRaises(InvalidLoiError):
             self.client.upload(loi='42.1001/rec/42')
 
     def test_upload_creates_manifest(self):
         os.mkdir(self.tempdir)
         with change_working_dir(self.tempdir):
             self.create_data_and_metadata_files()
-            self.client.create(loi=self.loi)
+            # self.client.create(loi=self.loi)
+            self.server.new(loi=self.loi)
             self.client.upload(loi=self.loi)
             self.assertTrue(os.path.isfile(self.manifest_filename))
 
@@ -267,7 +285,8 @@ class TestClient(unittest.TestCase):
             self.create_data_and_metadata_files()
             self.create_manifest_file()
             self.client.create_manifest = mock.MagicMock()
-            self.client.create(loi=self.loi)
+            # self.client.create(loi=self.loi)
+            self.server.new(loi=self.loi)
             self.client.upload(loi=self.loi)
             self.client.create_manifest.assert_not_called()
 
@@ -275,7 +294,8 @@ class TestClient(unittest.TestCase):
         os.mkdir(self.tempdir)
         with change_working_dir(self.tempdir):
             self.create_data_and_metadata_files()
-            self.client.create(loi=self.loi)
+            # self.client.create(loi=self.loi)
+            self.server.new(loi=self.loi)
             self.client.upload(loi=self.loi)
             manifest = Manifest()
             manifest.from_file(self.manifest_filename)
@@ -288,12 +308,68 @@ class TestClient(unittest.TestCase):
             for filename in ['asdf', 'sdfg']:
                 with open(filename, 'w+') as f:
                     f.write('')
-            self.client.create(loi=self.loi)
+            # self.client.create(loi=self.loi)
+            self.server.new(loi=self.loi)
             self.client.upload(loi=self.loi, filename='bar')
             manifest = Manifest()
             manifest.from_file()
             self.assertEqual([self.data_filename],
                              manifest.data_filenames)
+
+
+class TestLocalClient(unittest.TestCase):
+    def setUp(self):
+        self.client = client.LocalClient()
+        self.loi = '42.1001/ds/exp/sa/42/cwepr/1'
+        self.server = Server()
+        self.config = configuration.StorageBackend()
+        self.storage_root = self.config.root_directory
+        self.tempdir = 'tmp'
+        self.manifest_filename = Manifest().manifest_filename
+        self.data_filename = 'bar.dat'
+        self.metadata_filename = 'bar.info'
+
+    def tearDown(self):
+        for directory in [self.storage_root, self.tempdir]:
+            if os.path.exists(directory):
+                shutil.rmtree(directory)
+
+    def create_zip_archive(self):
+        os.makedirs(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+            self.create_manifest_file()
+        zip_archive = shutil.make_archive(base_name='test', format='zip',
+                                          root_dir=self.tempdir)
+        with open(zip_archive, 'rb') as zip_file:
+            contents = zip_file.read()
+        os.remove('test.zip')
+        return contents
+
+    def create_manifest_file(self):
+        manifest = Manifest()
+        manifest.data_filenames = [self.data_filename]
+        manifest.metadata_filenames = [self.metadata_filename]
+        manifest.to_file()
+
+    def create_data_and_metadata_files(self):
+        with open(self.data_filename, 'w+') as f:
+            f.write('')
+        with open(self.metadata_filename, 'w+') as f:
+            f.write('cwEPR Info file - v. 0.1.4 (2020-01-21)')
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_create_with_loi_returns_valid_loi(self):
+        checker = loi_.LoiChecker()
+        self.assertTrue(checker.check(self.client.create(self.loi)))
+
+    def test_create_creates_directory_via_backend(self):
+        loi = '42.1001/ds/exp/sa/42/cwepr/'
+        self.client.create(loi)
+        self.assertTrue(os.path.exists(os.path.join(
+            self.storage_root, 'exp/sa/42/cwepr/1')))
 
     def test_upload_with_given_path(self):
         os.mkdir(self.tempdir)
@@ -324,6 +400,10 @@ class TestClient(unittest.TestCase):
             integrity = self.client.upload(loi=self.loi)
         self.assertCountEqual(['all', 'data'], integrity.keys())
 
-
-if __name__ == '__main__':
-    unittest.main()
+    def test_download_contains_manifest(self):
+        self.server.new(loi=self.loi)
+        data = self.create_zip_archive()
+        self.server.upload(loi=self.loi, content=data)
+        self.path = self.client.download(self.loi)
+        self.assertTrue(os.path.isfile(os.path.join(self.path,
+                                                    self.manifest_filename)))

@@ -20,10 +20,13 @@ using the HTTP(S) protocol.
 
 """
 import glob
+import json
 import os
 import shutil
 import tempfile
 import warnings
+
+import requests
 
 from datasafe.exceptions import InvalidLoiError, MissingLoiError
 import datasafe.loi as loi_
@@ -39,14 +42,22 @@ class Client:
     The client interacts with a server to transfer data from and to the
     datasafe.
 
+    This class provides all functionality that is local to the client. The
+    actual connection to the server is done in non-public methods that need
+    to be implemented in concrete classes.
+
+    There are currently two concrete client classes available:
+
+    * :class:`LocalClient`
+
+      A client connecting locally directly within Python to a local server.
+
+    * :class:`HTTPClient`
+
+      A client connecting via HTTP protocol to an HTTP server.
 
     Attributes
     ----------
-    server : :class:`datasafe.server.Server`
-
-        Datasafe server component to talk to. The server itself will
-        communicate with a backend to do the actual storage.
-
     loi_parser : :class:`datasafe.loi.Parser`
 
         Parser for lab object identifiers (LOIs). Used to check a given LOI
@@ -63,7 +74,6 @@ class Client:
     """
 
     def __init__(self):
-        self.server = server.Server()
         self.loi_parser = loi_.Parser()
         self.metadata_extensions = ('.info', '.yaml')
         self._loi_checker = loi_.LoiChecker()
@@ -110,7 +120,10 @@ class Client:
         self._loi_checker.ignore_check = 'LoiMeasurementNumberChecker'
         if not self._loi_checker.check(loi):
             raise InvalidLoiError('String is not a valid LOI.')
-        return self.server.new(loi=loi)
+        return self._server_create(loi=loi)
+
+    def _server_create(self, loi=''):  # noqa
+        return ''
 
     def create_manifest(self, filename='', path=''):
         """
@@ -250,8 +263,11 @@ class Client:
             filenames.extend(manifest.data_filenames)
             filenames.append(manifest.manifest_filename)
             content = self._create_zip_archive(filenames)
-        return self.server.upload(loi=loi,
-                                  content=content)
+        return self._server_upload(loi=loi,
+                                   content=content)
+
+    def _server_upload(self, loi='', content=None):  # noqa
+        return {'data': True, 'all': True}
 
     def download(self, loi=''):
         """
@@ -291,7 +307,7 @@ class Client:
         if not loi:
             raise MissingLoiError('No LOI provided.')
         self._check_loi(loi=loi, validate=False)
-        content = self.server.download(loi=loi)
+        content = self._server_download(loi=loi)
         download_dir = tempfile.mkdtemp()
         with change_working_dir(download_dir):
             archive_file = 'archive.zip'
@@ -312,6 +328,9 @@ class Client:
                 message = 'Integrity check failed, data may be corrupted.'
             warnings.warn(message)
         return download_dir
+
+    def _server_download(self, loi=''):  # noqa
+        return self._create_zip_archive(filenames=[])
 
     def _check_loi(self, loi='', validate=True):
         """
@@ -359,3 +378,67 @@ class Client:
                 self._copy_file(os.path.join(source, item), destination)
         else:
             shutil.copy(source, destination)
+
+
+class LocalClient(Client):
+    """
+    Client connecting locally directly within Python to a local server.
+
+    Attributes
+    ----------
+    server : :class:`datasafe.server.Server`
+
+        Datasafe server component to talk to. The server itself will
+        communicate with a backend to do the actual storage.
+
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.server = server.Server()
+
+    def _server_create(self, loi=''):
+        return self.server.new(loi=loi)
+
+    def _server_upload(self, loi='', content=None):
+        return self.server.upload(loi=loi, content=content)
+
+    def _server_download(self, loi=''):
+        return self.server.download(loi=loi)
+
+
+class HTTPClient(Client):
+    """
+    Client connecting via HTTP to a remote server.
+
+    Attributes
+    ----------
+    server_url : :class:`str`
+        URL of a database HTTP server to connect to.
+
+        Default: 'http://127.0.0.1:5000/'
+
+    url_prefix : :class:`str`
+        Prefix of the URLs appended to :attr:`server_url`
+
+        Default: 'api/'
+
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.server_url = 'http://127.0.0.1:5000/'
+        self.url_prefix = 'api/'
+
+    def _server_create(self, loi=''):
+        response = requests.post(self.server_url + self.url_prefix + loi)
+        return response.content.decode()
+
+    def _server_upload(self, loi='', content=None):
+        response = requests.put(self.server_url + self.url_prefix + loi,
+                                data=content)
+        return json.loads(response.content)
+
+    def _server_download(self, loi=''):
+        response = requests.get(self.server_url + self.url_prefix + loi)
+        return response.content

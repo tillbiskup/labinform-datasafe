@@ -5,7 +5,7 @@ import unittest
 
 import flask_unittest
 
-import datasafe.server as server
+from datasafe import server
 from datasafe.manifest import Manifest
 from datasafe.utils import change_working_dir
 

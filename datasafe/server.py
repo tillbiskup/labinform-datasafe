@@ -248,7 +248,6 @@ class Server:
             Raised if resource corresponding to LOI is not empty
 
         """
-
         if not loi:
             raise MissingLoiError('No LOI provided.')
         self._check_loi(loi=loi)

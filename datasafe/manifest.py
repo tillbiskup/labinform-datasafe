@@ -180,7 +180,7 @@ class Manifest:
         for filename in self.metadata_filenames:
             if not os.path.exists(filename):
                 raise NoFileError(f'Metadata file {filename} does not '
-                                        'exist')
+                                  'exist')
         manifest_ = self._create_manifest_dict()
         for filename in self.data_filenames:
             # noinspection PyTypeChecker

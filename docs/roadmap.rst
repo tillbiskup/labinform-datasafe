@@ -12,10 +12,6 @@ For version 0.1
 
 * Configuration handling: via configuration files or else
 
-* HTTP transport layer between server and client
-
-  * HTTP client
-
 
 For later versions
 ==================
