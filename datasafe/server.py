@@ -628,7 +628,14 @@ class HTTPServerAPI(MethodView):
         return new_loi, 201
 
     def get(self, loi=''):
-        return '', 404
+        try:
+            content = self.server.download(loi=loi)
+        except ValueError:
+            content = ''
+        if not content:
+            return '', 404
+        else:
+            return content, 200
 
     def put(self, loi='', ):
         integrity = self.server.upload(loi=loi, content=request.data)

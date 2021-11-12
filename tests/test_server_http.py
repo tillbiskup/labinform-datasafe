@@ -85,12 +85,19 @@ class TestAPI(flask_unittest.ClientTestCase):
         response = client.post("/api/" + self.loi)
         self.assertResponseEqual(response, f"{loi}1".encode())
 
-    def test_get_non_existing_loi_returns_404(self, client):
-        self.assertStatus(client.get("/api/" + self.loi), 404)
-
     def test_put_with_valid_loi_deposits_data(self, client):
         client.post("/api/" + self.loi)
         client.put("/api/" + self.loi, data=self.create_zip_archive())
         storage_dir = os.path.join(self.storage.root_directory,
                                    *self.loi.split('/')[2:])
         self.assertTrue(os.listdir(storage_dir))
+
+    def test_get_non_existing_loi_returns_404(self, client):
+        self.assertStatus(client.get("/api/" + self.loi), 404)
+
+    def test_get_returns_dataset_zip(self, client):
+        data = self.create_zip_archive()
+        client.post("/api/" + self.loi)
+        client.put("/api/" + self.loi, data=data)
+        response = client.get("/api/" + self.loi)
+        self.assertResponseEqual(response, data)
