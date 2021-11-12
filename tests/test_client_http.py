@@ -2,22 +2,14 @@ import os
 import shutil
 import unittest
 
-import flask_unittest
 import requests
 
-import datasafe.loi as loi_
-from datasafe import server
-from datasafe import client as datasafe_client
+from datasafe import server, client
+from datasafe.exceptions import InvalidLoiError, LoiNotFoundError, \
+    ExistingFileError, MissingContentError
+from datasafe.loi import LoiChecker
 from datasafe.manifest import Manifest
 from datasafe.utils import change_working_dir
-
-
-class TestHTTPClient(unittest.TestCase):
-    def setUp(self):
-        self.client = datasafe_client.HTTPClient()
-
-    def test_instantiate_class(self):
-        pass
 
 
 def server_is_running():
@@ -29,11 +21,10 @@ def server_is_running():
 
 
 @unittest.skipUnless(server_is_running(), reason='No HTTP server running')
-class TestHTTPClientConnection(flask_unittest.LiveTestCase):
-    app = server.create_http_server({"TESTING": True})
+class TestHTTPClient(unittest.TestCase):
 
     def setUp(self):
-        self.client = datasafe_client.HTTPClient()
+        self.client = client.HTTPClient()
         self.loi = '42.1001/ds/exp/sa/42/cwepr/1'
         self.storage = server.StorageBackend()
         self.storage_root = \
@@ -73,7 +64,7 @@ class TestHTTPClientConnection(flask_unittest.LiveTestCase):
             f.write('cwEPR Info file - v. 0.1.4 (2020-01-21)')
 
     def test_create_with_loi_returns_valid_loi(self):
-        checker = loi_.LoiChecker()
+        checker = LoiChecker()
         self.assertTrue(checker.check(self.client.create(self.loi)))
 
     def test_create_creates_directory_via_backend(self):
@@ -111,8 +102,33 @@ class TestHTTPClientConnection(flask_unittest.LiveTestCase):
             integrity = self.client.upload(loi=self.loi)
         self.assertCountEqual(['all', 'data'], integrity.keys())
 
+    def test_upload_with_invalid_loi_raises(self):
+        loi = '42.1001/ds/foo/bar/baz'
+        os.mkdir(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+            self.client.create(loi=self.loi)
+            with self.assertRaisesRegex(InvalidLoiError, 'not a valid LOI'):
+                self.client.upload(loi=loi)
+
+    def test_upload_with_not_existing_resource_raises(self):
+        os.mkdir(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+            with self.assertRaisesRegex(LoiNotFoundError, 'LOI does not exist'):
+                self.client.upload(loi=self.loi)
+
+    def test_upload_with_existing_resource_content_raises(self):
+        os.mkdir(self.tempdir)
+        with change_working_dir(self.tempdir):
+            self.create_data_and_metadata_files()
+            self.client.create(loi=self.loi)
+            self.client.upload(loi=self.loi)
+            with self.assertRaisesRegex(ExistingFileError, 'Directory not '
+                                                           'empty'):
+                self.client.upload(loi=self.loi)
+
     def test_download_contains_manifest(self):
-        self.client.create(loi=self.loi)
         os.mkdir(self.tempdir)
         with change_working_dir(self.tempdir):
             self.create_data_and_metadata_files()
@@ -122,3 +138,16 @@ class TestHTTPClientConnection(flask_unittest.LiveTestCase):
         self.assertTrue(os.path.isfile(os.path.join(self.path,
                                                     self.manifest_filename)))
 
+    def test_download_with_inexisting_resource_raises(self):
+        with self.assertRaisesRegex(LoiNotFoundError, 'does not exist'):
+            self.path = self.client.download(self.loi)
+
+    def test_download_with_invalid_loi_raises(self):
+        loi = '42.1001/ds/foo/bar/baz'
+        with self.assertRaisesRegex(InvalidLoiError, 'not a valid LOI'):
+            self.path = self.client.download(loi)
+
+    def test_download_empty_resource_raises(self):
+        self.client.create(loi=self.loi)
+        with self.assertRaises(MissingContentError):
+            self.path = self.client.download(self.loi)

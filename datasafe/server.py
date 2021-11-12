@@ -173,7 +173,7 @@ class Server:
         if not self.storage.exists(self.loi.id):
             raise LoiNotFoundError('LOI does not exist.')
         if not self.storage.isempty(path=self.loi.id):
-            raise ExistingFileError('Directory not empty')
+            raise ExistingFileError('Directory not empty.')
         return self.storage.deposit(path=self.loi.id, content=content)
 
     def download(self, loi=''):
@@ -835,7 +835,7 @@ class HTTPServerAPI(MethodView):
         does not exist      400  error message
         missing content     400  error message
         invalid             404  error message
-        no resource content       405  error message
+        no resource content 405  error message
         =================== ==== ===========================================
 
         The status "does not exist" refers to the LOI the data should be put

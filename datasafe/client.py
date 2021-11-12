@@ -28,7 +28,8 @@ import warnings
 
 import requests
 
-from datasafe.exceptions import InvalidLoiError, MissingLoiError
+from datasafe.exceptions import InvalidLoiError, MissingLoiError, \
+    LoiNotFoundError, ExistingFileError, MissingContentError
 import datasafe.loi as loi_
 from datasafe.manifest import Manifest
 from datasafe import server
@@ -437,8 +438,23 @@ class HTTPClient(Client):
     def _server_upload(self, loi='', content=None):
         response = requests.put(self.server_url + self.url_prefix + loi,
                                 data=content)
+        if response.status_code == 404:
+            raise InvalidLoiError(message=response.content.decode())
+        if response.status_code == 400:
+            if 'does not exist' in response.content.decode():
+                raise LoiNotFoundError(message=response.content.decode())
+        if response.status_code == 405:
+            raise ExistingFileError(message=response.content.decode())
         return json.loads(response.content)
 
     def _server_download(self, loi=''):
         response = requests.get(self.server_url + self.url_prefix + loi)
+        if response.status_code == 204:
+            # Note: 204 returns no content (obviously!)
+            raise MissingContentError('LOI does not have any content')
+        if response.status_code == 404:
+            if 'does not exist' in response.content.decode():
+                raise LoiNotFoundError(message=response.content.decode())
+            if 'not a valid LOI' in response.content.decode():
+                raise InvalidLoiError(message=response.content.decode())
         return response.content

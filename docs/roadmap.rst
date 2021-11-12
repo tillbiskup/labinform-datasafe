@@ -8,6 +8,8 @@ A few ideas how to develop the project further, currently a list as a reminder f
 For version 0.1
 ===============
 
+* Handling of status codes from HTTP server in HTTP client
+
 * Client gets file format information and passes it to manifest
 
 * Configuration handling: via configuration files or else
