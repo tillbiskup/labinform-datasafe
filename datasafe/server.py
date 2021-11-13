@@ -857,7 +857,7 @@ class HTTPServerAPI(MethodView):
         except ExistingFileError as exception:
             content = exception.message
             status = 405
-            header = {'allow': 'UPDATE'}
+            header = {'allow': 'PATCH'}
         return content, status, header
 
     def patch(self, loi=''):

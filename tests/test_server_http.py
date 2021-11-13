@@ -129,7 +129,7 @@ class TestAPI(flask_unittest.ClientTestCase):
         self.assertStatus(response, 405)
         self.assertResponseEqual(response,
                                  'Directory not empty.'.encode())
-        self.assertIn('UPDATE', response.allow)
+        self.assertIn('PATCH', response.allow)
 
     def test_get_non_existing_loi_returns_404(self, client):
         self.assertStatus(client.get("/api/" + self.loi), 404)

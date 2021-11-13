@@ -573,7 +573,7 @@ class FormatDetector:
 
         Returns
         -------
-        metadata_info : class:`list`
+        metadata_info : :class:`list`
             List of ordered dicts (:class:`collections.OrderedDict`) each
             containing "name", "format", and "version" as fields.
 
@@ -668,7 +668,7 @@ class EPRFormatDetector(FormatDetector):
 
     Here, EPR stands for electron paramagnetic resonance (spectroscopy).
 
-    Currently, the following vendor-speccific file formats can be
+    Currently, the following vendor-specific file formats can be
     distinguished (without guarantee that each of the formats will be
     accurately detected in any case):
 
@@ -727,31 +727,28 @@ class EPRFormatDetector(FormatDetector):
             file_format = "Bruker BES3T"
         elif '.par' in file_extensions:
             par_file = [x for x in self.data_filenames if x.endswith('.par')]
-            if par_file:
-                with open(par_file[0], 'r', encoding='utf8') as file:
-                    first_line = file.readline()
-                if 'DOS' in first_line:
-                    file_format = "Bruker EMX"
-                else:
-                    file_format = "Bruker ESP"
+            with open(par_file[0], 'r', encoding='utf8') as file:
+                first_line = file.readline()
+            if 'DOS' in first_line:
+                file_format = "Bruker EMX"
+            else:
+                file_format = "Bruker ESP"
         elif '.xml' in file_extensions:
             xml_file = [x for x in self.data_filenames if x.endswith('.xml')]
-            if xml_file:
-                with open(xml_file[0], 'r', encoding='utf8') as file:
-                    file.readline()
-                    second_line = file.readline()
-                if second_line.startswith('<ESRXmlFile'):
-                    file_format = "Magnettech XML"
+            with open(xml_file[0], 'r', encoding='utf8') as file:
+                file.readline()
+                second_line = file.readline()
+            if second_line.startswith('<ESRXmlFile'):
+                file_format = "Magnettech XML"
         elif '.csv' in file_extensions:
             csv_file = [x for x in self.data_filenames if x.endswith('.csv')]
-            if csv_file:
-                with open(csv_file[0], 'r', encoding='utf8') as file:
-                    first_line = file.readline()
-                    file.readline()
-                    third_line = file.readline()
-                if first_line.startswith('Name,') \
-                        and third_line.startswith('Recipe'):
-                    file_format = "Magnettech CSV"
+            with open(csv_file[0], 'r', encoding='utf8') as file:
+                first_line = file.readline()
+                file.readline()
+                third_line = file.readline()
+            if first_line.startswith('Name,') \
+                    and third_line.startswith('Recipe'):
+                file_format = "Magnettech CSV"
         return file_format
 
 
