@@ -1,10 +1,23 @@
 """
 Checksums for datasafe items.
 
+.. sidebar:: Checksum
+
+    A small-sized block of data derived from another block of digital data for
+    the purpose of detecting errors that may have been introduced during its
+    transmission or storage. By themselves, checksums are often used to
+    verify data integrity but are not relied upon to verify data
+    authenticity. (Source: `Wikipedia
+    <https://en.wikipedia.org/wiki/Checksum>`_)
+
 Checksums fulfil a twofold function within the dataset component of the
 LabInform framework: They allow for easily checking whether the data items
 of a dataset entry have been corrupted on transfer or during time, and they
 allow for easily detecting duplicates.
+
+
+Design goals
+============
 
 To fulfil their duties, a few general design goals have been developed and
 implemented:
@@ -25,12 +38,21 @@ implemented:
   to (in)frequent updates and corrections. Data, however, shall never
   change after they have been recorded.
 
+
+Algorithms
+==========
+
 A note on the algorithms used: The module allows to use all algorithms for
 creating checksums that are currently supported by the :mod:`hashlib` module.
 However, although MD5 usually is considered unsafe, for the purposes
 checksums are used in the current context (*non-cryptographic*),
 it is clearly sufficient. This is why still, the default algorithm used by
 the :class:`Checksum` class is MD5.
+
+
+Module documentation
+====================
+
 """
 
 import importlib
@@ -106,13 +128,13 @@ class Generator:
         """
         Generate checksum for (list of) file(s).
 
-        For a single file, the checksum will be generated of its content.
+        For a single file, the checksum of its content will be generated.
 
-        For a list of files, for each file, the checksum of its contents
+        For a list of files, for each file, the checksum of its content
         will be generated and afterwards the checksum over the checksums.
 
         The checksums of the individual files will be sorted before generating
-        the final checksum. Hence, sorting is independent of the data_filenames
+        the final checksum. Hence, sorting is independent of the data filenames
         and only depends on the actual file contents, resulting in stable
         hashes.
 

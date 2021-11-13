@@ -1,15 +1,38 @@
 """
 Manifests for datasafe items.
 
+.. sidebar:: Manifest
+
+    *Shipping:* Document listing the cargo (...) of a ship, aircraft or
+    vehicle for the use of customs or other officials.
+
+    *Computing:* File containing metadata for a group of accompanying files
+    forming part of a coherent unit.
+
+
 Each item (currently: dataset) stored in the datasafe is accompanied by a
 file containing a lot of (automatically obtained) useful information about
 the item stored. Typically, the YAML format is used for the manifest file,
 and the file named ``MANIFEST.yaml`` generically.
 
-The idea behind manifests is to have easy access to information that could
-be retrieved from the item stored, but not without having special
-functionality such as data and metadata importers available. Thus,
-the datasafe component is much more independent of other packages and modules.
+Manifests provide eays access to information on the items of a dataset such as
+data format, associated files and their meanings, and checksums allowing to
+detect data corruption. Particularly information regarding the file format
+could be retrieved from the item(s) stored, but only by using specialised
+data and metadata imporers. Thus, manifests allow the the datasafe component
+to be much more independent of other packages and modules.
+
+
+.. note::
+
+    While manifest files are a general concept, currently they are only
+    implemented for datasets stored in the datasafe. This will, however,
+    most probably change in the future with the further development of the
+    datasafe.
+
+
+Manifests for datasets
+======================
 
 In case of a dataset, the information contained ranges from general
 information on the dataset (LOI, whether it is complete) to the format of
@@ -48,6 +71,102 @@ metadata in ``test.info``):
       value: 74be16979710d4c4e7c6647856088456
 
 
+A few comments on this example:
+
+* The file identifies its own format, using the ``format`` key on the
+  highest level, including type and version. This allows for automatically
+  handling different formats and different versions of the same format.
+
+* YAML is a human-readable and (even more important) human-*writable*
+  standard supported by many programming languages. Hence, information
+  stored in this way can be easily processed both, by other programs as well
+  as in the (far) future. Text files are probably the only format with real
+  longtime support.
+
+* Checksums are used to allow for integrity checks, *i.e.* inadvertent
+  change of data or metadata. At the same time, as they are generated using
+  the *content*, but *not the names* of the files, they can be used to check
+  for duplicates.
+
+* Using MD5 as a hashing algorithm may raise some criticism. Clearly, MD5 shall
+  not be used any more for security purposes, as it needs to be considered
+  broken (since years already, as of 2021). However, to only check for
+  inadvertend changes (or duplicates) of data, it is still a good choice,
+  due to being fast and still widely supported.
+
+
+Working with manifests
+======================
+
+To work with manifests in a program, the YAML file needs to be represented
+in form of an object, and this object should be able to get its contents
+from as well as writing its contents to a YAML file. Furthermore, wouldn't
+it be helpful if a manifest object could check for the integrity of the
+accompanying files, (re)creating checksums and comparing them to those
+stored in the manifest?
+
+This is what the :class:`Manifest` class provides you with. Suppose you have
+a dataset and an accompanying manifest. Checking the integrity of the
+dataset could be as simple as:
+
+.. code-block::
+
+    manifest = Manifest()
+    manifest.from_file()
+    integrity = manifest.check_integrity()
+
+    if not all(integrity.values()):
+        fails = [key for key, value in integrity.items() if not value]
+        for fail in fails:
+            print(f"The following checksum failed: '{fail}'")
+
+
+Of course, in your code, you will most probably do more sensible things than
+only printing which checksum check failed.
+
+Conversely, if you would want to create a manifest file, in the simplest
+case all you would need to do is to specify which filenames are data and
+metadata files, respectively:
+
+.. code-block::
+
+    manifest = Manifest()
+    manifest.data_filenames = [<your data filenames>]
+    manifest.metadata_filenames = [<your metadata filenames>]
+    manifest.to_file()
+
+
+This would create a file ``MANIFEST.yaml`` including the auto-generated
+checksums and the information regarding the metadata file format (as long as
+it is either the info file format or YAML).
+
+
+File format detection
+=====================
+
+A big question remains: How to (automatically) detect the file format of a
+given dataset? Probably there is no general solution to this problem that
+would work in all possible cases. Furthermore, it is implausible for this
+package to contain format detectors for all file formats one could think of.
+Therefore, the following strategy will be used:
+
+* File format detection is delegated to helper functions that are provided
+  with the list of filenames a dataset consists of.
+
+* Using the Python plugin architecture (entry points), users can provide
+  their own helper functions to detect file formats.
+
+
+.. important::
+
+    The ideas described above are (as of 11/2021) still only ideas that
+    remain to be implemented. Furthermore, most probably the package will
+    provide file format detectors for at least (some) EPR data formats.
+
+
+Module documentation
+====================
+
 """
 
 import os
@@ -63,7 +182,7 @@ class Manifest:
     Representation of the information contained in a manifest file
 
     A file named ``MANIFEST.yaml`` contains relevant information about the
-    data storage of a single measurement. Beside the type and format of the
+    data storage of a single measurement. Besides the type and format of the
     ``MANIFEST.yaml`` itself, it contains the LOI of the dataset, the names,
     format and versions of data and metadata files and the respective
     checksums.

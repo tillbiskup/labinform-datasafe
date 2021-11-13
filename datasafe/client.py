@@ -16,6 +16,9 @@ are responsible for a series of different tasks:
   using :class:`datasafe.manifest.FormatDetector`. See there for details.
 
 
+Types of clients
+================
+
 Currently, there are two different clients implemented:
 
 * :class:`LocalClient`
@@ -38,6 +41,73 @@ implementations inherit from. This base class deals with all aspects of a
 client that can be performed completely local, such as Manifest creation and
 check of LOIs for overall validity. Thus, implementing concrete clients is
 rather straight-forward.
+
+
+Working with a client
+=====================
+
+A database client operates as interface the datasafe. Hence the user (be it
+a human user or other code) needs not care about where and how data are stored.
+
+The functionality of the datasafe client can be split into two categories:
+
+* Tasks entirely local
+
+* Tasks interacting with a datasafe server component
+
+Both will briefly be described below.
+
+
+Local tasks
+-----------
+
+There is currently one task in this category:
+
+* Creating a manifest file
+
+  :meth:`Client.create_manifest`
+
+Manifests contain information on the data and metadata and allow the
+datasafe to operate independently of special-purpose functions such as
+importers for the diverse set of file formats. For details of manifests,
+see the :mod:`datasafe.manifest` module.
+
+
+Tasks interacting with a datasafe server
+----------------------------------------
+
+The following tasks are currently implemented:
+
+* Create a resource in the datasafe
+
+  :meth:`Client.create`
+
+* Upload data to a resource in the datasafe
+
+  :meth:`Client.upload`
+
+* Download data from a resource in the datasafe
+
+  :meth:`Client.download`
+
+* Update data of a resource in the datasafe
+
+  :meth:`Client.update`
+
+From the four basic operations of persistent storage, create, read, update,
+and delete (CRUD), this covers create (:meth:`Client.create` and
+:meth:`Client.upload`), read (:meth:`Client.download`), and update
+(:meth:`Client.update`). The last, delete, is covered by the storage backend
+the server components connect to, but not (yet) exposed by the servers (and
+hence not accessible to the clients). The reason for this is that data shall
+usually not be deleted in any case, but long-term archived. Therefore,
+while there may be legitimate use cases for actually deleting items in the
+datasafe, this will most probably be an administrative task not available to
+the regular client.
+
+
+Module documentation
+====================
 
 """
 import glob
@@ -523,7 +593,7 @@ class HTTPClient(Client):
     Attributes
     ----------
     server_url : :class:`str`
-        URL of a database HTTP server to connect to.
+        URL of a datasafe HTTP server to connect to.
 
         Default: 'http://127.0.0.1:5000/'
 
