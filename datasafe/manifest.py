@@ -57,7 +57,7 @@ metadata in ``test.info``):
         format: cwEPR Info file
         version: 0.1.4
       data:
-        format: test
+        format: undetected
         names:
         - test
     checksums:
@@ -148,20 +148,87 @@ A big question remains: How to (automatically) detect the file format of a
 given dataset? Probably there is no general solution to this problem that
 would work in all possible cases. Furthermore, it is implausible for this
 package to contain format detectors for all file formats one could think of.
-Therefore, the following strategy will be used:
+Therefore, the following strategy is employed:
 
-* File format detection is delegated to helper functions that are provided
+* File format detection is delegated to helper classes that are provided
   with the list of filenames a dataset consists of.
 
 * Using the Python plugin architecture (entry points), users can provide
-  their own helper functions to detect file formats.
+  their own helper classes to detect file formats.
+
+The general helper class to derive own helper classes from is
+:class:`FormatDetector`. Rather than being a purely abstract class, it does
+already its job in detecting metadata file formats, namely info and YAML
+files. Therefore, you usually will only need to implement the logic for
+detecting the file format(s) as such.
 
 
 .. important::
 
-    The ideas described above are (as of 11/2021) still only ideas that
-    remain to be implemented. Furthermore, most probably the package will
-    provide file format detectors for at least (some) EPR data formats.
+    Please bear in mind that *detecting* a file format is entirely different
+    from actually *importing* the data contained in the respective files.
+    The latter is the responsibility of separate packages dealing with
+    data processing and analysis, *e.g.* packages derived from the
+    `ASpecD framework <https://docs.aspecd.de/>`_.
+
+
+
+Registering your own file format detectors
+------------------------------------------
+
+The entry point for registering file format detectors is called
+``labinform_fileformats``, and an excerpt of the ``setup.py`` file of this
+package showing the relevant section is shown below:
+
+.. code-block::
+
+    setuptools.setup(
+        # ...
+        entry_points={
+            'labinform_fileformats': [
+                'epr = datasafe.manifest:EPRFormatDetector',
+            ],
+        },
+        # ...
+    )
+
+As you can see, already in this package, a detector (for electron
+paramagnetic resonance spectroscopy data) is registered. Similarly, as soon
+as you create your own package containing classes derived from
+:class:`FormatDetector`, give it a ``setup.py`` file defining an entry point
+as shown above (with your own name/s instead of "epr" above), your detectors
+will automatically be used as soon as you install your package (in
+the virtual environment you are using, of course).
+
+
+Detectors provided with this package
+------------------------------------
+
+As always, this package has been designed with to some concrete use case in
+mind, and therefore, detectors for those file formats regularly encountered
+by the package authors are available.
+
+Currently, the following file format detectors are available in this package
+and can be used as templates for own developments (but note that the
+strategies used may not be the best, though they should work):
+
+* :class:`EPRFormatDetector`
+
+  Detector for different vendor file formats used in electron paramangetic
+  resonance (EPR) spectroscopy.
+
+
+Limitations
+===========
+
+In its current implementation (as of 11/2021), manifests **require metadata
+files** to accompany the data files of a dataset. Without an existing metadata
+file, the :class:`Manifest` class will raise an error when trying to create
+a manifest file.
+
+This may be a practical limitation for legacy data recorded without at the
+same time creating a metadata file containing some of the most important
+pieces of information *not* contained in the data files themselves.
 
 
 Module documentation
@@ -172,6 +239,7 @@ Module documentation
 import os
 
 import oyaml as yaml
+from pkg_resources import iter_entry_points
 
 import datasafe.checksum
 from datasafe.exceptions import MissingInformationError, NoFileError
@@ -298,14 +366,16 @@ class Manifest:
                 raise NoFileError(f'Data file {filename} does not exist.')
         for filename in self.metadata_filenames:
             if not os.path.exists(filename):
-                raise NoFileError(f'Metadata file {filename} does not '
-                                  'exist')
+                raise NoFileError(f'Metadata file {filename} does not exist')
+        self._prepare_format_detector()
         manifest_ = self._create_manifest_dict()
         for filename in self.data_filenames:
             # noinspection PyTypeChecker
             manifest_['files']['data']['names'].append(filename)
-        manifest_['files']['data']['format'] = self._get_data_format()
-        manifest_['files']['metadata'] = self._get_metadata_info()
+        manifest_['files']['data']['format'] = \
+            self.format_detector.data_format()
+        manifest_['files']['metadata'] = \
+            self.format_detector.metadata_format()
         manifest_['checksums'].append({
             'name': 'CHECKSUM',
             'format': 'MD5 checksum',
@@ -321,6 +391,18 @@ class Manifest:
         })
         manifest_['dataset']['loi'] = self.loi
         return manifest_
+
+    def _prepare_format_detector(self):
+        for entry_point in iter_entry_points('labinform_fileformats'):
+            detector_class = entry_point.load()
+            detector = detector_class()
+            detector.data_filenames = self.data_filenames
+            detector.metadata_filenames = self.metadata_filenames
+            if detector.detection_successful():
+                self.format_detector = detector
+                break
+        self.format_detector.data_filenames = self.data_filenames
+        self.format_detector.metadata_filenames = self.metadata_filenames
 
     def to_file(self):
         """
@@ -416,16 +498,6 @@ class Manifest:
         manifest_ = dict(manifest_keys_level_one)
         return manifest_
 
-    def _get_metadata_info(self):
-        """Retrieve general information about metadata file."""
-        self.format_detector.metadata_filenames = self.metadata_filenames
-        return self.format_detector.metadata_format()
-
-    def _get_data_format(self):
-        """Retrieve format of data files."""
-        self.format_detector.data_filenames = self.data_filenames
-        return self.format_detector.data_format()
-
     @staticmethod
     def _generate_checksum(filenames=None):
         """
@@ -494,7 +566,7 @@ class FormatDetector:
 
         Generally, the metadata format is checked using the file extension.
 
-        Two formats are automatically detected: info (.info) and YAML (
+        Two formats are automatically detected: info (.info) and YAML (.yml,
         .yaml). To support other formats, you need to provide methods with
         the naming scheme ``_parse_<extension>`` with "<extension>" being
         the file extension of your metadata file.
@@ -543,6 +615,9 @@ class FormatDetector:
         version = info['format']['version']
         return format_, version
 
+    def _parse_yml(self, filename=''):
+        return self._parse_yaml(filename=filename)
+
     def data_format(self):
         """
         Obtain format of the data file(s).
@@ -569,7 +644,115 @@ class FormatDetector:
 
     # noinspection PyMethodMayBeStatic
     def _detect_data_format(self):  # noqa
-        return 'test'
+        return 'undetected'
+
+    def detection_successful(self):
+        """
+        Return whether a file format could be detected successfully.
+
+        Returns
+        -------
+        success : :class:`bool`
+            Status of file format detection.
+
+            Can be used upstream to distinguish whether this class should be
+            applied as file format detector.
+
+        """
+        return bool(self._detect_data_format())
+
+
+class EPRFormatDetector(FormatDetector):
+    """
+    Detector for EPR file formats.
+
+    Here, EPR stands for electron paramagnetic resonance (spectroscopy).
+
+    Currently, the following vendor-speccific file formats can be
+    distinguished (without guarantee that each of the formats will be
+    accurately detected in any case):
+
+    * Bruker EMX (.par, .spc)
+
+    * Bruker ESP (.par, .spc)
+
+    * Bruker BES3T (.DSC, .DTA [, ...])
+
+    * Magnettech XML (.xml)
+
+    * Magnettech CSV (.csv)
+
+    The following assumptions will be made for each of the formats, besides
+    existing data files with the given extensions (case-insensitive):
+
+    * Bruker EMX (.par, .spc)
+
+      First line of PAR file starts with ``DOS``
+
+      Note that according to its official specification, this format cannot be
+      distinguished from the Bruker ESP format that stores its actual data
+      in a different binary format. But in practice, the criterion given
+      seems to be quite robust.
+
+    * Bruker ESP (.par, .spc)
+
+      First line of PAR file *does not start* with ``DOS``
+
+      Note that according to its official specification, this format cannot be
+      distinguished from the Bruker EMX format that stores its actual data
+      in a different binary format. But in practice, the criterion given
+      seems to be quite robust.
+
+    * Bruker BES3T (.DSC, .DTA [, ...])
+
+      Existence of at least two files with extension '.DSC' and '.DTA'
+      (case-insensitive)
+
+    * Magnettech XML (.xml)
+
+      Second line of file starts with ``<ESRXmlFile``
+
+    * Magnettech CSV (.csv)
+
+      First line of file starts with ``Name,``, third line of file starts with
+      ``Recipe``
+
+    """
+
+    def _detect_data_format(self):
+        file_format = ""
+        file_extensions = [os.path.splitext(x)[-1].lower()
+                           for x in self.data_filenames]
+        if {'.dsc', '.dta'} <= set(file_extensions):
+            file_format = "Bruker BES3T"
+        elif '.par' in file_extensions:
+            par_file = [x for x in self.data_filenames if x.endswith('.par')]
+            if par_file:
+                with open(par_file[0], 'r', encoding='utf8') as file:
+                    first_line = file.readline()
+                if 'DOS' in first_line:
+                    file_format = "Bruker EMX"
+                else:
+                    file_format = "Bruker ESP"
+        elif '.xml' in file_extensions:
+            xml_file = [x for x in self.data_filenames if x.endswith('.xml')]
+            if xml_file:
+                with open(xml_file[0], 'r', encoding='utf8') as file:
+                    file.readline()
+                    second_line = file.readline()
+                if second_line.startswith('<ESRXmlFile'):
+                    file_format = "Magnettech XML"
+        elif '.csv' in file_extensions:
+            csv_file = [x for x in self.data_filenames if x.endswith('.csv')]
+            if csv_file:
+                with open(csv_file[0], 'r', encoding='utf8') as file:
+                    first_line = file.readline()
+                    file.readline()
+                    third_line = file.readline()
+                if first_line.startswith('Name,') \
+                        and third_line.startswith('Recipe'):
+                    file_format = "Magnettech CSV"
+        return file_format
 
 
 if __name__ == '__main__':

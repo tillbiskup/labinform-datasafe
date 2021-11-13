@@ -8,10 +8,6 @@ A few ideas how to develop the project further, currently a list as a reminder f
 For version 0.1
 ===============
 
-* Client gets file format information and passes it to manifest
-
-* Implement automatic file format detectors, using Python plugin architecture (entry points)
-
 * Configuration handling: via configuration files or else
 
 * CLI for client

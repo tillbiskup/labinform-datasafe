@@ -31,6 +31,13 @@ class TestManifest(unittest.TestCase):
         with open(self.metadata_filename, 'w+') as f:
             f.write('')
 
+    def create_magnettech_xml_file(self):
+        self.data_filename = 'test.xml'
+        with open(self.data_filename, 'w+') as file:
+            file.write('<?xml version="1.0" encoding="utf-8"?>\n<ESRXmlFile '
+                       'Version="1" Timestamp="2019-07-23T13:43:49.6413649Z">')
+        self.manifest.data_filenames = [self.data_filename]
+
     def test_instantiate_class(self):
         pass
 
@@ -198,6 +205,17 @@ class TestManifest(unittest.TestCase):
         self.manifest.loi = '42.1001/ds/'
         dict_ = self.manifest.to_dict()
         self.assertEqual(self.manifest.loi, dict_['dataset']['loi'])
+
+    def test_to_dict_with_unknown_file_format(self):
+        self.create_data_and_metadata_files()
+        dict_ = self.manifest.to_dict()
+        self.assertEqual('undetected', dict_['files']['data']['format'])
+
+    def test_to_dict_with_magnettech_xml_file_detects_file_format(self):
+        self.create_data_and_metadata_files()
+        self.create_magnettech_xml_file()
+        dict_ = self.manifest.to_dict()
+        self.assertEqual('Magnettech XML', dict_['files']['data']['format'])
 
     def test_to_file_creates_yaml_file(self):
         self.create_data_and_metadata_files()
@@ -387,7 +405,17 @@ class TestFormatDetector(unittest.TestCase):
         self.assertEqual('info file', metadata_info[0]['format'])
         self.assertEqual('0.1.2', metadata_info[0]['version'])
 
-    def test_data_format_without_metadata_raises(self):
+    def test_metadata_format_parses_yml_file(self):
+        self.metadata_filename = 'test.yml'
+        self.detector.metadata_filenames = [self.metadata_filename]
+        info_dict = {'format': {'type': 'info file', 'version': '0.1.2'}}
+        with open(self.metadata_filename, 'w+') as file:
+            yaml.dump(info_dict, file)
+        metadata_info = self.detector.metadata_format()
+        self.assertEqual('info file', metadata_info[0]['format'])
+        self.assertEqual('0.1.2', metadata_info[0]['version'])
+
+    def test_data_format_without_filenames_raises(self):
         message = 'No data filenames'
         with self.assertRaisesRegex(NoFileError, message):
             self.detector.data_format()
@@ -397,5 +425,91 @@ class TestFormatDetector(unittest.TestCase):
         self.assertIsInstance(self.detector.data_format(), str)
 
 
-if __name__ == '__main__':
-    unittest.main()
+class TestEPRFormatDetector(unittest.TestCase):
+
+    def setUp(self):
+        self.detector = manifest.EPRFormatDetector()
+        self.metadata_filenames = ['test.info']
+        self.data_filenames = []
+
+    def tearDown(self):
+        for filename in [*self.data_filenames, *self.metadata_filenames]:
+            if os.path.exists(filename):
+                os.remove(filename)
+
+    def test_instantiate_class(self):
+        pass
+
+    def create_metadata_file(self):
+        with open(self.metadata_filenames[0], 'w+') as f:
+            f.write('cwEPR Info file - v. 0.1.4 (2020-01-21)')
+
+    def create_esp_data_files(self):
+        self.data_filenames = ['test.par', 'test.spc']
+        with open('test.par', 'w+') as f:
+            f.write('JSS  2\nADEV  1')
+        with open('test.spc', 'w+') as f:
+            f.write('')
+
+    def create_emx_data_files(self):
+        self.data_filenames = ['test.par', 'test.spc']
+        with open('test.par', 'w+') as f:
+            f.write('DOS  Format\nANZ 1024')
+        with open('test.spc', 'w+') as f:
+            f.write('')
+
+    def create_bes3t_data_files(self):
+        self.data_filenames = ['test.DSC', 'test.DTA']
+        with open('test.DSC', 'w+') as f:
+            f.write('#DESC	1.2 * DESCRIPTOR INFORMATION '
+                    '***********************\n*')
+        with open('test.DTA', 'w+') as f:
+            f.write('')
+
+    def create_magnettech_xml_file(self):
+        self.data_filenames = ['test.xml']
+        with open(self.data_filenames[0], 'w+') as file:
+            file.write('<?xml version="1.0" encoding="utf-8"?>\n<ESRXmlFile '
+                       'Version="1" Timestamp="2019-07-23T13:43:49.6413649Z">')
+
+    def create_magnettech_csv_file(self):
+        self.data_filenames = ['test.csv']
+        with open(self.data_filenames[0], 'w+') as file:
+            file.write('Name,20190723-Test\n\nRecipe')
+
+    def test_has_check_format_method(self):
+        self.assertTrue(hasattr(self.detector, 'detection_successful'))
+        self.assertTrue(callable(self.detector.detection_successful))
+
+    def test_check_format_returns_boolean_value(self):
+        self.assertIsInstance(self.detector.detection_successful(), bool)
+
+    def test_data_format_with_esp_files(self):
+        self.create_esp_data_files()
+        self.detector.data_filenames = self.data_filenames
+        self.assertEqual('Bruker ESP', self.detector.data_format())
+        self.assertTrue(self.detector.detection_successful())
+
+    def test_data_format_with_emx_files(self):
+        self.create_emx_data_files()
+        self.detector.data_filenames = self.data_filenames
+        self.assertEqual('Bruker EMX', self.detector.data_format())
+        self.assertTrue(self.detector.detection_successful())
+
+    def test_data_format_with_bes3t_files(self):
+        self.create_bes3t_data_files()
+        self.detector.data_filenames = self.data_filenames
+        self.assertEqual('Bruker BES3T', self.detector.data_format())
+        self.assertTrue(self.detector.detection_successful())
+
+    def test_data_format_with_magnettech_xml_files(self):
+        self.create_magnettech_xml_file()
+        self.detector.data_filenames = self.data_filenames
+        self.assertEqual('Magnettech XML', self.detector.data_format())
+        self.assertTrue(self.detector.detection_successful())
+
+    def test_data_format_with_magnettech_csv_files(self):
+        self.create_magnettech_csv_file()
+        self.detector.data_filenames = self.data_filenames
+        self.assertEqual('Magnettech CSV', self.detector.data_format())
+        self.assertTrue(self.detector.detection_successful())

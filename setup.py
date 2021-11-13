@@ -41,5 +41,10 @@ setuptools.setup(
         'dev': ['prospector'],
         'docs': ['sphinx', 'sphinx-rtd-theme'],
     },
+    entry_points={
+        'labinform_fileformats': [
+            'epr = datasafe.manifest:EPRFormatDetector',
+        ],
+    },
     python_requires='>=3.7',
 )
