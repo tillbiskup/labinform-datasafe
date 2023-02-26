@@ -72,9 +72,6 @@ def change_working_dir(path=''):
 
     This can come in quite handy in case of tests.
 
-
-    .. versionadded:: 0.6
-
     """
     oldpwd = os.getcwd()
     if path:
