@@ -36,6 +36,7 @@ setuptools.setup(
         "Topic :: Scientific/Engineering",
     ],
     install_requires=[
+        'flask',
     ],
     extras_require={
         'dev': ['prospector'],
