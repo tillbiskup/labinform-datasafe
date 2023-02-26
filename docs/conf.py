@@ -23,8 +23,8 @@ with open(os.path.join(os.path.dirname(__file__), '..', 'VERSION')) as \
         version_file:
     release_ = version_file.read().strip()
 
-project = 'datasafe'
-copyright = '2020-21, Mirjam Schröder, Till Biskup'
+project = 'LabInform datasafe'
+copyright = '2020-23, Mirjam Schröder, Till Biskup'
 author = 'Mirjam Schröder, Till Biskup'
 
 # The short X.Y version
@@ -98,6 +98,11 @@ html_theme_options = {
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
 html_logo = './logo.png'
+
+# The name of an image file (relative to this directory) to use as a favicon of
+# the docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
+# pixels large.
+html_favicon = './labinform-favicon.ico'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
