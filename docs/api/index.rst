@@ -10,7 +10,7 @@ Submodules
 An alphabetic list of the submodules available within the datasafe. The actual documentation is split in pages for each submodule, respectively. For a short description of each of these modules, see below.
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 1
 
    datasafe.checksum
    datasafe.client
@@ -19,6 +19,7 @@ An alphabetic list of the submodules available within the datasafe. The actual d
    datasafe.server
    datasafe.utils
 
+
 Module contents
 ---------------
 
@@ -26,3 +27,9 @@ Module contents
    :members:
    :undoc-members:
    :show-inheritance:
+
+
+Index
+-----
+
+* :ref:`genindex`
