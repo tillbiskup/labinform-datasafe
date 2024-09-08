@@ -6,6 +6,8 @@
 LabInform datasafe documentation
 ================================
 
+*A local repository for "warm" research data.*
+
 Welcome! This is the documentation for the LabInform datasafe component, the **data store** that is part of the `LabInform laboratory information and management system <https://www.labinform.de/>`_ (LIMS).
 
 One key aspect of handling data is to store them in one place and access them via unique identifiers (here: a *Lab Object Identifier*, LOI). The data storage component of the LabInform framework is the datasafe documented here.
@@ -34,6 +36,19 @@ And to make it even more convenient for users and future-proof:
 * Developed fully test-driven
 
 * Extensive user and API documentation
+
+
+.. warning::
+  The LabInform datasafe component is currently under active development and still considered in Alpha development state. Therefore, expect frequent changes in features and public APIs that may break your own code. Nevertheless, feedback as well as feature requests are highly welcome.
+
+
+Requirements
+============
+
+The LabInform datasafe package comes with a rather minimal set of requirements:
+
+* Python >= 3.7
+* flask and oyaml packages
 
 
 .. _sec-how_to_cite:
@@ -79,13 +94,10 @@ There is a number of related packages users of the LabInform datasafe may well b
   A Python framework for the analysis of spectroscopic data focussing on reproducibility and good scientific practice.
 
 
-.. warning::
-  The LabInform datasafe component is currently under active development and still considered in Alpha development state. Therefore, expect frequent changes in features and public APIs that may break your own code. Nevertheless, feedback as well as feature requests are highly welcome.
-
-
 .. toctree::
    :maxdepth: 2
    :caption: User manual:
+   :hidden:
 
    audience
    introduction

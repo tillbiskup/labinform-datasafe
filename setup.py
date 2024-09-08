@@ -8,7 +8,7 @@ with open(os.path.join(os.path.dirname(__file__), 'README.rst')) as f:
     readme = f.read()
 
 setuptools.setup(
-    name='datasafe',
+    name='labinform-datasafe',
     version=version,
     description='Datasafe component of the LabInform project.',
     long_description=readme,
@@ -46,7 +46,7 @@ setuptools.setup(
         'oyaml',
     ],
     extras_require={
-        'dev': ['prospector'],
+        'dev': ['prospector', 'black', 'flask-unittest'],
         'docs': ['sphinx', 'sphinx-rtd-theme'],
     },
     entry_points={
