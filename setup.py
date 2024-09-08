@@ -1,31 +1,32 @@
 import os
 import setuptools
 
-with open(os.path.join(os.path.dirname(__file__), 'VERSION')) as version_file:
+with open(os.path.join(os.path.dirname(__file__), "VERSION")) as version_file:
     version = version_file.read().strip()
 
-with open(os.path.join(os.path.dirname(__file__), 'README.rst')) as f:
+with open(os.path.join(os.path.dirname(__file__), "README.rst")) as f:
     readme = f.read()
 
 setuptools.setup(
-    name='labinform-datasafe',
+    name="labinform-datasafe",
     version=version,
-    description='Datasafe component of the LabInform project.',
+    description="Datasafe component of the LabInform project.",
     long_description=readme,
-    long_description_content_type='text/x-rst',
-    author='Mirjam Schröder, Till Biskup',
-    author_email='till@till-biskup.de',
-    url='https://www.labinform.de/',
+    long_description_content_type="text/x-rst",
+    author="Mirjam Schröder, Till Biskup",
+    author_email="till@till-biskup.de",
+    url="https://www.labinform.de/",
     project_urls={
-        'Documentation': 'https://datasafe.docs.labinform.de/',
+        "Documentation": "https://datasafe.docs.labinform.de/",
+        "Source": "https://github.com/tillbiskup/labinform-datasafe",
     },
-    packages=setuptools.find_packages(exclude=('tests', 'docs')),
+    packages=setuptools.find_packages(exclude=("tests", "docs")),
     keywords=[
-        'Reproducible research',
-        'data storage',
-        'repository',
-        'warm research data',
-        'checksums',
+        "Reproducible research",
+        "data storage",
+        "repository",
+        "warm research data",
+        "checksums",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -42,17 +43,30 @@ setuptools.setup(
         "Topic :: Scientific/Engineering",
     ],
     install_requires=[
-        'flask',
-        'oyaml',
+        "flask",
+        "oyaml",
     ],
     extras_require={
-        'dev': ['prospector', 'black', 'flask-unittest'],
-        'docs': ['sphinx', 'sphinx-rtd-theme'],
-    },
-    entry_points={
-        'labinform_fileformats': [
-            'epr = datasafe.manifest:EPRFormatDetector',
+        "dev": [
+            "prospector",
+            "bandit",
+            "pyroma",
+            "black",
+            "flask-unittest",
+        ],
+        "docs": [
+            "sphinx",
+            "sphinx-rtd-theme",
+        ],
+        "deployment": [
+            "build",
+            "twine",
         ],
     },
-    python_requires='>=3.7',
+    entry_points={
+        "labinform_fileformats": [
+            "epr = datasafe.manifest:EPRFormatDetector",
+        ],
+    },
+    python_requires=">=3.7",
 )

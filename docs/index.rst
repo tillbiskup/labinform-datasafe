@@ -122,8 +122,6 @@ License
 
 This program is free software: you can redistribute it and/or modify it under the terms of the **BSD License**. However, if you use the LabInform datasafe as crucial infrastructure component of your own research, please cite it appropriately. See :ref:`How to cite <sec-how_to_cite>` for details.
 
-Please note that DokuWiki itself is provided under a GNU General Public License. For details, see `their webpage <https://www.dokuwiki.org/faq%3Alicense>`_.
-
 
 A note on the logo
 ==================
