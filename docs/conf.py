@@ -24,7 +24,7 @@ with open(os.path.join(os.path.dirname(__file__), '..', 'VERSION')) as \
     release_ = version_file.read().strip()
 
 project = 'LabInform datasafe'
-copyright = '2020-23, Mirjam Schröder, Till Biskup'
+copyright = '2020-24, Mirjam Schröder, Till Biskup'
 author = 'Mirjam Schröder, Till Biskup'
 
 # The short X.Y version

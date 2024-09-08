@@ -17,18 +17,24 @@ setuptools.setup(
     author_email='till@till-biskup.de',
     url='https://www.labinform.de/',
     project_urls={
-        'Documentation': 'https://docs.labinform.de/',
+        'Documentation': 'https://datasafe.docs.labinform.de/',
     },
     packages=setuptools.find_packages(exclude=('tests', 'docs')),
     keywords=[
         'Reproducible research',
         'data storage',
+        'repository',
+        'warm research data',
+        'checksums',
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
         "Intended Audience :: Science/Research",
@@ -37,6 +43,7 @@ setuptools.setup(
     ],
     install_requires=[
         'flask',
+        'oyaml',
     ],
     extras_require={
         'dev': ['prospector'],
