@@ -16,8 +16,8 @@ type: software
 license: BSD-2-Clause
 repository-code: "https://github.com/tillbiskup/labinform-datasafe"
 keywords:
-  - "Reproducible research",
-  - "data storage",
-  - "repository",
-  - "warm research data",
-  - "checksums",
+  - "Reproducible research"
+  - "data storage"
+  - "repository"
+  - "warm research data"
+  - "checksums"
