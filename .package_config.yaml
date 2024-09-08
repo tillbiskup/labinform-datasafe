@@ -1,0 +1,31 @@
+package:
+  name: 'labinform-datasafe'
+  author: 'Mirjam Schröder, Till Biskup'
+  author_email: 'till@till-biskup.de'
+  year: '2018-24'
+  description: 'Datasafe component of the LabInform framework.'
+  urls:
+    main: 'https://www.labinform.de/'
+    documentation: 'https://datasafe.docs.labinform.de/'
+    source: 'https://github.com/tillbiskup/labinform-datasafe'
+  keywords: [
+    'reproducible science',
+    'reproducible research',
+    'data storage',
+    'repository'
+    'warm research data',
+    'checksums',
+  ]
+  install_requires: [
+    'flask',
+    'oyaml',
+  ]
+  license: BSD
+documentation:
+  logo: 'labinform-datasafe-logo.png'
+  favicon: 'favicon.ico'
+  language: en
+options:
+  logging: true
+  git: true
+  gui: false

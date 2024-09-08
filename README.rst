@@ -51,8 +51,6 @@ To install the LabInform datasafe package on your computer (sensibly within a Py
 
     pip install labinform-datasafe
 
-Have a look at the more detailed :doc:`installation instructions <installing>` as well.
-
 
 License
 =======
