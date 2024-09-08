@@ -47,9 +47,9 @@ class LoiMixin:
     """
 
     def __init__(self):
-        self.separator = '/'
-        self.root = '42'
-        self.root_issuer_separator = '.'
+        self.separator = "/"
+        self.root = "42"
+        self.root_issuer_separator = "."
 
 
 class AbstractChecker:
@@ -115,9 +115,9 @@ class StartsWithChecker(AbstractChecker):
     """
 
     def __init__(self):
-        self.string = ''
+        self.string = ""
 
-    def _check(self, string=''):
+    def _check(self, string=""):
         return string.startswith(self.string)
 
 
@@ -133,7 +133,7 @@ class IsPatternChecker(AbstractChecker):
     """
 
     def __init__(self):
-        self.pattern = ''
+        self.pattern = ""
 
     def _check(self, string):
         return re.fullmatch(self.pattern, string)
@@ -195,7 +195,7 @@ class AbstractLoiChecker(LoiMixin):
 
     def __init__(self):
         super().__init__()
-        self._ignore_check = ''
+        self._ignore_check = ""
         self._next_checker = None
 
     @property
@@ -217,7 +217,9 @@ class AbstractLoiChecker(LoiMixin):
 
     @next_checker.setter
     def next_checker(self, next_checker):
-        if not self.ignore_check or self.ignore_check not in str(next_checker):
+        if not self.ignore_check or self.ignore_check not in str(
+            next_checker
+        ):
             self._next_checker = next_checker
             self._next_checker.ignore_check = self.ignore_check
         else:
@@ -263,7 +265,7 @@ class LoiChecker(AbstractLoiChecker):
     Begin of the cascading chain to validate a given LOI. Checking starts
     with the first part of the LOI that should start with 42. Following,
     the data type will be surveyed and depending on the result, further
-    downstream checkers will be involved. Returns `True` if string is valid 
+    downstream checkers will be involved. Returns `True` if string is valid
     LOI.
     """
 
@@ -307,11 +309,12 @@ class LoiTypeChecker(AbstractLoiChecker):
 
     def _check(self, string):
         checker = InListChecker()
-        checker.list = ['ds', 'rec', 'img', 'info']
+        checker.list = ["ds", "rec", "img", "info"]
         result = checker.check(string)
         if result:
             self.next_checker = utils.object_from_name(
-                'datasafe.loi', 'Loi' + string.capitalize() + 'Checker')
+                "datasafe.loi", "Loi" + string.capitalize() + "Checker"
+            )
         return result
 
 
@@ -328,11 +331,12 @@ class LoiDsChecker(AbstractLoiChecker):
 
     def _check(self, string):
         checker = InListChecker()
-        checker.list = ['exp', 'calc']
+        checker.list = ["exp", "calc"]
         result = checker.check(string)
         if result:
             self.next_checker = utils.object_from_name(
-                'datasafe.loi', 'Loi' + string.capitalize() + 'Checker')
+                "datasafe.loi", "Loi" + string.capitalize() + "Checker"
+            )
         return result
 
 
@@ -358,7 +362,7 @@ class BaSaChecker(AbstractLoiChecker):
 
     def _check(self, string):
         checker = InListChecker()
-        checker.list = ['ba', 'sa']
+        checker.list = ["ba", "sa"]
         return checker.check(string)
 
 
@@ -383,7 +387,7 @@ class LoiExpMethodChecker(AbstractLoiChecker):
 
     def _check(self, string):
         checker = InListChecker()
-        checker.list = ['cwepr', 'trepr']
+        checker.list = ["cwepr", "trepr"]
         return checker.check(string)
 
 
@@ -404,7 +408,7 @@ class LoiCalcChecker(AbstractLoiChecker):
 
     def _check(self, string):
         checker = InListChecker()
-        checker.list = ['geo', 'result']
+        checker.list = ["geo", "result"]
         return checker.check(string)
 
 
@@ -432,7 +436,7 @@ class LoiInfoChecker(AbstractLoiChecker):
 
     def _check(self, string):
         checker = InListChecker()
-        checker.list = ['tb', 'ms', 'jp', 'dm', 'cm']
+        checker.list = ["tb", "ms", "jp", "dm", "cm"]
         return checker.check(string)
 
 
@@ -441,12 +445,21 @@ class LoiInfoKindChecker(AbstractLoiChecker):
 
     def _check(self, string):
         checker = InListChecker()
-        checker.list = ['sample', 'calculation', 'project', 'publication',
-                        'grant', 'device', 'chemical', 'person']
+        checker.list = [
+            "sample",
+            "calculation",
+            "project",
+            "publication",
+            "grant",
+            "device",
+            "chemical",
+            "person",
+        ]
         result = checker.check(string)
         if result:
             self.next_checker = utils.object_from_name(
-                'datasafe.loi', 'LoiInfo' + string.capitalize() + 'Checker')
+                "datasafe.loi", "LoiInfo" + string.capitalize() + "Checker"
+            )
         return result
 
 
@@ -491,8 +504,14 @@ class LoiInfoSampleChecker(AbstractLoiChecker):
 
     def _check(self, string):
         checker = InListChecker()
-        checker.list = ['batch', 'sample', 'substrate', 'synthesis', 'cell',
-                        'tube']
+        checker.list = [
+            "batch",
+            "sample",
+            "substrate",
+            "synthesis",
+            "cell",
+            "tube",
+        ]
         return checker.check(string)
 
 
@@ -505,7 +524,7 @@ class LoiInfoCalculationChecker(AbstractLoiChecker):
 
     def _check(self, string):
         checker = InListChecker()
-        checker.list = ['molecule', 'geometry', 'calculation']
+        checker.list = ["molecule", "geometry", "calculation"]
         return checker.check(string)
 
 
@@ -533,11 +552,11 @@ class Parser(LoiMixin):
 
     def __init__(self):
         super().__init__()
-        self.issuer = ''
-        self.type = ''
-        self.id = ''  # noqa
+        self.issuer = ""
+        self.type = ""
+        self.id = ""  # noqa
 
-    def parse(self, loi=''):
+    def parse(self, loi=""):
         """
         Parse given LOI and create dict with the four parts described above.
 
@@ -561,21 +580,23 @@ class Parser(LoiMixin):
 
         """
         if not loi:
-            raise MissingLoiError('No LOI provided.')
+            raise MissingLoiError("No LOI provided.")
         checker = LoiChecker()
-        checker.ignore_check = 'LoiDsChecker'
+        checker.ignore_check = "LoiDsChecker"
         if not checker.check(loi):
-            raise InvalidLoiError('String is not a valid LOI.')
-        self.issuer = \
-            loi.split(self.separator)[0].split(self.root_issuer_separator)[1]
+            raise InvalidLoiError("String is not a valid LOI.")
+        self.issuer = loi.split(self.separator)[0].split(
+            self.root_issuer_separator
+        )[1]
         self.type = loi.split(self.separator)[1]
         self.id = self.separator.join(loi.split(self.separator)[2:])
         parser_dict = {
-            'root': loi.split(self.separator)[0].split(
-                self.root_issuer_separator)[0],
-            'issuer': self.issuer,
-            'type': self.type,
-            'id': self.id,
+            "root": loi.split(self.separator)[0].split(
+                self.root_issuer_separator
+            )[0],
+            "issuer": self.issuer,
+            "type": self.type,
+            "id": self.id,
         }
 
         return parser_dict

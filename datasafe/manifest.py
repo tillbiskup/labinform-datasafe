@@ -281,12 +281,12 @@ class Manifest:
     """
 
     def __init__(self):
-        self.loi = ''
+        self.loi = ""
         self.data_filenames = []
         self.metadata_filenames = []
-        self.data_checksum = ''
-        self.checksum = ''
-        self.manifest_filename = 'MANIFEST.yaml'
+        self.data_checksum = ""
+        self.checksum = ""
+        self.manifest_filename = "MANIFEST.yaml"
         self.format_detector = FormatDetector()
 
     def from_dict(self, manifest_dict):
@@ -299,18 +299,18 @@ class Manifest:
             Dict containing information of a manifest
 
         """
-        self.data_filenames = manifest_dict['files']['data']['names']
+        self.data_filenames = manifest_dict["files"]["data"]["names"]
         self.metadata_filenames = []
-        for metadata_file in manifest_dict['files']['metadata']:
-            self.metadata_filenames.append(metadata_file['name'])
-        for checksum in manifest_dict['checksums']:
-            if 'metadata' in checksum['span']:
-                self.checksum = checksum['value']
+        for metadata_file in manifest_dict["files"]["metadata"]:
+            self.metadata_filenames.append(metadata_file["name"])
+        for checksum in manifest_dict["checksums"]:
+            if "metadata" in checksum["span"]:
+                self.checksum = checksum["value"]
             else:
-                self.data_checksum = checksum['value']
-        self.loi = manifest_dict['dataset']['loi']
+                self.data_checksum = checksum["value"]
+        self.loi = manifest_dict["dataset"]["loi"]
 
-    def from_file(self, filename='MANIFEST.yaml'):
+    def from_file(self, filename="MANIFEST.yaml"):
         """
         Obtain information from Manifest file
 
@@ -336,7 +336,7 @@ class Manifest:
             raise MissingInformationError(message="No filename provided")
         if not os.path.exists(filename):
             raise NoFileError("File does not exist")
-        with open(filename, 'r', encoding='utf8') as file:
+        with open(filename, "r", encoding="utf8") as file:
             manifest_dict = yaml.safe_load(file)
         self.from_dict(manifest_dict)
 
@@ -360,40 +360,47 @@ class Manifest:
 
         """
         if not self.data_filenames:
-            raise MissingInformationError(message='Data filenames missing')
+            raise MissingInformationError(message="Data filenames missing")
         for filename in self.data_filenames:
             if not os.path.exists(filename):
-                raise NoFileError(f'Data file {filename} does not exist.')
+                raise NoFileError(f"Data file {filename} does not exist.")
         for filename in self.metadata_filenames:
             if not os.path.exists(filename):
-                raise NoFileError(f'Metadata file {filename} does not exist')
+                raise NoFileError(f"Metadata file {filename} does not exist")
         self._prepare_format_detector()
         manifest_ = self._create_manifest_dict()
         for filename in self.data_filenames:
             # noinspection PyTypeChecker
-            manifest_['files']['data']['names'].append(filename)
-        manifest_['files']['data']['format'] = \
-            self.format_detector.data_format()
-        manifest_['files']['metadata'] = \
-            self.format_detector.metadata_format()
-        manifest_['checksums'].append({
-            'name': 'CHECKSUM',
-            'format': 'MD5 checksum',
-            'span': 'data, metadata',
-            'value': self._generate_checksum(self.data_filenames +
-                                             self.metadata_filenames),
-        })
-        manifest_['checksums'].append({
-            'name': 'CHECKSUM_data',
-            'format': 'MD5 checksum',
-            'span': 'data',
-            'value': self._generate_checksum(self.data_filenames),
-        })
-        manifest_['dataset']['loi'] = self.loi
+            manifest_["files"]["data"]["names"].append(filename)
+        manifest_["files"]["data"][
+            "format"
+        ] = self.format_detector.data_format()
+        manifest_["files"][
+            "metadata"
+        ] = self.format_detector.metadata_format()
+        manifest_["checksums"].append(
+            {
+                "name": "CHECKSUM",
+                "format": "MD5 checksum",
+                "span": "data, metadata",
+                "value": self._generate_checksum(
+                    self.data_filenames + self.metadata_filenames
+                ),
+            }
+        )
+        manifest_["checksums"].append(
+            {
+                "name": "CHECKSUM_data",
+                "format": "MD5 checksum",
+                "span": "data",
+                "value": self._generate_checksum(self.data_filenames),
+            }
+        )
+        manifest_["dataset"]["loi"] = self.loi
         return manifest_
 
     def _prepare_format_detector(self):
-        for entry_point in iter_entry_points('labinform_fileformats'):
+        for entry_point in iter_entry_points("labinform_fileformats"):
             detector_class = entry_point.load()
             detector = detector_class()
             detector.data_filenames = self.data_filenames
@@ -413,8 +420,9 @@ class Manifest:
         The dict populated this way is then written to a yaml file (usually)
         named ``MANIFEST.yaml`` (as specified by :attr:`manifest_filename`).
         """
-        with open(self.manifest_filename, mode='w+', encoding='utf8') as \
-                output_file:
+        with open(
+            self.manifest_filename, mode="w+", encoding="utf8"
+        ) as output_file:
             yaml.dump(self.to_dict(), output_file)
 
     def check_integrity(self):
@@ -454,15 +462,22 @@ class Manifest:
             Raised if not all necessary information is available.
 
         """
-        if not all([self.data_filenames, self.metadata_filenames,
-                    self.data_checksum, self.checksum]):
-            raise MissingInformationError('Some information missing')
-        checksum = self._generate_checksum(self.data_filenames +
-                                           self.metadata_filenames)
+        if not all(
+            [
+                self.data_filenames,
+                self.metadata_filenames,
+                self.data_checksum,
+                self.checksum,
+            ]
+        ):
+            raise MissingInformationError("Some information missing")
+        checksum = self._generate_checksum(
+            self.data_filenames + self.metadata_filenames
+        )
         data_checksum = self._generate_checksum(self.data_filenames)
         integrity = {
-            'data': data_checksum == self.data_checksum,
-            'all': checksum == self.checksum,
+            "data": data_checksum == self.data_checksum,
+            "all": checksum == self.checksum,
         }
         return integrity
 
@@ -487,13 +502,13 @@ class Manifest:
         }
         manifest_files = {
             "metadata": [],
-            "data": {'format': '', 'names': []},
+            "data": {"format": "", "names": []},
         }
         manifest_keys_level_one = [
-            ('format', manifest_format),
-            ('dataset', manifest_dataset),
-            ('files', manifest_files),
-            ('checksums', []),
+            ("format", manifest_format),
+            ("dataset", manifest_dataset),
+            ("files", manifest_files),
+            ("checksums", []),
         ]
         manifest_ = dict(manifest_keys_level_one)
         return manifest_
@@ -585,37 +600,33 @@ class FormatDetector:
         for filename in self.metadata_filenames:
             extension = os.path.splitext(filename)[1]
             try:
-                parse_method = getattr(self, '_parse_' + extension[1:])
+                parse_method = getattr(self, "_parse_" + extension[1:])
                 format_, version = parse_method(filename=filename)
             except AttributeError:
-                format_ = 'test'
-                version = '0.1.0'
-            info = {
-                'name': filename,
-                'format': format_,
-                'version': version
-            }
+                format_ = "test"
+                version = "0.1.0"
+            info = {"name": filename, "format": format_, "version": version}
             metadata_info.append(info)
         return metadata_info
 
     @staticmethod
-    def _parse_info(filename=''):
-        with open(filename, 'r', encoding='utf8') as file:
+    def _parse_info(filename=""):
+        with open(filename, "r", encoding="utf8") as file:
             info_line = file.readline()
-        info_parts = info_line.split(' - ')
+        info_parts = info_line.split(" - ")
         _, version, _ = info_parts[1].split()
         format_ = info_parts[0].strip()
         return format_, version
 
     @staticmethod
-    def _parse_yaml(filename=''):
-        with open(filename, 'r', encoding='utf8') as file:
+    def _parse_yaml(filename=""):
+        with open(filename, "r", encoding="utf8") as file:
             info = yaml.safe_load(file)
-        format_ = info['format']['type']
-        version = info['format']['version']
+        format_ = info["format"]["type"]
+        version = info["format"]["version"]
         return format_, version
 
-    def _parse_yml(self, filename=''):
+    def _parse_yml(self, filename=""):
         return self._parse_yaml(filename=filename)
 
     def data_format(self):
@@ -639,12 +650,12 @@ class FormatDetector:
 
         """
         if not self.data_filenames:
-            raise NoFileError('No data filenames')
+            raise NoFileError("No data filenames")
         return self._detect_data_format()
 
     # noinspection PyMethodMayBeStatic
     def _detect_data_format(self):  # noqa
-        return 'undetected'
+        return "undetected"
 
     def detection_successful(self):
         """
@@ -721,45 +732,47 @@ class EPRFormatDetector(FormatDetector):
 
     def _detect_data_format(self):
         file_format = ""
-        file_extensions = [os.path.splitext(x)[-1].lower()
-                           for x in self.data_filenames]
-        if {'.dsc', '.dta'} <= set(file_extensions):
+        file_extensions = [
+            os.path.splitext(x)[-1].lower() for x in self.data_filenames
+        ]
+        if {".dsc", ".dta"} <= set(file_extensions):
             file_format = "Bruker BES3T"
-        elif '.par' in file_extensions:
-            par_file = [x for x in self.data_filenames if x.endswith('.par')]
-            with open(par_file[0], 'r', encoding='utf8') as file:
+        elif ".par" in file_extensions:
+            par_file = [x for x in self.data_filenames if x.endswith(".par")]
+            with open(par_file[0], "r", encoding="utf8") as file:
                 first_line = file.readline()
-            if 'DOS' in first_line:
+            if "DOS" in first_line:
                 file_format = "Bruker EMX"
             else:
                 file_format = "Bruker ESP"
-        elif '.xml' in file_extensions:
-            xml_file = [x for x in self.data_filenames if x.endswith('.xml')]
-            with open(xml_file[0], 'r', encoding='utf8') as file:
+        elif ".xml" in file_extensions:
+            xml_file = [x for x in self.data_filenames if x.endswith(".xml")]
+            with open(xml_file[0], "r", encoding="utf8") as file:
                 file.readline()
                 second_line = file.readline()
-            if second_line.startswith('<ESRXmlFile'):
+            if second_line.startswith("<ESRXmlFile"):
                 file_format = "Magnettech XML"
-        elif '.csv' in file_extensions:
-            csv_file = [x for x in self.data_filenames if x.endswith('.csv')]
-            with open(csv_file[0], 'r', encoding='utf8') as file:
+        elif ".csv" in file_extensions:
+            csv_file = [x for x in self.data_filenames if x.endswith(".csv")]
+            with open(csv_file[0], "r", encoding="utf8") as file:
                 first_line = file.readline()
                 file.readline()
                 third_line = file.readline()
-            if first_line.startswith('Name,') \
-                    and third_line.startswith('Recipe'):
+            if first_line.startswith("Name,") and third_line.startswith(
+                "Recipe"
+            ):
                 file_format = "Magnettech CSV"
         return file_format
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Create Manifest.yaml file for demonstration purposes
-    DATA_FILENAME = 'test'
-    METADATA_FILENAME = 'test.info'
-    with open(DATA_FILENAME, 'w+', encoding='utf8') as f:
-        f.write('')
-    with open(METADATA_FILENAME, 'w+', encoding='utf8') as f:
-        f.write('cwEPR Info file - v. 0.1.4 (2020-01-21)')
+    DATA_FILENAME = "test"
+    METADATA_FILENAME = "test.info"
+    with open(DATA_FILENAME, "w+", encoding="utf8") as f:
+        f.write("")
+    with open(METADATA_FILENAME, "w+", encoding="utf8") as f:
+        f.write("cwEPR Info file - v. 0.1.4 (2020-01-21)")
     manifest_obj = Manifest()
     manifest_obj.data_filenames = [DATA_FILENAME]
     manifest_obj.metadata_filenames = [METADATA_FILENAME]

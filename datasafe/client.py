@@ -110,6 +110,7 @@ Module documentation
 ====================
 
 """
+
 import glob
 import json
 import os
@@ -119,8 +120,14 @@ import warnings
 
 import requests
 
-from datasafe.exceptions import InvalidLoiError, MissingLoiError, \
-    LoiNotFoundError, ExistingFileError, MissingContentError, NoFileError
+from datasafe.exceptions import (
+    InvalidLoiError,
+    MissingLoiError,
+    LoiNotFoundError,
+    ExistingFileError,
+    MissingContentError,
+    NoFileError,
+)
 import datasafe.loi as loi_
 from datasafe.manifest import Manifest
 from datasafe import server
@@ -167,10 +174,10 @@ class Client:
 
     def __init__(self):
         self.loi_parser = loi_.Parser()
-        self.metadata_extensions = ('.info', '.yaml')
+        self.metadata_extensions = (".info", ".yaml")
         self._loi_checker = loi_.LoiChecker()
 
-    def create(self, loi=''):
+    def create(self, loi=""):
         """
         Create new LOI.
 
@@ -204,20 +211,20 @@ class Client:
 
         """
         if not loi:
-            raise MissingLoiError('No LOI provided.')
+            raise MissingLoiError("No LOI provided.")
         self._check_loi(loi=loi, validate=False)
         id_parts = self.loi_parser.split_id()
-        if id_parts[0] != 'exp':
-            raise InvalidLoiError('Loi ist not a valid experiment LOI')
-        self._loi_checker.ignore_check = 'LoiMeasurementNumberChecker'
+        if id_parts[0] != "exp":
+            raise InvalidLoiError("Loi ist not a valid experiment LOI")
+        self._loi_checker.ignore_check = "LoiMeasurementNumberChecker"
         if not self._loi_checker.check(loi):
-            raise InvalidLoiError('String is not a valid LOI.')
+            raise InvalidLoiError("String is not a valid LOI.")
         return self._server_create(loi=loi)
 
-    def _server_create(self, loi=''):  # noqa
-        return ''
+    def _server_create(self, loi=""):  # noqa
+        return ""
 
-    def create_manifest(self, filename='', path=''):
+    def create_manifest(self, filename="", path=""):
         """
         Create a manifest file for a given dataset.
 
@@ -273,17 +280,19 @@ class Client:
         """
         manifest = Manifest()
         with change_working_dir(path):
-            file_pattern = filename + '.*' if filename else '*'
+            file_pattern = filename + ".*" if filename else "*"
             filenames = glob.glob(file_pattern)
-            manifest.metadata_filenames = \
-                [x for x in filenames if x.endswith(self.metadata_extensions)]
-            manifest.data_filenames = \
-                [x for x in filenames if x not in manifest.metadata_filenames]
+            manifest.metadata_filenames = [
+                x for x in filenames if x.endswith(self.metadata_extensions)
+            ]
+            manifest.data_filenames = [
+                x for x in filenames if x not in manifest.metadata_filenames
+            ]
             if manifest.manifest_filename in manifest.metadata_filenames:
                 manifest.metadata_filenames.remove(manifest.manifest_filename)
             manifest.to_file()
 
-    def upload(self, loi='', filename='', path=''):
+    def upload(self, loi="", filename="", path=""):
         """
         Upload data belonging to a dataset to the datasafe.
 
@@ -342,7 +351,7 @@ class Client:
 
         """
         if not loi:
-            raise MissingLoiError('No LOI provided.')
+            raise MissingLoiError("No LOI provided.")
         self._check_loi(loi=loi, validate=False)
         with change_working_dir(path):
             if not os.path.exists(Manifest().manifest_filename):
@@ -355,13 +364,12 @@ class Client:
             filenames.extend(manifest.data_filenames)
             filenames.append(manifest.manifest_filename)
             content = self._create_zip_archive(filenames)
-        return self._server_upload(loi=loi,
-                                   content=content)
+        return self._server_upload(loi=loi, content=content)
 
-    def _server_upload(self, loi='', content=None):  # noqa
-        return {'data': True, 'all': True}
+    def _server_upload(self, loi="", content=None):  # noqa
+        return {"data": True, "all": True}
 
-    def download(self, loi=''):
+    def download(self, loi=""):
         """
         Download data from the datasafe.
 
@@ -397,34 +405,36 @@ class Client:
 
         """
         if not loi:
-            raise MissingLoiError('No LOI provided.')
+            raise MissingLoiError("No LOI provided.")
         self._check_loi(loi=loi, validate=False)
         content = self._server_download(loi=loi)
         download_dir = tempfile.mkdtemp()
         with change_working_dir(download_dir):
-            archive_file = 'archive.zip'
+            archive_file = "archive.zip"
             with open(archive_file, "wb") as file:
                 file.write(content)
-            shutil.unpack_archive(archive_file, '.')
+            shutil.unpack_archive(archive_file, ".")
             os.remove(archive_file)
             manifest = Manifest()
             manifest.from_file(manifest.manifest_filename)
             integrity = manifest.check_integrity()
         if not all(integrity.values()):
             if not any(integrity.values()):
-                message = 'Integrity check failed, data and metadata may be ' \
-                          'corrupted.'
-            elif integrity['data']:
-                message = 'Integrity check failed, metadata may be corrupted.'
+                message = (
+                    "Integrity check failed, data and metadata may be "
+                    "corrupted."
+                )
+            elif integrity["data"]:
+                message = "Integrity check failed, metadata may be corrupted."
             else:
-                message = 'Integrity check failed, data may be corrupted.'
+                message = "Integrity check failed, data may be corrupted."
             warnings.warn(message)
         return download_dir
 
-    def _server_download(self, loi=''):  # noqa
+    def _server_download(self, loi=""):  # noqa
         return self._create_zip_archive(filenames=[])
 
-    def update(self, loi='', filename='', path=''):
+    def update(self, loi="", filename="", path=""):
         """
         Update data belonging to a dataset to the datasafe.
 
@@ -483,7 +493,7 @@ class Client:
 
         """
         if not loi:
-            raise MissingLoiError('No LOI provided.')
+            raise MissingLoiError("No LOI provided.")
         self._check_loi(loi=loi, validate=False)
         with change_working_dir(path):
             if not os.path.exists(Manifest().manifest_filename):
@@ -496,13 +506,12 @@ class Client:
             filenames.extend(manifest.data_filenames)
             filenames.append(manifest.manifest_filename)
             content = self._create_zip_archive(filenames)
-        return self._server_update(loi=loi,
-                                   content=content)
+        return self._server_update(loi=loi, content=content)
 
-    def _server_update(self, loi='', content=None):  # noqa
-        return {'data': True, 'all': True}
+    def _server_update(self, loi="", content=None):  # noqa
+        return {"data": True, "all": True}
 
-    def _check_loi(self, loi='', validate=True):
+    def _check_loi(self, loi="", validate=True):
         """
         Check a LOI.
 
@@ -525,19 +534,20 @@ class Client:
 
         """
         self.loi_parser.parse(loi)
-        if self.loi_parser.type != 'ds':
-            raise InvalidLoiError('LOI is not a datasafe LOI.')
+        if self.loi_parser.type != "ds":
+            raise InvalidLoiError("LOI is not a datasafe LOI.")
         if validate:
             if not self._loi_checker.check(loi):
-                raise InvalidLoiError('String is not a valid LOI.')
+                raise InvalidLoiError("String is not a valid LOI.")
 
     def _create_zip_archive(self, filenames=None):
         with tempfile.TemporaryDirectory() as tmpdir:
             for filename in filenames:
                 self._copy_file(filename, tmpdir)
-            zip_archive = shutil.make_archive(base_name='dataset', format='zip',
-                                              root_dir=tmpdir)
-            with open(zip_archive, 'rb') as zip_file:
+            zip_archive = shutil.make_archive(
+                base_name="dataset", format="zip", root_dir=tmpdir
+            )
+            with open(zip_archive, "rb") as zip_file:
                 contents = zip_file.read()
         return contents
 
@@ -567,16 +577,16 @@ class LocalClient(Client):
         super().__init__()
         self.server = server.Server()
 
-    def _server_create(self, loi=''):
+    def _server_create(self, loi=""):
         return self.server.new(loi=loi)
 
-    def _server_upload(self, loi='', content=None):
+    def _server_upload(self, loi="", content=None):
         return self.server.upload(loi=loi, content=content)
 
-    def _server_download(self, loi=''):
+    def _server_download(self, loi=""):
         return self.server.download(loi=loi)
 
-    def _server_update(self, loi='', content=None):
+    def _server_update(self, loi="", content=None):
         return self.server.update(loi=loi, content=content)
 
 
@@ -606,40 +616,42 @@ class HTTPClient(Client):
 
     def __init__(self):
         super().__init__()
-        self.server_url = 'http://127.0.0.1:5000/'
-        self.url_prefix = 'api/'
+        self.server_url = "http://127.0.0.1:5000/"
+        self.url_prefix = "api/"
 
-    def _server_create(self, loi=''):
+    def _server_create(self, loi=""):
         response = requests.post(self.server_url + self.url_prefix + loi)
         return response.content.decode()
 
-    def _server_upload(self, loi='', content=None):
-        response = requests.put(self.server_url + self.url_prefix + loi,
-                                data=content)
+    def _server_upload(self, loi="", content=None):
+        response = requests.put(
+            self.server_url + self.url_prefix + loi, data=content
+        )
         if response.status_code == 404:
             raise InvalidLoiError(message=response.content.decode())
         if response.status_code == 400:
-            if 'does not exist' in response.content.decode():
+            if "does not exist" in response.content.decode():
                 raise LoiNotFoundError(message=response.content.decode())
         if response.status_code == 405:
             raise ExistingFileError(message=response.content.decode())
         return json.loads(response.content)
 
-    def _server_download(self, loi=''):
+    def _server_download(self, loi=""):
         response = requests.get(self.server_url + self.url_prefix + loi)
         if response.status_code == 204:
             # Note: 204 returns no content (obviously!)
-            raise MissingContentError('LOI does not have any content')
+            raise MissingContentError("LOI does not have any content")
         if response.status_code == 404:
-            if 'does not exist' in response.content.decode():
+            if "does not exist" in response.content.decode():
                 raise LoiNotFoundError(message=response.content.decode())
-            if 'not a valid LOI' in response.content.decode():
+            if "not a valid LOI" in response.content.decode():
                 raise InvalidLoiError(message=response.content.decode())
         return response.content
 
-    def _server_update(self, loi='', content=None):
-        response = requests.patch(self.server_url + self.url_prefix + loi,
-                                  data=content)
+    def _server_update(self, loi="", content=None):
+        response = requests.patch(
+            self.server_url + self.url_prefix + loi, data=content
+        )
         if response.status_code == 400:
             raise LoiNotFoundError(message=response.content.decode())
         if response.status_code == 404:

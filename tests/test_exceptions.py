@@ -9,8 +9,8 @@ class TestMissingPathError(unittest.TestCase):
         self.exception = exceptions.MissingPathError
 
     def test_prints_message(self):
-        with self.assertRaisesRegex(self.exception, 'bla'):
-            raise self.exception('bla')
+        with self.assertRaisesRegex(self.exception, "bla"):
+            raise self.exception("bla")
 
 
 class TestMissingContentError(unittest.TestCase):
@@ -19,8 +19,8 @@ class TestMissingContentError(unittest.TestCase):
         self.exception = exceptions.MissingContentError
 
     def test_prints_message(self):
-        with self.assertRaisesRegex(self.exception, 'bla'):
-            raise self.exception('bla')
+        with self.assertRaisesRegex(self.exception, "bla"):
+            raise self.exception("bla")
 
 
 class TestMissingLoiError(unittest.TestCase):
@@ -29,8 +29,8 @@ class TestMissingLoiError(unittest.TestCase):
         self.exception = exceptions.MissingLoiError
 
     def test_prints_message(self):
-        with self.assertRaisesRegex(self.exception, 'bla'):
-            raise self.exception('bla')
+        with self.assertRaisesRegex(self.exception, "bla"):
+            raise self.exception("bla")
 
 
 class TestLoiNotFoundError(unittest.TestCase):
@@ -39,8 +39,8 @@ class TestLoiNotFoundError(unittest.TestCase):
         self.exception = exceptions.LoiNotFoundError
 
     def test_prints_message(self):
-        with self.assertRaisesRegex(self.exception, 'bla'):
-            raise self.exception('bla')
+        with self.assertRaisesRegex(self.exception, "bla"):
+            raise self.exception("bla")
 
 
 class TestMissingInformationError(unittest.TestCase):
@@ -49,8 +49,8 @@ class TestMissingInformationError(unittest.TestCase):
         self.exception = exceptions.MissingInformationError
 
     def test_prints_message(self):
-        with self.assertRaisesRegex(self.exception, 'bla'):
-            raise self.exception('bla')
+        with self.assertRaisesRegex(self.exception, "bla"):
+            raise self.exception("bla")
 
 
 class TestNoFileError(unittest.TestCase):
@@ -59,8 +59,8 @@ class TestNoFileError(unittest.TestCase):
         self.exception = exceptions.NoFileError
 
     def test_prints_message(self):
-        with self.assertRaisesRegex(self.exception, 'bla'):
-            raise self.exception('bla')
+        with self.assertRaisesRegex(self.exception, "bla"):
+            raise self.exception("bla")
 
 
 class TestExistingFileError(unittest.TestCase):
@@ -69,5 +69,5 @@ class TestExistingFileError(unittest.TestCase):
         self.exception = exceptions.ExistingFileError
 
     def test_prints_message(self):
-        with self.assertRaisesRegex(self.exception, 'bla'):
-            raise self.exception('bla')
+        with self.assertRaisesRegex(self.exception, "bla"):
+            raise self.exception("bla")

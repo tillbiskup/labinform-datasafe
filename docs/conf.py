@@ -19,16 +19,17 @@
 
 import os
 
-with open(os.path.join(os.path.dirname(__file__), '..', 'VERSION')) as \
-        version_file:
+with open(
+    os.path.join(os.path.dirname(__file__), "..", "VERSION")
+) as version_file:
     release_ = version_file.read().strip()
 
-project = 'LabInform datasafe'
-copyright = '2020-24, Mirjam Schröder, Till Biskup'
-author = 'Mirjam Schröder, Till Biskup'
+project = "LabInform datasafe"
+copyright = "2020-24, Mirjam Schröder, Till Biskup"
+author = "Mirjam Schröder, Till Biskup"
 
 # The short X.Y version
-version = ".".join(release_.split('.')[0:2])
+version = ".".join(release_.split(".")[0:2])
 # The full version, including alpha/beta/rc tags
 release = release_
 
@@ -39,32 +40,32 @@ release = release_
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.napoleon',
-    'sphinx.ext.todo',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.viewcode',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.todo",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.viewcode",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # The suffix(es) of source data_filenames.
 # You can specify multiple suffix as a list of string:
 #
 # source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = ".rst"
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = "index"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = "sphinx"
 
 # Show or hide todo and todolist directives in output
 todo_include_todos = True
@@ -72,11 +73,11 @@ todo_link_only = True
 
 # Autodoc configuration
 autodoc_default_options = {
-    'members': True,
-    'member-order': 'bysource',
-    'undoc-members': True,
+    "members": True,
+    "member-order": "bysource",
+    "undoc-members": True,
     # 'private-members': True,
-    'show-inheritance': True,
+    "show-inheritance": True,
 }
 
 # -- Options for HTML output -------------------------------------------------
@@ -84,37 +85,37 @@ autodoc_default_options = {
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-#html_theme = 'alabaster'
-html_theme = 'sphinx_rtd_theme'
+# html_theme = 'alabaster'
+html_theme = "sphinx_rtd_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
 html_theme_options = {
-    'style_external_links': True,
+    "style_external_links": True,
 }
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = './logo.png'
+html_logo = "./logo.png"
 
 # The name of an image file (relative to this directory) to use as a favicon of
 # the docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-html_favicon = './labinform-favicon.ico'
+html_favicon = "./labinform-favicon.ico"
 
-html_last_updated_fmt = '%Y-%m-%d'
+html_last_updated_fmt = "%Y-%m-%d"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-#html_static_path = ['_static']
+# html_static_path = ['_static']
 
 
 # -- Extension configuration -------------------------------------------------
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3', None),
-#    'matplotlib': ('https://matplotlib.org/', None),
-    'flask': ('https://flask.palletsprojects.com/en/2.0.x/', None),
+    "python": ("https://docs.python.org/3", None),
+    #    'matplotlib': ('https://matplotlib.org/', None),
+    "flask": ("https://flask.palletsprojects.com/en/2.0.x/", None),
 }

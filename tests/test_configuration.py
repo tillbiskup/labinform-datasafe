@@ -11,6 +11,6 @@ class TestStorageBackendConfig(unittest.TestCase):
         pass
 
     def test_has_attributes(self):
-        for attribute in ['manifest_filename', 'root_directory']:
+        for attribute in ["manifest_filename", "root_directory"]:
             with self.subTest(attribute=attribute):
                 self.assertTrue(hasattr(self.config, attribute))

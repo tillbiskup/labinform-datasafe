@@ -23,7 +23,7 @@ class MissingPathError(Error):
 
     """
 
-    def __init__(self, message=''):
+    def __init__(self, message=""):
         super().__init__(message)
         self.message = message
 
@@ -38,7 +38,7 @@ class MissingContentError(Error):
 
     """
 
-    def __init__(self, message=''):
+    def __init__(self, message=""):
         super().__init__(message)
         self.message = message
 
@@ -53,7 +53,7 @@ class MissingLoiError(Error):
 
     """
 
-    def __init__(self, message=''):
+    def __init__(self, message=""):
         super().__init__(message)
         self.message = message
 
@@ -68,7 +68,7 @@ class LoiNotFoundError(Error):
 
     """
 
-    def __init__(self, message=''):
+    def __init__(self, message=""):
         super().__init__(message)
         self.message = message
 
@@ -83,7 +83,7 @@ class InvalidLoiError(Error):
 
     """
 
-    def __init__(self, message=''):
+    def __init__(self, message=""):
         super().__init__(message)
         self.message = message
 
@@ -98,7 +98,7 @@ class MissingInformationError(Error):
 
     """
 
-    def __init__(self, message=''):
+    def __init__(self, message=""):
         super().__init__(message)
         self.message = message
 
@@ -113,7 +113,7 @@ class NoFileError(Error):
 
     """
 
-    def __init__(self, message=''):
+    def __init__(self, message=""):
         super().__init__(message)
         self.message = message
 
@@ -128,6 +128,6 @@ class ExistingFileError(Error):
 
     """
 
-    def __init__(self, message=''):
+    def __init__(self, message=""):
         super().__init__(message)
         self.message = message

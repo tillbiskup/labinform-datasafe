@@ -73,12 +73,12 @@ class Generator:
     """
 
     def __init__(self):
-        self.algorithm = 'md5'
+        self.algorithm = "md5"
 
     def _get_hash_function(self):
-        return getattr(importlib.import_module('hashlib'), self.algorithm)()
+        return getattr(importlib.import_module("hashlib"), self.algorithm)()
 
-    def hash_string(self, string=''):
+    def hash_string(self, string=""):
         """
         Create checksum for string
 
@@ -152,7 +152,7 @@ class Generator:
             Checksum generated over (list of) file(s)
 
         """
-        checksum = ''
+        checksum = ""
         if isinstance(filenames, list):
             file_checksum = []
             for filename in filenames:

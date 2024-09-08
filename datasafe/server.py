@@ -83,9 +83,15 @@ from flask.views import MethodView
 
 from datasafe import configuration
 import datasafe.loi as loi_
-from datasafe.exceptions import MissingPathError, MissingContentError, \
-    MissingLoiError, InvalidLoiError, ExistingFileError, LoiNotFoundError, \
-    NoFileError
+from datasafe.exceptions import (
+    MissingPathError,
+    MissingContentError,
+    MissingLoiError,
+    InvalidLoiError,
+    ExistingFileError,
+    LoiNotFoundError,
+    NoFileError,
+)
 from datasafe.manifest import Manifest
 from datasafe.utils import change_working_dir
 
@@ -116,7 +122,7 @@ class Server:
         self.loi = loi_.Parser()
         self._loi_checker = loi_.LoiChecker()
 
-    def new(self, loi=''):
+    def new(self, loi=""):
         """
         Create new LOI.
 
@@ -147,14 +153,14 @@ class Server:
 
         """
         if not loi:
-            raise MissingLoiError('No LOI provided.')
+            raise MissingLoiError("No LOI provided.")
         self._check_loi(loi=loi, validate=False)
         id_parts = self.loi.split_id()
-        if id_parts[0] != 'exp':
-            raise InvalidLoiError('Loi ist not a valid experiment LOI.')
-        self._loi_checker.ignore_check = 'LoiMeasurementNumberChecker'
+        if id_parts[0] != "exp":
+            raise InvalidLoiError("Loi ist not a valid experiment LOI.")
+        self._loi_checker.ignore_check = "LoiMeasurementNumberChecker"
         if not self._loi_checker.check(loi):
-            raise InvalidLoiError('String is not a valid LOI.')
+            raise InvalidLoiError("String is not a valid LOI.")
         date_checker = loi_.IsDateChecker()
         if date_checker.check(id_parts[1]):
             path = self.loi.separator.join(id_parts[0:3])
@@ -163,13 +169,18 @@ class Server:
         if not self.storage.exists(path):
             self.storage.create(path)
         new_path = self.storage.create_next_id(path)
-        new_loi = self.loi.separator.join([
-            self.loi.root_issuer_separator.join([self.loi.root,
-                                                 self.loi.issuer]),
-            self.loi.type, *new_path.split(os.sep)])
+        new_loi = self.loi.separator.join(
+            [
+                self.loi.root_issuer_separator.join(
+                    [self.loi.root, self.loi.issuer]
+                ),
+                self.loi.type,
+                *new_path.split(os.sep),
+            ]
+        )
         return new_loi
 
-    def upload(self, loi='', content=None):
+    def upload(self, loi="", content=None):
         """
         Upload data to the datasafe.
 
@@ -206,15 +217,15 @@ class Server:
 
         """
         if not loi:
-            raise MissingLoiError('No LOI provided.')
+            raise MissingLoiError("No LOI provided.")
         self._check_loi(loi=loi)
         if not self.storage.exists(self.loi.id):
-            raise LoiNotFoundError('LOI does not exist.')
+            raise LoiNotFoundError("LOI does not exist.")
         if not self.storage.isempty(path=self.loi.id):
-            raise ExistingFileError('Directory not empty.')
+            raise ExistingFileError("Directory not empty.")
         return self.storage.deposit(path=self.loi.id, content=content)
 
-    def download(self, loi=''):
+    def download(self, loi=""):
         """
         Download data from the datasafe.
 
@@ -242,15 +253,15 @@ class Server:
 
         """
         if not loi:
-            raise MissingLoiError('No LOI provided.')
+            raise MissingLoiError("No LOI provided.")
         self._check_loi(loi=loi)
         if not self.storage.exists(self.loi.id):
-            raise LoiNotFoundError('LOI does not exist.')
+            raise LoiNotFoundError("LOI does not exist.")
         if self.storage.isempty(self.loi.id):
-            raise MissingContentError('LOI does not have content.')
+            raise MissingContentError("LOI does not have content.")
         return self.storage.retrieve(path=self.loi.id)
 
-    def update(self, loi='', content=None):
+    def update(self, loi="", content=None):
         """
         Update data in the datasafe.
 
@@ -287,22 +298,22 @@ class Server:
 
         """
         if not loi:
-            raise MissingLoiError('No LOI provided.')
+            raise MissingLoiError("No LOI provided.")
         self._check_loi(loi=loi)
         if not self.storage.exists(self.loi.id):
-            raise LoiNotFoundError('LOI does not exist.')
+            raise LoiNotFoundError("LOI does not exist.")
         if self.storage.isempty(path=self.loi.id):
-            raise NoFileError('Directory empty')
+            raise NoFileError("Directory empty")
         self.storage.remove(path=self.loi.id, force=True)
         return self.storage.deposit(path=self.loi.id, content=content)
 
-    def _check_loi(self, loi='', validate=True):
+    def _check_loi(self, loi="", validate=True):
         self.loi.parse(loi)
-        if self.loi.type != 'ds':
-            raise InvalidLoiError('LOI is not a datasafe LOI.')
+        if self.loi.type != "ds":
+            raise InvalidLoiError("LOI is not a datasafe LOI.")
         if validate:
             if not self._loi_checker.check(loi):
-                raise InvalidLoiError('String is not a valid LOI.')
+                raise InvalidLoiError("String is not a valid LOI.")
 
 
 class StorageBackend:
@@ -328,11 +339,12 @@ class StorageBackend:
 
     def __init__(self):
         self.config = configuration.StorageBackend()
-        self.manifest_filename = \
+        self.manifest_filename = (
             self.config.manifest_filename or Manifest().manifest_filename
-        self.root_directory = self.config.root_directory or ''
+        )
+        self.root_directory = self.config.root_directory or ""
 
-    def working_path(self, path=''):
+    def working_path(self, path=""):
         """
         Full path to working directory in datasafe
 
@@ -344,7 +356,7 @@ class StorageBackend:
         """
         return os.path.join(self.root_directory, path)
 
-    def create(self, path=''):
+    def create(self, path=""):
         """
         Create directory for given path.
 
@@ -363,7 +375,7 @@ class StorageBackend:
             raise MissingPathError
         os.makedirs(self.working_path(path))
 
-    def exists(self, path=''):
+    def exists(self, path=""):
         """
         Check whether given path exists
 
@@ -375,7 +387,7 @@ class StorageBackend:
         """
         return os.path.exists(self.working_path(path))
 
-    def isempty(self, path=''):
+    def isempty(self, path=""):
         """
         Check whether directory corresponding to path is empty
 
@@ -399,7 +411,7 @@ class StorageBackend:
             raise NoFileError
         return not os.listdir(self.working_path(path))
 
-    def remove(self, path='', force=False):
+    def remove(self, path="", force=False):
         """
         Remove directory corresponding to path.
 
@@ -428,7 +440,7 @@ class StorageBackend:
         else:
             os.rmdir(self.working_path(path))
 
-    def get_highest_id(self, path=''):
+    def get_highest_id(self, path=""):
         """
         Get number of subdirectory corresponding to path with highest number
 
@@ -462,7 +474,7 @@ class StorageBackend:
             highest_id = sorted(directory_contents)[-1]
         return highest_id
 
-    def create_next_id(self, path=''):
+    def create_next_id(self, path=""):
         """
         Create next subdirectory in directory corresponding to path
 
@@ -476,7 +488,7 @@ class StorageBackend:
         self.create(new_path)
         return new_path
 
-    def deposit(self, path='', content=None):
+    def deposit(self, path="", content=None):
         """
         Deposit data provided as content in directory corresponding to path.
 
@@ -516,10 +528,12 @@ class StorageBackend:
 
         """
         if not path:
-            raise MissingPathError(message='No path provided.')
+            raise MissingPathError(message="No path provided.")
         if not content:
-            raise MissingContentError(message='No content provided to deposit.')
-        tmpfile = tempfile.mkstemp(suffix='.zip')
+            raise MissingContentError(
+                message="No content provided to deposit."
+            )
+        tmpfile = tempfile.mkstemp(suffix=".zip")
         with open(tmpfile[1], "wb") as file:
             file.write(content)
         shutil.unpack_archive(tmpfile[1], self.working_path(path))
@@ -530,7 +544,7 @@ class StorageBackend:
         os.remove(tmpfile[1])
         return integrity
 
-    def retrieve(self, path=''):
+    def retrieve(self, path=""):
         """
         Obtain data from directory corresponding to path
 
@@ -558,19 +572,21 @@ class StorageBackend:
 
         """
         if not path:
-            raise MissingPathError(message='No path provided.')
+            raise MissingPathError(message="No path provided.")
         tmpfile = tempfile.mkstemp()
-        zip_archive = shutil.make_archive(base_name=tmpfile[1],
-                                          format='zip',
-                                          root_dir=self.working_path(path))
-        with open(zip_archive, 'rb') as zip_file:
+        zip_archive = shutil.make_archive(
+            base_name=tmpfile[1],
+            format="zip",
+            root_dir=self.working_path(path),
+        )
+        with open(zip_archive, "rb") as zip_file:
             contents = zip_file.read()
         # noinspection PyTypeChecker
-        os.remove(tmpfile[1] + '.zip')
+        os.remove(tmpfile[1] + ".zip")
         os.remove(tmpfile[1])
         return contents
 
-    def get_manifest(self, path=''):
+    def get_manifest(self, path=""):
         """
         Retrieve manifest of a dataset stored in path.
 
@@ -586,13 +602,14 @@ class StorageBackend:
 
         """
         if not path:
-            raise MissingPathError(message='No path provided.')
+            raise MissingPathError(message="No path provided.")
         if not os.path.exists(path):
-            raise MissingPathError(message=f'Path {path} does not exist.')
+            raise MissingPathError(message=f"Path {path} does not exist.")
         if not os.path.exists(os.path.join(path, self.manifest_filename)):
-            raise MissingContentError(message='No MANIFEST file found.')
-        with open(os.path.join(path, self.manifest_filename), 'r',
-                  encoding='utf8') as file:
+            raise MissingContentError(message="No MANIFEST file found.")
+        with open(
+            os.path.join(path, self.manifest_filename), "r", encoding="utf8"
+        ) as file:
             manifest_contents = file.read()
         return manifest_contents
 
@@ -617,17 +634,20 @@ class StorageBackend:
         if self.root_directory:
             top = self.root_directory
         else:
-            top = '.'
+            top = "."
         paths = []
         for root, dirs, _ in os.walk(top):
             for dir_ in dirs:
                 files_in_dir = os.listdir(os.path.join(root, dir_))
                 if not files_in_dir or self.manifest_filename in files_in_dir:
-                    paths.append(os.path.join(root, dir_).replace(os.path.join(
-                        top, ''), ''))
+                    paths.append(
+                        os.path.join(root, dir_).replace(
+                            os.path.join(top, ""), ""
+                        )
+                    )
         return paths
 
-    def check_integrity(self, path=''):
+    def check_integrity(self, path=""):
         """
         Check integrity of dataset, comparing stored with generated checksums.
 
@@ -647,7 +667,7 @@ class StorageBackend:
 
         """
         if self.manifest_filename not in os.listdir(path):
-            raise MissingContentError(message='No manifest file found.')
+            raise MissingContentError(message="No manifest file found.")
         manifest = Manifest()
         manifest.from_file(os.path.join(path, self.manifest_filename))
         return manifest.check_integrity()
@@ -673,16 +693,16 @@ def create_http_server(test_config=None):
     if test_config:
         app.config.from_mapping(test_config)
 
-    @app.route('/heartbeat')
+    @app.route("/heartbeat")
     def heartbeat():
         return "alive"
 
-    @app.route('/api/')
+    @app.route("/api/")
     def api_test():
         return "alive"
 
-    dataset = HTTPServerAPI.as_view('datasets')
-    app.add_url_rule('/api/<path:loi>', view_func=dataset)
+    dataset = HTTPServerAPI.as_view("datasets")
+    app.add_url_rule("/api/<path:loi>", view_func=dataset)
 
     return app
 
@@ -713,7 +733,7 @@ class HTTPServerAPI(MethodView):
     def __init__(self):
         self.server = Server()
 
-    def get(self, loi=''):
+    def get(self, loi=""):
         """
         Handle get requests.
 
@@ -750,14 +770,14 @@ class HTTPServerAPI(MethodView):
             content = self.server.download(loi=loi)
             status = 200
         except MissingContentError:
-            content = 'LOI does not have any content'
+            content = "LOI does not have any content"
             status = 204
         except (LoiNotFoundError, InvalidLoiError) as exception:
             content = exception.message
             status = 404
         return content, status
 
-    def post(self, loi=''):
+    def post(self, loi=""):
         """
         Handle POST requests.
 
@@ -799,7 +819,10 @@ class HTTPServerAPI(MethodView):
             status = 404
         return content, status
 
-    def put(self, loi='', ):
+    def put(
+        self,
+        loi="",
+    ):
         """
         Handle PUT requests.
 
@@ -857,10 +880,10 @@ class HTTPServerAPI(MethodView):
         except ExistingFileError as exception:
             content = exception.message
             status = 405
-            header = {'allow': 'PATCH'}
+            header = {"allow": "PATCH"}
         return content, status, header
 
-    def patch(self, loi=''):
+    def patch(self, loi=""):
         """
         Handle PATCH requests.
 
@@ -918,5 +941,5 @@ class HTTPServerAPI(MethodView):
         except NoFileError as exception:
             content = exception.message
             status = 405
-            header = {'allow': 'PUT'}
+            header = {"allow": "PUT"}
         return content, status, header

@@ -11,13 +11,12 @@ module.
     the datasafe component.
 """
 
-
 import contextlib
 import importlib
 import os
 
 
-def object_from_name(module_name='', class_name=''):
+def object_from_name(module_name="", class_name=""):
     """
     Create object from module and class name
 
@@ -43,7 +42,7 @@ def object_from_name(module_name='', class_name=''):
 
 
 @contextlib.contextmanager
-def change_working_dir(path=''):
+def change_working_dir(path=""):
     """
     Context manager for temporarily changing the working directory.
 
