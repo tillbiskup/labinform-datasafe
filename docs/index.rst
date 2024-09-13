@@ -8,13 +8,7 @@ LabInform datasafe documentation
 
 *A local repository for "warm" research data.*
 
-Welcome! This is the documentation for the LabInform datasafe component, the **data store** that is part of the `LabInform laboratory information and management system <https://www.labinform.de/>`_ (LIMS).
-
-One key aspect of handling data is to store them in one place and access them via unique identifiers (here: a *Lab Object Identifier*, LOI). The data storage component of the LabInform framework is the datasafe documented here.
-
-
-.. note::
-   This documentation will most probably eventually become part of the general `LabInform documentation <https://docs.labinform.de/>`_. There, you can find already some more general information concerning LabInform.
+Welcome! This is the documentation for the LabInform datasafe component, the **data store for "warm" research data** that is part of the `LabInform laboratory information and management system <https://www.labinform.de/>`_ (LIMS). One key aspect of handling data is to safely store them in one place and access them via unique identifiers (here: a *Lab Object Identifier*, LOI). While data belonging to (textual) publications can often be stored in public repositories, we need a safe place for all our (unpublished) data, starting with their acquisition and independent of their current state. This is meant by "warm" research data -- a term coined by `scientists from KIT <https://doi.org/10.5334/dsj-2021-008>`_.
 
 
 Features
@@ -27,6 +21,10 @@ A list of features, not all implemented yet but aimed at for the first public re
 * Local install as well as network install possible
 
 * Automatic generation of unique LOIs
+
+* Pre-register LOIs before starting the acquisition.
+
+* Checksums for automatically checking data integrity
 
 
 And to make it even more convenient for users and future-proof:
