@@ -35,7 +35,7 @@ function git_branch_name {
 
 # Dirty fix: If we are on release branch, don't do anything
 branch=$(git_branch_name)
-if [[ ${branch} == release ]]
+if [[ ${branch} == stable ]]
 then
     echo "On branch '$branch', hence nothing done..."
     exit
