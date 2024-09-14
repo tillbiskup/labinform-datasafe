@@ -1,5 +1,5 @@
-.. image:: images/zenodo.xxxxxxx.svg
-   :target: https://doi.org/10.5281/zenodo.#######
+.. image:: images/zenodo.13763299.svg
+   :target: https://doi.org/10.5281/zenodo.13763299
    :align: right
 
 ================================
@@ -16,7 +16,7 @@ Features
 
 A list of features, not all implemented yet but aimed at for the first public release:
 
-* Home for "warm" research data: one central place
+* Repository for "warm" research data: one central place
 
 * Access to data using unique and persistent IDs (*Lab Object Identifier*, LOI)
 
@@ -60,12 +60,12 @@ How to cite
 
 The LabInform datasafe is free software. However, if you use the LabInform datasafe as crucial infrastructure component of your own research, please cite the software:
 
-* Mirjam Schröder, Till Biskup. LabInform datasafe (2023). doi:10.5281/zenodo.#######
+* Mirjam Schröder, Till Biskup. LabInform datasafe (2023). doi:10.5281/zenodo.13763299
 
-To make things easier, the LabInform datasafe has a `DOI <https://doi.org/10.5281/zenodo.#######>`_ provided by `Zenodo <https://zenodo.org/>`_, and you may click on the badge below to directly access the record associated with it. Note that this DOI refers to the software as such and always forwards to the most current version.
+To make things easier, the LabInform datasafe has a `DOI <https://doi.org/10.5281/zenodo.13763299>`_ provided by `Zenodo <https://zenodo.org/>`_, and you may click on the badge below to directly access the record associated with it. Note that this DOI refers to the software as such and always forwards to the most current version.
 
-.. image:: images/zenodo.xxxxxxx.svg
-   :target: https://doi.org/10.5281/zenodo.#######
+.. image:: images/zenodo.13763299.svg
+   :target: https://doi.org/10.5281/zenodo.13763299
 
 
 Where to start

@@ -21,3 +21,7 @@ keywords:
   - "repository"
   - "warm research data"
   - "checksums"
+identifiers:
+  - description: "The concept DOI of the work."
+    type: doi
+    value: 10.5281/zenodo.13763299

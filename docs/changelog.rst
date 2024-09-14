@@ -9,3 +9,11 @@ Version 0.1.0
 =============
 
 *Not yet released*
+
+
+Version 0.1.0-beta.1
+====================
+
+Released 2024-09-14
+
+* First public pre-release on PyPI
