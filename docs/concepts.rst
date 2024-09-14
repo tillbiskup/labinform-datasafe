@@ -39,6 +39,8 @@ While the LOI is a useful concept in a much broader context, for the LabInform d
 
 A note on the term "persistent identifier": Some people think that only IDs issued by a public organisation are truly persistent. However, this is a quite narrow view, and even the organisations behind DOI, ARK, ORCID, ISBN, or whatever else are not old enough to prove actually persistent. Furthermore, persistent basically means that the identifier will not change, and that you are able to deduce which resource it once pointed to, even if the resource is long gone.
 
+For more details, see the :mod:`datasafe.loi` module documentation.
+
 
 Client-server architecture
 ==========================
@@ -47,6 +49,8 @@ A key concept of the LabInform datasafe is to abstract away from the actual stor
 
 The entire internet is based on the client-server architecture, and you can setup the same locally. Eventually, it does not matter where the server is located, as long as it is accessible. Of course, storing your precious research data, the LabInform datasafe server component should better be located in a safe place entirely under your control.
 
+For more details, see the :mod:`datasafe.client` and :mod:`datasafe.server` module documentation.
+
 
 Checksums for detecting data corruption
 =======================================
@@ -54,3 +58,15 @@ Checksums for detecting data corruption
 Preserving digital data for a long time is a still unsolved problem. Furthermore, flipping a single bit may be sufficient to corrupt an entire file, rendering it unreadable and hence useless. While minimising the chances for loss of data is the realm of backup and storage strategies, checksums can be used to *detect* data corruption, both during transport and on rest.
 
 The LabInform datasafe uses checksums (cryptographic hashes) extensively to detect problems during data transfer between server and client. As it stores the checksums in the datasafe as well, these checksums can be used to detect data corruption on the server side as well.
+
+Furthermore, there are two distinct checksums used: one spanning both, data and metadata, the other spanning only the data. The reason behind: Metadata are of human origin and therefore inherently prone to errors and subject to (in)frequent updates and corrections. Data, however, shall never change after they have been recorded.
+
+For more details, see the :mod:`datasafe.checksum` module documentation.
+
+
+Manifests
+=========
+
+Each individual dataset in the LabInform datasafe is accompanied by a manifest stored in a separate file and providing a minimum of metadata necessary for operating the datasafe: a list of the files the dataset consists of, both data and metadata, together with an identifier of their respective format, and two checksums, one spanning both, data and metadata, the other spanning only the data.
+
+For more details, see the :mod:`datasafe.manifest` module documentation.

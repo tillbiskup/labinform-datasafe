@@ -16,9 +16,13 @@ Features
 
 A list of features, not all implemented yet but aimed at for the first public release:
 
-* Client-server architecture
+* Home for "warm" research data: one central place
 
-* Local install as well as network install possible
+* Access to data using unique and persistent IDs (*Lab Object Identifier*, LOI)
+
+* Client-server architecture, supporting local and network operation
+
+* Full control over the data: runs locally on your own hardware
 
 * Automatic generation of unique IDs for data
 

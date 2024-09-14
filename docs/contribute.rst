@@ -8,9 +8,9 @@ You want to contribute to the labinform-datasafe package? Excellent! Here, you w
 Virtual environment
 ===================
 
-The whole development should take place inside a virtual python environment that should be located *outside* the project directory.
+The whole development should take place inside a virtual Python environment that should be located *outside* the project directory.
 
-To create a new virtual python environment, open a terminal and change to a a directory where the virtual environment should reside. Then type something like:
+To create a new virtual Python environment, open a terminal and change to a a directory where the virtual environment should reside. Then type something like:
 
 .. code-block:: bash
 
