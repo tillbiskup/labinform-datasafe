@@ -10,7 +10,7 @@ with open(os.path.join(os.path.dirname(__file__), "README.rst")) as f:
 setuptools.setup(
     name="labinform-datasafe",
     version=version,
-    description="Datasafe component of the LabInform project.",
+    description="A local repository for warm research data",
     long_description=readme,
     long_description_content_type="text/x-rst",
     author="Mirjam Schröder, Till Biskup",
@@ -30,8 +30,6 @@ setuptools.setup(
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
@@ -39,7 +37,7 @@ setuptools.setup(
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
         "Intended Audience :: Science/Research",
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Topic :: Scientific/Engineering",
     ],
     install_requires=[

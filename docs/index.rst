@@ -8,7 +8,7 @@ LabInform datasafe documentation
 
 *A local repository for "warm" research data.*
 
-Welcome! This is the documentation for the LabInform datasafe component, the **data store for "warm" research data** that is part of the `LabInform laboratory information and management system <https://www.labinform.de/>`_ (LIMS). One key aspect of handling data is to safely store them in one place and access them via unique identifiers (here: a *Lab Object Identifier*, LOI). While data belonging to (textual) publications can often be stored in public repositories, we need a safe place for all our (unpublished) data, starting with their acquisition and independent of their current state. This is meant by "warm" research data -- a term coined by `scientists from KIT <https://doi.org/10.5334/dsj-2021-008>`_.
+Welcome! This is the documentation for the LabInform datasafe component, the **local repository for "warm" research data** that is part of the `LabInform laboratory information and management system <https://www.labinform.de/>`_ (LIMS). One key aspect of handling data is to safely store them in one place and access them via **unique and stable identifiers** (here: a *Lab Object Identifier*, LOI). While data belonging to (textual) publications can often be stored in public repositories, we need a safe place for all our (unpublished) data, starting with their acquisition and independent of their current state. This is meant by "warm" research data -- a term coined by `scientists from KIT <https://doi.org/10.5334/dsj-2021-008>`_.
 
 
 Features
@@ -20,16 +20,16 @@ A list of features, not all implemented yet but aimed at for the first public re
 
 * Local install as well as network install possible
 
-* Automatic generation of unique LOIs
+* Automatic generation of unique IDs for data
 
-* Pre-register LOIs before starting the acquisition.
+* Pre-register IDs before starting the data acquisition.
 
 * Checksums for automatically checking data integrity
 
 
 And to make it even more convenient for users and future-proof:
 
-* Open source project written in Python (>= 3.7)
+* Open source project written in Python (>= 3.9)
 
 * Developed fully test-driven
 
@@ -37,7 +37,7 @@ And to make it even more convenient for users and future-proof:
 
 
 .. warning::
-  The LabInform datasafe component is currently under active development and still considered in Alpha development state. Therefore, expect frequent changes in features and public APIs that may break your own code. Nevertheless, feedback as well as feature requests are highly welcome.
+  The LabInform datasafe component is currently under active development and still considered in Beta development state. Therefore, expect frequent changes in features and public APIs that may break your own code. Nevertheless, feedback as well as feature requests are highly welcome.
 
 
 Requirements
@@ -45,7 +45,7 @@ Requirements
 
 The LabInform datasafe package comes with a rather minimal set of requirements:
 
-* Python >= 3.7
+* Python >= 3.9
 * flask and oyaml packages
 
 
@@ -67,7 +67,7 @@ To make things easier, the LabInform datasafe has a `DOI <https://doi.org/10.528
 Where to start
 ==============
 
-If you want to know what it is all about or are unsure whether the LabInform datasafe is interesting for you, start :doc:`right at the beginning <audience>`. If you are interested in contributing to the LabInform datasafe, the :doc:`developers corner <contribute>` is the right place for you.
+If you want to know what it is all about or are unsure whether the LabInform datasafe is interesting for you, start :doc:`right at the beginning <audience>`. Other good places to start are the :doc:`concepts` and :doc:`usecases` sections. If you are interested in contributing to the LabInform datasafe, the :doc:`developers corner <contribute>` is the right place for you.
 
 
 Installation

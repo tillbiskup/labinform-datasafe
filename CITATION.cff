@@ -4,7 +4,7 @@ title: LabInform datasafe
 abstract: >
     A local repository for "warm" research data.
   
-    The LabInform datasafe is the data store that is part of the LabInform laboratory information and management system (LIMS). One key aspect of handling data is to store them in one place and access them via unique identifiers (here: a Lab Object Identifier, LOI).
+    The LabInform datasafe is the local repository for "warm" research data that is part of the LabInform laboratory information and management system (LIMS). One key aspect of handling data is to store them in one place and access them via unique and stable identifiers (here: a Lab Object Identifier, LOI). While data belonging to (textual) publications can often be stored in public repositories, we need a safe place for all our (unpublished) data, starting with their acquisition and independent of their current state. This is meant by "warm" research data.
 authors:
   - family-names: Schröder
     given-names: Mirjam
