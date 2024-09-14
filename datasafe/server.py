@@ -294,7 +294,7 @@ class Server:
             Raised if resource corresponding to LOI does not exist
 
         datasafe.exceptions.NoFileError
-            Raised if resource corresponding to LOI is not empty
+            Raised if resource corresponding to LOI is empty
 
         """
         if not loi:
