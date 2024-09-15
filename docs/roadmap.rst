@@ -12,6 +12,10 @@ For version 0.1
 
 * CLI for client
 
+* Documentation: How to setup a datasafe server and storage backend
+
+* Probably: Implement another web server than the flask builtin server
+
 
 For later versions
 ==================

@@ -819,10 +819,7 @@ class HTTPServerAPI(MethodView):
             status = 404
         return content, status
 
-    def put(
-        self,
-        loi="",
-    ):
+    def put(self, loi=""):
         """
         Handle PUT requests.
 

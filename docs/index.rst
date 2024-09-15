@@ -50,7 +50,8 @@ Requirements
 The LabInform datasafe package comes with a rather minimal set of requirements:
 
 * Python >= 3.9
-* flask and oyaml packages
+* requests and oyaml packages
+* flask package for server
 
 
 .. _sec-how_to_cite:

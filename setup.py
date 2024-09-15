@@ -43,6 +43,7 @@ setuptools.setup(
     install_requires=[
         "flask",
         "oyaml",
+        "requests",
     ],
     extras_require={
         "dev": [

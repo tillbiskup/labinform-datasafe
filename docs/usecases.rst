@@ -11,6 +11,7 @@ Overview
 ========
 
 * General scenario: one central place for all research data
+* Setting up the server and storage backend
 * Pre-registering an LOI before data acquisition
 * Uploading data
 * Accessing data (I): manual access
@@ -22,6 +23,13 @@ General scenario: one central place for all research data
 
 The *raison d'être* of the LabInform datasafe is to have one central (local) place to store all "warm" research data and to provide access independent of the internal organisation of the data within the repository, by means of unique and persistent identifiers (LOIs).
 
+
+Setting up the server and storage backend
+=========================================
+
+Before actually being able to work with the datasafe and store and retrieve data, you need to setup the server and storage backend components.
+
+TBD
 
 
 Pre-registering a LOI before data acquisition
