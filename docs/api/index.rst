@@ -14,6 +14,7 @@ An alphabetic list of the modules available within the LabInform datasafe. The a
 
    datasafe.checksum
    datasafe.client
+   datasafe.configuration
    datasafe.loi
    datasafe.manifest
    datasafe.server
