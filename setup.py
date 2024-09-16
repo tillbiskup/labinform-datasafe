@@ -52,6 +52,7 @@ setuptools.setup(
             "pyroma",
             "black",
             "flask-unittest",
+            "pymetacode",
         ],
         "docs": [
             "sphinx",
@@ -67,5 +68,5 @@ setuptools.setup(
             "epr = datasafe.manifest:EPRFormatDetector",
         ],
     },
-    python_requires=">=3.7",
+    python_requires=">=3.9",
 )
